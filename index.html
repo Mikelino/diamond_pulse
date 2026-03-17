@@ -1,0 +1,4248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Team — Walk-Up Songs</title>
+
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Walk-Up Songs" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <script src="config.js"></script>
+
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --darkgray: #111111;
+      --gray: #1c1c1c;
+      --border: #2a2a2a;
+      --orange: #FF4500;
+      --orange-dark: #CC3800;
+      --orange-glow: rgba(255,69,0,0.25);
+      --orange-avatar: rgba(255,69,0,0.5);
+      --white: #FFFFFF;
+      --offwhite: #E8E8E8;
+      --muted: rgba(255,255,255,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--black);
+      background-image: radial-gradient(ellipse at 50% -10%, rgba(255,69,0,0.1) 0%, transparent 55%);
+      min-height: 100vh;
+      font-family: 'Barlow', sans-serif;
+      color: var(--white);
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--black);
+      border-bottom: 2px solid var(--orange);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 24px rgba(255,69,0,0.15);
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      height: 44px;
+      width: 44px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-logo-img {
+      height: 44px;
+      width: auto;
+    }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .header-club {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: clamp(16px, 3.5vw, 24px);
+      letter-spacing: 3px;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    .header-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--orange);
+      text-transform: uppercase;
+    }
+
+    .save-indicator {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #2ecc40;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .save-indicator.visible { opacity: 1; }
+
+    .team-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .team-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--gray);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .team-action-btn:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .team-action-btn.delete:hover {
+      border-color: #cc2200;
+      color: #cc2200;
+      background: rgba(204,34,0,0.08);
+    }
+
+    /* ── EDIT MODE (AJOUT) ── */
+    body.edit-mode #nowPlaying { opacity: 0.55; }
+
+    /* Désactiver toute lecture en mode édition */
+    body.edit-mode .play-btn {
+      opacity: 0.25 !important;
+      pointer-events: none !important;
+    }
+
+    /* Cartes : pas de curseur “clic/lecture” */
+    body.edit-mode .player-card { cursor: default; }
+
+    /* Poignée bien visible en édition */
+    body.edit-mode .drag-handle { color: rgba(255,69,0,0.75); }
+
+    /* Champs modifiables : surbrillance */
+    body.edit-mode .editable-field {
+      background: rgba(255,69,0,0.12);
+      border-bottom: 1px dashed rgba(255,69,0,0.7);
+      border-radius: 2px;
+      padding: 0 4px;
+    }
+    body.edit-mode .editable-field:hover {
+      background: rgba(255,69,0,0.18);
+    }
+
+    /* ── TEAM SELECTOR ── */
+    .team-selector-wrap {
+      position: relative;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .team-selector {
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--white);
+      font-family: 'Oswald', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 36px 8px 14px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+      min-width: 140px;
+    }
+
+    .team-selector:focus,
+    .team-selector:hover { border-color: var(--orange); }
+
+    .team-selector option {
+      background: #1c1c1c;
+      color: white;
+      font-size: 14px;
+    }
+
+    .selector-arrow {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--orange);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    /* ── NOW PLAYING ── */
+    #nowPlaying {
+      background: var(--darkgray);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 60px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #nowPlaying::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--orange);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #nowPlaying.active::before { opacity: 1; }
+    #nowPlaying.active { background: #160800; }
+
+    #nowPlaying.active .now-icon {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.1);
+    }
+
+    .now-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+
+    .now-icon.spinning { animation: spin-icon 0.8s ease-out; }
+
+    @keyframes spin-icon {
+      from { transform: rotate(-30deg) scale(0.8); }
+      to   { transform: rotate(0) scale(1); }
+    }
+
+    .now-text { flex: 1; min-width: 0; }
+
+    .now-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .now-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(15px, 3vw, 21px);
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .now-song {
+      font-size: 12px;
+      color: var(--orange);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .progress-wrap { flex-shrink: 0; width: 100px; }
+
+    .progress-bar-bg {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--orange);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 6px var(--orange);
+    }
+
+    .progress-time {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-align: right;
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 14px 60px;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── PLAYER CARDS ── */
+    .lineup { display: flex; flex-direction: column; gap: 2px; }
+
+    .player-card {
+      background: var(--darkgray);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      display: grid;
+      grid-template-columns: 24px 36px 22px 48px 44px 1fr auto 28px 52px 32px;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .player-card:hover {
+      background: var(--gray);
+      border-left-color: var(--orange);
+      border-color: rgba(255,69,0,0.3);
+    }
+
+    .player-card.playing {
+      background: #140800;
+      border-left-color: var(--orange);
+      border-color: rgba(255,69,0,0.5);
+      box-shadow: inset 0 0 30px rgba(255,69,0,0.05);
+    }
+
+    .player-card.absent {
+      opacity: 0.3;
+      border-left-color: transparent !important;
+      filter: grayscale(1);
+    }
+
+    .player-card.absent:hover {
+      opacity: 0.45;
+      border-color: var(--border);
+      background: var(--darkgray);
+    }
+
+    .order-num {
+      font-family: 'Oswald', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--border);
+      text-align: center;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .player-card:hover .order-num,
+    .player-card.playing .order-num { color: var(--orange); }
+
+    .player-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      background: rgba(128,128,128,0.1);
+      border: 1px solid var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 1px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .player-card:hover .player-avatar,
+    .player-card.playing .player-avatar {
+      background: rgba(128,128,128,0.15);
+      border-color: var(--orange);
+    }
+
+    .pos-select {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--orange);
+      opacity: 1;
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 0;
+    }
+
+    .pos-select option {
+      background: #1c1c1c;
+      color: var(--white);
+      font-size: 13px;
+    }
+
+    .player-info { min-width: 0; }
+
+    .player-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .jersey-num {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(14px, 2.5vw, 18px);
+      font-weight: 600;
+      color: var(--orange);
+      flex-shrink: 0;
+      cursor: text;
+    }
+
+    .add-jersey-btn {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(14px, 2.5vw, 18px);
+      font-weight: 600;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .add-jersey-btn:hover { color: var(--orange); }
+
+    .jersey-num.editing {
+      background: rgba(255,69,0,0.1);
+      border-bottom: 1px solid var(--orange);
+      outline: none;
+      border-radius: 2px;
+      padding: 0 4px;
+      min-width: 24px;
+    }
+
+    .player-pos {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #FF4500;
+      background: rgba(255,69,0,0.1);
+      border: 1px solid rgba(255,69,0,0.25);
+      border-radius: 2px;
+      padding: 1px 5px;
+      margin-top: 3px;
+    }
+
+    .player-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(14px, 2.5vw, 18px);
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--white);
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+    }
+
+    .avatar-cap { fill: var(--orange-avatar); }
+    .avatar-body { fill: #333; }
+    .avatar-head { fill: #555; }
+    .upload-btn {
+      font-size: 16px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.25);
+      transition: all 0.15s;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      background: transparent;
+      flex-shrink: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .upload-btn:hover {
+      border-color: rgba(255,69,0,0.3);
+      background: rgba(255,69,0,0.08);
+      color: var(--orange);
+    }
+
+    .upload-btn.has-file { color: var(--orange); }
+
+    .upload-btn.has-file:hover {
+      color: var(--orange);
+      border-color: rgba(255,69,0,0.3);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .song-info { text-align: right; min-width: 0; cursor: default; }
+    .song-title, .song-artist { cursor: text; }
+
+    .song-title.editing, .song-artist.editing {
+      background: rgba(255,69,0,0.1);
+      border-bottom: 1px solid var(--orange);
+      outline: none;
+      border-radius: 2px;
+      padding: 0 4px;
+      min-width: 60px;
+      cursor: text;
+    }
+
+    .song-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--offwhite);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    .song-artist {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+      margin-top: 2px;
+    }
+
+    /* ── PHOTO ── */
+    .photo-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--gray);
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+      padding: 0;
+    }
+
+    .photo-btn:hover { border-color: var(--orange); }
+
+    .photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    /* ── DRAG HANDLE ── */
+    .drag-handle {
+      color: var(--border);
+      font-size: 16px;
+      cursor: grab;
+      padding: 0 2px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+      touch-action: none;
+    }
+
+    .drag-handle:active { cursor: grabbing; }
+    .player-card:hover .drag-handle { color: rgba(255,69,0,0.5); }
+    .player-card.sortable-ghost { opacity: 0.3; background: #1a0800; }
+    .player-card.sortable-chosen {
+      background: #1a0800;
+      border-left-color: var(--orange);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      transform: scale(1.01);
+      z-index: 10;
+    }
+
+    /* ── PRESENCE BUTTON ── */
+    .presence-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #3a3a3a;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      user-select: none;
+      -webkit-user-select: none;
+      padding: 0;
+    }
+
+    .presence-btn.present {
+      background: #1a5c1a;
+      border-color: #2ecc40;
+      box-shadow: 0 0 5px rgba(46,204,64,0.4);
+    }
+
+    .presence-btn.present::after {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2ecc40;
+      display: block;
+    }
+
+    .delete-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,0.15);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .player-card:hover .delete-btn {
+      color: rgba(255,69,0,0.5);
+      border-color: rgba(255,69,0,0.2);
+    }
+
+    .delete-btn:hover {
+      background: rgba(255,69,0,0.15) !important;
+      color: #FF4500 !important;
+      border-color: rgba(255,69,0,0.4) !important;
+    }
+
+    /* ── PLAY BUTTON ── */
+    .play-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .player-card:hover .play-btn {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .play-btn.playing-btn {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: white;
+      box-shadow: 0 0 12px var(--orange-glow);
+      animation: btn-pulse 1.5s infinite;
+    }
+
+    @keyframes btn-pulse {
+      0%,100% { box-shadow: 0 0 8px var(--orange-glow); }
+      50%     { box-shadow: 0 0 20px rgba(255,69,0,0.5); }
+    }
+
+    .audio-upload-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gray);
+      border: 1px dashed var(--border);
+      border-radius: 2px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .audio-upload-label:hover {
+      border-color: var(--red);
+      background: #150800;
+      color: var(--offwhite);
+    }
+
+    .audio-upload-label.has-file {
+      border-color: #2ecc40;
+      background: #0a1a0a;
+      color: #2ecc40;
+    }
+
+    audio::-webkit-media-controls-panel { background: var(--gray); }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ── ADD PLAYER ── */
+    .add-card { background: var(--darkgray); border: 1px solid var(--border); }
+
+    .add-toggle {
+      width: 100%;
+      padding: 13px 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: color 0.2s;
+    }
+
+    .add-toggle:hover { color: var(--white); }
+
+    .add-form {
+      padding: 0 16px 16px;
+      display: none;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+    }
+
+    .add-form.open { display: flex; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .form-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding-top: 10px;
+    }
+
+    .form-input {
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 7px 10px;
+      color: var(--white);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus { border-color: var(--orange); background: #150800; }
+    .form-input::placeholder { color: rgba(255,255,255,0.15); }
+
+    .add-btn {
+      align-self: flex-end;
+      background: var(--orange);
+      border: none;
+      border-radius: 2px;
+      color: white;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 15px;
+    }
+
+    .add-btn:hover { background: #e64000; }
+
+    /* ── CHEER ── */
+    .cheer-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .cheer-overlay.show { opacity: 1; background: rgba(0,0,0,0.15); }
+
+    .cheer-text {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: clamp(52px, 14vw, 110px);
+      color: var(--white);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-align: center;
+      transform: scale(0);
+      opacity: 0;
+      line-height: 1;
+    }
+
+    .cheer-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(14px, 3vw, 22px);
+      color: var(--orange);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-top: 4px;
+      opacity: 0;
+    }
+
+    @keyframes cheer-in {
+      0%   { transform: scale(0.5) translateY(20px); opacity: 0; }
+      60%  { transform: scale(1.05) translateY(-4px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    @keyframes sub-in {
+      0%   { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--border);
+      text-transform: uppercase;
+    }
+
+    /* ── CONFIG BUTTON ── */
+    .config-btn {
+      font-size: 18px;
+    }
+
+    /* ── CONFIG PAGE ── */
+    .config-page {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      background-image: radial-gradient(ellipse at 50% -10%, rgba(255,69,0,0.1) 0%, transparent 55%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .config-header {
+      background: var(--black);
+      border-bottom: 2px solid var(--orange);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 64px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 24px rgba(255,69,0,0.15);
+    }
+
+    .config-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .config-back-btn:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .config-header-title {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .config-title-main {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: clamp(16px, 3.5vw, 22px);
+      letter-spacing: 3px;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    .config-title-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--orange);
+      text-transform: uppercase;
+    }
+
+    .config-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 16px 60px;
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── CONFIG BODY (sidebar + panels) ── */
+    .config-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .config-sidebar {
+      width: 180px;
+      flex-shrink: 0;
+      background: var(--darkgray);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 8px;
+      gap: 2px;
+    }
+
+    .cfg-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .cfg-nav-btn:hover {
+      background: var(--gray);
+      color: var(--offwhite);
+      border-color: var(--border);
+    }
+
+    .cfg-nav-btn.active {
+      background: var(--gray);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .cfg-nav-icon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .cfg-nav-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── PANELS ── */
+    .config-panels {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .config-panel {
+      display: none;
+      padding: 28px 24px 60px;
+      max-width: 700px;
+    }
+
+    .config-panel.active {
+      display: block;
+    }
+
+    /* placeholder interface */
+    .cfg-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px 20px;
+      background: var(--darkgray);
+      border: 1px dashed var(--border);
+      text-align: center;
+    }
+
+    .cfg-placeholder-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .cfg-placeholder-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--border);
+    }
+
+    @media (max-width: 640px) {
+      .config-body {
+        flex-direction: column;
+      }
+      .config-sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 8px 8px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        gap: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .config-sidebar::-webkit-scrollbar { display: none; }
+      .cfg-nav-btn {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        gap: 4px;
+      }
+      .cfg-nav-label {
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+      .config-panels {
+        flex: 1;
+        min-height: 0;
+      }
+      .config-panel { padding: 20px 14px 60px; }
+    }
+
+    .config-section {
+      margin-bottom: 36px;
+    }
+
+    .config-section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .config-section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .config-add-form {
+      background: var(--darkgray);
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .config-form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    /* ── TEAM LIST ── */
+    .cfg-team-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cfg-team-row {
+      background: var(--darkgray);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      transition: all 0.15s;
+    }
+
+    .cfg-team-row:hover {
+      border-left-color: var(--orange);
+      border-color: rgba(255,69,0,0.3);
+      background: var(--gray);
+    }
+
+    .cfg-team-row.current-team {
+      border-left-color: var(--orange);
+    }
+
+    .cfg-team-info {}
+
+    .cfg-team-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    .cfg-team-key {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .cfg-team-count {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .cfg-current-badge {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--orange);
+      background: rgba(255,69,0,0.12);
+      border: 1px solid rgba(255,69,0,0.3);
+      border-radius: 2px;
+      padding: 2px 8px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .cfg-team-action {
+      width: 32px;
+      height: 32px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--gray);
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .cfg-team-action:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .cfg-team-action.delete-action:hover {
+      border-color: #cc2200;
+      color: #cc2200;
+      background: rgba(204,34,0,0.08);
+    }
+
+    /* ── MODALS ── */
+    .cfg-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .cfg-modal {
+      background: var(--darkgray);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--orange);
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    }
+
+    .cfg-modal-danger {
+      border-top-color: #cc2200;
+    }
+
+    .cfg-modal-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .cfg-modal-body {
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+      color: var(--offwhite);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .cfg-modal-warning {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: #cc5500;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      padding: 8px 12px;
+      background: rgba(204,34,0,0.08);
+      border: 1px solid rgba(204,34,0,0.2);
+      border-radius: 2px;
+    }
+
+    .cfg-modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .cfg-modal-cancel {
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cfg-modal-cancel:hover {
+      border-color: var(--orange);
+      color: var(--white);
+    }
+
+    .cfg-modal-confirm {
+      background: var(--orange);
+      border: none;
+      border-radius: 2px;
+      color: white;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cfg-modal-confirm:hover { background: #e64000; }
+
+    .cfg-modal-confirm-danger {
+      background: #cc2200;
+    }
+
+    .cfg-modal-confirm-danger:hover { background: #aa1a00; }
+
+    @media (max-width: 540px) {
+      .cfg-team-row {
+        grid-template-columns: 1fr auto auto;
+      }
+      .cfg-current-badge { display: none; }
+    }
+
+    @media (max-width: 540px) {
+      /* Grille mobile : ordre-num | avatar | pos | info(nom) | play | présence */
+      .player-card {
+        grid-template-columns: 20px 36px 22px 1fr 36px 22px;
+        gap: 8px;
+        padding: 10px 10px;
+      }
+      /* Cacher les colonnes inutiles sur mobile */
+      .drag-handle { display: none; }
+      .upload-btn  { display: none; }
+      .delete-btn  { display: none; }
+      .song-info   { display: none; }
+      /* S'assurer que le nom ne soit pas tronqué trop tôt */
+      .player-name {
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .player-info { min-width: 0; overflow: hidden; }
+      .jersey-num  { font-size: 13px; }
+    }
+    /* ── MAIN BODY LAYOUT (sidebar + panels) ── */
+    .main-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .main-sidebar {
+      width: 180px;
+      flex-shrink: 0;
+      background: var(--darkgray);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 8px;
+      gap: 2px;
+    }
+
+    .main-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .main-nav-btn:hover {
+      background: var(--gray);
+      color: var(--offwhite);
+      border-color: var(--border);
+    }
+
+    .main-nav-btn.active {
+      background: var(--gray);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .main-nav-icon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .main-nav-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .main-panels {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .main-panel {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .main-panel.active {
+      display: block;
+    }
+
+    .main-panel main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 14px 60px;
+    }
+
+    @media (max-width: 540px) {
+      .main-sidebar {
+        width: 52px;
+        padding: 12px 6px;
+      }
+      .main-nav-label { display: none; }
+      .main-nav-btn { justify-content: center; padding: 10px; }
+    }
+
+    /* ── INTERFACE PANEL ── */
+    .if-color-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .if-color-input {
+      width: 48px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--gray);
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .if-color-input:hover { border-color: var(--orange); }
+
+    .if-color-hex {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .if-color-preview {
+      margin-top: 16px;
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .if-preview-bar {
+      width: 4px;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    .if-preview-label {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 3px;
+      color: white;
+    }
+
+    /* Slider */
+    .if-slider {
+      width: 100%;
+      margin-top: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .if-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--orange);
+      cursor: pointer;
+      border: 2px solid var(--black);
+      box-shadow: 0 0 6px var(--orange-glow);
+    }
+
+    .if-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--orange);
+      cursor: pointer;
+      border: 2px solid var(--black);
+    }
+
+    .if-slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--border);
+    }
+
+    .if-pwd-msg {
+      margin-top: 12px;
+      padding: 8px 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+
+    .if-pwd-msg.success {
+      background: rgba(46,204,64,0.08);
+      border: 1px solid rgba(46,204,64,0.3);
+      color: #2ecc40;
+    }
+
+    .if-pwd-msg.error {
+      background: rgba(204,34,0,0.08);
+      border: 1px solid rgba(204,34,0,0.3);
+      color: #cc5500;
+    }
+
+    /* ── SOCIAL MEDIA ── */
+    .social-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .social-radio-label:has(input:checked) {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .social-radio-label input { display: none; }
+
+    /* ── STORY BACKGROUNDS ── */
+    .cfg-bg-hint {
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .cfg-bg-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cfg-bg-row:last-child { border-bottom: none; }
+
+    .cfg-bg-preview {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--border);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .cfg-bg-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+
+    .cfg-bg-info { flex: 1; min-width: 0; }
+
+    .cfg-bg-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    .cfg-bg-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cfg-bg-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--gray);
+      cursor: pointer;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .cfg-bg-btn:hover {
+      border-color: var(--orange);
+      background: rgba(255,69,0,0.08);
+    }
+
+    .cfg-bg-clear {
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,0.2);
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .cfg-bg-clear:hover {
+      border-color: #cc2200;
+      color: #cc2200;
+      background: rgba(204,34,0,0.08);
+    }
+
+  </style>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-logo" id="headerLogoWrap">
+        <svg id="headerLogoSvg" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Balle de baseball -->
+          <circle cx="22" cy="22" r="20" fill="#1c1c1c" stroke="#FF4500" stroke-width="2"/>
+          <!-- Coutures -->
+          <path d="M14 10 Q18 16 14 22 Q18 28 14 34" stroke="#FF4500" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M30 10 Q26 16 30 22 Q26 28 30 34" stroke="#FF4500" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M14 10 Q22 13 30 10" stroke="#FF4500" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M14 34 Q22 31 30 34" stroke="#FF4500" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <img id="headerLogoImg" src="" alt="Logo" class="header-logo-img" style="display:none" />
+      </div>
+      <div class="header-titles">
+        <div class="header-club">Your Team</div>
+        <div class="header-sub">Walk-Up Songs</div>
+      </div>
+    </div>
+
+    <div class="team-selector-wrap">
+      <select class="team-selector" id="teamSelect" onchange="switchTeam(this.value)">
+        <option value="U9">U9</option>
+        <option value="U12" selected>U12</option>
+        <option value="U15">U15</option>
+        <option value="LadiesD2">Ladies D2</option>
+        <option value="LadiesD3">Ladies D3</option>
+        <option value="SeniorsD4">Seniors D4</option>
+        <option value="SeniorsD3">Seniors D3</option>
+      </select>
+      <span class="selector-arrow">▼</span>
+    </div>
+
+    <!-- ✅ BOUTON MODE MODIFICATION (AJOUT) -->
+    <button class="team-action-btn" id="editModeBtn" onclick="toggleEditMode()" title="Mode modification">✏️</button>
+
+    <!-- BOUTON CONFIG -->
+    <button class="team-action-btn config-btn" id="configNavBtn" onclick="openConfig()" title="Configuration des équipes">⚙️</button>
+
+    <div id="saveIndicator" class="save-indicator">✓ Sauvé</div>
+  </header>
+
+  <!-- NOW PLAYING -->
+  <div id="nowPlaying">
+    <div class="now-icon" id="nowIcon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </div>
+    <div class="now-text">
+      <div class="now-label" id="nowLabel">En attente</div>
+      <div class="now-name" id="nowName">Sélectionne un joueur</div>
+      <div class="now-song" id="nowSong"></div>
+    </div>
+    <div class="progress-wrap" id="progressWrap" style="display:none">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-time" id="progressTime">0:00 / 0:15</div>
+    </div>
+  </div>
+
+  <!-- MAIN BODY -->
+  <div class="main-body">
+
+    <!-- SIDEBAR PRINCIPALE -->
+    <nav class="main-sidebar">
+      <button class="main-nav-btn active" id="mainNavBatting" onclick="mainSwitchTab('batting')">
+        <span class="main-nav-label">Batting Order</span>
+      </button>
+      <button class="main-nav-btn" id="mainNavSocial" onclick="mainSwitchTab('social')">
+        <span class="main-nav-label">Social Media</span>
+      </button>
+    </nav>
+
+    <!-- PANELS -->
+    <div class="main-panels">
+
+      <!-- PANEL : BATTING ORDER -->
+      <div class="main-panel active" id="mainPanelBatting">
+        <main>
+          <div class="section-label" id="sectionLabel">⚾ Batting Order — U12</div>
+          <div class="lineup" id="lineup"></div>
+
+          <div class="divider"></div>
+
+          <div class="section-label">+ Joueur</div>
+          <div class="add-card">
+            <button class="add-toggle" onclick="toggleForm()">+ Ajouter un joueur à cette équipe</button>
+            <div class="add-form" id="addForm">
+              <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input class="form-input" id="newName" placeholder="Prénom Nom" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">N° Maillot</label>
+                <input class="form-input" id="newJersey" placeholder="Ex: 7" type="number" min="0" max="99" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Position</label>
+                <select class="form-input" id="newPos">
+                  <option value="">— Choisir —</option>
+                  <option value="P">P — Lanceur</option>
+                  <option value="C">C — Receveur</option>
+                  <option value="1B">1B — 1ère base</option>
+                  <option value="2B">2B — 2e base</option>
+                  <option value="3B">3B — 3e base</option>
+                  <option value="SS">SS — Arrêt-court</option>
+                  <option value="CF">CF — Champ centre</option>
+                  <option value="LF">LF — Champ gauche</option>
+                  <option value="RF">RF — Champ droit</option>
+                  <option value="DC">DC — Dugout Captain</option>
+                  <option value="PC">PC — Pitch Counter</option>
+                  <option value="SP">SP — Sparring Partner</option>
+                  <option value="BC">BC — BullPen Catcher</option>
+                  <option value="B">B — Bench</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Chanson</label>
+                <input class="form-input" id="newSong" placeholder="Eye of the Tiger" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Artiste</label>
+                <input class="form-input" id="newArtist" placeholder="Survivor" />
+              </div>
+
+              <div class="form-group" style="min-width:100%">
+                <label class="form-label">Fichier audio</label>
+                <label class="audio-upload-label" id="audioUploadLabel">
+                  <span id="audioUploadText">📂 Choisir un fichier mp3 / wav…</span>
+                  <input type="file" id="newAudioFile" accept="audio/*" style="display:none" onchange="handleAudioUpload(this)" />
+                </label>
+                <audio id="audioPreview" controls style="display:none;width:100%;margin-top:8px;height:32px;"></audio>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Départ (sec)</label>
+                <input class="form-input" id="newStart" type="number" placeholder="30" value="0" />
+              </div>
+              <button class="add-btn" onclick="addPlayer().catch(e => console.error(e))">Ajouter</button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- PANEL : SOCIAL MEDIA -->
+      <div class="main-panel" id="mainPanelSocial">
+        <main>
+
+          <!-- STORY LINEUP -->
+          <div class="section-label">📋 Story Lineup</div>
+          <div class="add-card">
+            <button class="add-toggle" onclick="toggleStoryForm()">📸 Exporter le lineup en story Instagram</button>
+            <div class="add-form" id="storyForm">
+              <div class="form-group">
+                <label class="form-label">Date du match</label>
+                <input class="form-input" id="storyDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Adversaire</label>
+                <input class="form-input" id="storyOpponent" placeholder="Ex: Brussels Kangaroos" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Joueur en avant</label>
+                <select class="form-input" id="storyFeatured">
+                  <option value="">— Aucun —</option>
+                </select>
+              </div>
+              <div class="form-group" id="featuredPhotoGroup" style="display:none">
+                <label class="form-label">Photo fond transparent (PNG)</label>
+                <label class="audio-upload-label" id="featuredPhotoLabel">
+                  <span id="featuredPhotoText">📂 Choisir une photo PNG…</span>
+                  <input type="file" id="featuredPhotoFile" accept="image/png,image/webp" style="display:none" onchange="handleFeaturedPhoto(this)" />
+                </label>
+              </div>
+              <button class="add-btn" onclick="exportStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- STORY SCORE -->
+          <div class="section-label">🏆 Story Score</div>
+          <div class="add-card">
+            <button class="add-toggle" onclick="toggleScoreForm()">🏆 Exporter le score en story Instagram</button>
+            <div class="add-form" id="scoreForm">
+              <div class="form-group">
+                <label class="form-label">Date du match</label>
+                <input class="form-input" id="scoreDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Adversaire</label>
+                <input class="form-input" id="scoreOpponent" placeholder="Ex: Brussels Kangaroos" />
+              </div>
+              <div class="form-group" style="max-width:100px">
+                <label class="form-label">Score Your Team</label>
+                <input class="form-input" id="scoreHome" type="number" min="0" placeholder="0" style="font-size:22px;font-family:'Oswald',sans-serif;text-align:center" />
+              </div>
+              <div class="form-group" style="max-width:100px">
+                <label class="form-label">Score Adversaire</label>
+                <input class="form-input" id="scoreAway" type="number" min="0" placeholder="0" style="font-size:22px;font-family:'Oswald',sans-serif;text-align:center" />
+              </div>
+              <div class="form-group" style="min-width:100%">
+                <label class="form-label">Résultat</label>
+                <div style="display:flex;gap:8px">
+                  <label class="social-radio-label" id="scoreWinLabel">
+                    <input type="radio" name="scoreResult" value="win" id="scoreWin" onchange="updateScoreResult()" /> Victoire ✅
+                  </label>
+                  <label class="social-radio-label" id="scoreLossLabel">
+                    <input type="radio" name="scoreResult" value="loss" id="scoreLoss" onchange="updateScoreResult()" /> Défaite ❌
+                  </label>
+                  <label class="social-radio-label" id="scoreTieLabel">
+                    <input type="radio" name="scoreResult" value="tie" id="scoreTie" onchange="updateScoreResult()" /> Nul 🤝
+                  </label>
+                </div>
+              </div>
+              <button class="add-btn" onclick="exportScoreStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- STORY MVP -->
+          <div class="section-label">⭐ Story MVP</div>
+          <div class="add-card">
+            <button class="add-toggle" onclick="toggleMvpForm()">⭐ Exporter le MVP en story Instagram</button>
+            <div class="add-form" id="mvpForm">
+              <div class="form-group">
+                <label class="form-label">Date du match</label>
+                <input class="form-input" id="mvpDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Adversaire</label>
+                <input class="form-input" id="mvpOpponent" placeholder="Ex: Brussels Kangaroos" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Joueur MVP</label>
+                <select class="form-input" id="mvpPlayer" onchange="updateMvpPhoto()">
+                  <option value="">— Choisir le MVP —</option>
+                </select>
+              </div>
+              <div class="form-group" id="mvpPhotoGroup">
+                <label class="form-label">Photo du joueur (PNG fond transparent)</label>
+                <label class="audio-upload-label" id="mvpPhotoLabel">
+                  <span id="mvpPhotoText">📂 Choisir une photo PNG…</span>
+                  <input type="file" id="mvpPhotoFile" accept="image/png,image/webp" style="display:none" onchange="handleMvpPhoto(this)" />
+                </label>
+              </div>
+              <div class="form-group" style="min-width:100%">
+                <label class="form-label">Citation / Message</label>
+                <input class="form-input" id="mvpQuote" placeholder="Ex: Match parfait, 3 for 3 !" />
+              </div>
+              <button class="add-btn" onclick="exportMvpStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+            </div>
+          </div>
+
+          <canvas id="storyCanvas" style="display:none"></canvas>
+          <canvas id="scoreCanvas" style="display:none"></canvas>
+          <canvas id="mvpCanvas" style="display:none"></canvas>
+
+        </main>
+      </div>
+
+    </div><!-- /main-panels -->
+  </div><!-- /main-body -->
+
+  <footer>© Your Team · yourclub.com</footer>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE CONFIGURATION                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PAGE CONFIGURATION                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="configPage" class="config-page" style="display:none">
+
+    <!-- CONFIG HEADER -->
+    <div class="config-header">
+      <button class="config-back-btn" onclick="closeConfig()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        Retour
+      </button>
+      <div class="config-header-title">
+        <div class="config-title-main">Configuration</div>
+        <div class="config-title-sub" id="cfgSubtitle">Équipes</div>
+      </div>
+      <div id="configSaveIndicator" class="save-indicator">✓ Sauvé</div>
+    </div>
+
+    <!-- CONFIG BODY : sidebar + content -->
+    <div class="config-body">
+
+      <!-- SIDEBAR -->
+      <nav class="config-sidebar">
+        <button class="cfg-nav-btn active" id="cfgNavTeams" onclick="cfgSwitchTab('teams')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Équipes</span>
+        </button>
+        <button class="cfg-nav-btn" id="cfgNavInterface" onclick="cfgSwitchTab('interface')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Interface</span>
+        </button>
+        <button class="cfg-nav-btn" id="cfgNavSecurite" onclick="cfgSwitchTab('securite')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1 4v2h2V9h-2zm0 4v2h2v-2h-2z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Sécurité</span>
+        </button>
+      </nav>
+
+      <!-- CONTENT PANELS -->
+      <div class="config-panels">
+
+        <!-- PANEL : ÉQUIPES -->
+        <div class="config-panel active" id="cfgPanelTeams">
+
+          <div class="config-section">
+            <div class="config-section-label">+ Nouvelle équipe</div>
+            <div class="config-add-form">
+              <div class="config-form-row">
+                <div class="form-group">
+                  <label class="form-label">Nom de l'équipe</label>
+                  <input class="form-input" id="cfgNewTeamName" placeholder="Ex: Seniors D1" />
+                </div>
+                <div class="form-group" style="max-width:160px">
+                  <label class="form-label">Identifiant court</label>
+                  <input class="form-input" id="cfgNewTeamKey" placeholder="Ex: SeniorsD1" />
+                </div>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px" onclick="cfgAddTeam()">Créer</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-label">⚾ Équipes existantes</div>
+            <div id="cfgTeamList" class="cfg-team-list"></div>
+          </div>
+
+        </div>
+
+        <!-- PANEL : INTERFACE -->
+        <div class="config-panel" id="cfgPanelInterface">
+
+          <!-- Identité du club -->
+          <div class="config-section">
+            <div class="config-section-label">🏷️ Identité du club</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
+                <div class="form-group">
+                  <label class="form-label">Nom du club</label>
+                  <input class="form-input" id="ifClubName" placeholder="Ex: Mon Club" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Sous-titre</label>
+                  <input class="form-input" id="ifClubSub" placeholder="Ex: Walk-Up Songs" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Site web (affiché sur les stories)</label>
+                  <input class="form-input" id="ifClubWebsite" placeholder="Ex: monclub.be" />
+                </div>
+                <div class="form-group" style="min-width:100%">
+                  <label class="form-label">Logo (fichier image)</label>
+                  <label class="audio-upload-label" id="ifLogoLabel" style="cursor:pointer">
+                    <span id="ifLogoText">📂 Choisir une image…</span>
+                    <input type="file" id="ifLogoFile" accept="image/*" style="display:none" onchange="ifHandleLogo(this)" />
+                  </label>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;min-width:100%">
+                  <div id="ifLogoPreview" style="display:none">
+                    <img id="ifLogoImg" src="" alt="Logo" style="height:44px;width:auto;border-radius:3px;border:1px solid var(--border)" />
+                  </div>
+                  <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveIdentity()">Appliquer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Couleurs -->
+          <div class="config-section">
+            <div class="config-section-label">🎨 Couleurs</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="gap:20px;align-items:flex-end;flex-wrap:wrap">
+                <div class="form-group" style="flex:0 0 auto">
+                  <label class="form-label">Couleur principale</label>
+                  <div class="if-color-row">
+                    <input type="color" class="if-color-input" id="ifColorAccent" value="#FF4500" oninput="ifPreviewColor()" />
+                    <span class="if-color-hex" id="ifColorAccentHex">#FF4500</span>
+                  </div>
+                </div>
+                <div class="form-group" style="flex:0 0 auto">
+                  <label class="form-label">Couleur de fond</label>
+                  <div class="if-color-row">
+                    <input type="color" class="if-color-input" id="ifColorBg" value="#0a0a0a" oninput="ifPreviewColor()" />
+                    <span class="if-color-hex" id="ifColorBgHex">#0a0a0a</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveColors()">Appliquer</button>
+                  <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetColors()">Réinitialiser</button>
+                </div>
+              </div>
+              <div class="if-color-preview" id="ifColorPreview">
+                <div class="if-preview-bar" id="ifPreviewBar" style="background:#FF4500"></div>
+                <span class="if-preview-label" id="ifPreviewLabel">YOUR TEAM</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lecture -->
+          <div class="config-section">
+            <div class="config-section-label">▶ Lecture</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="align-items:flex-end;gap:20px;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:200px">
+                  <label class="form-label">Durée de lecture — <span id="ifDurationVal">15</span> sec</label>
+                  <input type="range" class="if-slider" id="ifDuration" min="5" max="60" step="1" value="15"
+                    oninput="document.getElementById('ifDurationVal').textContent = this.value" />
+                  <div class="if-slider-labels"><span>5s</span><span>30s</span><span>60s</span></div>
+                </div>
+                <button class="add-btn" style="margin-top:0;padding:9px 24px;flex-shrink:0" onclick="ifSaveDuration()">Appliquer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sécurité : déplacé dans l'onglet dédié -->
+
+          <!-- Backgrounds Stories -->
+          <div class="config-section">
+            <div class="config-section-label">🖼️ Backgrounds des stories</div>
+            <div class="config-add-form">
+              <p class="cfg-bg-hint">Chargez une image 1080×1920px (format story Instagram) pour chaque type. Le contenu s'affichera par-dessus avec un overlay pour la lisibilité.</p>
+
+              <!-- Lineup -->
+              <div class="cfg-bg-row">
+                <div class="cfg-bg-preview" id="bgPreviewLineup">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </div>
+                <div class="cfg-bg-info">
+                  <div class="cfg-bg-label">Story Lineup</div>
+                  <div class="cfg-bg-sub" id="bgSubLineup">Aucun background chargé</div>
+                </div>
+                <label class="cfg-bg-btn" title="Choisir une image">
+                  📂
+                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'lineup')" />
+                </label>
+                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('lineup')" id="bgClearLineup" style="display:none">✕</button>
+              </div>
+
+              <!-- Score -->
+              <div class="cfg-bg-row">
+                <div class="cfg-bg-preview" id="bgPreviewScore">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </div>
+                <div class="cfg-bg-info">
+                  <div class="cfg-bg-label">Story Score</div>
+                  <div class="cfg-bg-sub" id="bgSubScore">Aucun background chargé</div>
+                </div>
+                <label class="cfg-bg-btn" title="Choisir une image">
+                  📂
+                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'score')" />
+                </label>
+                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('score')" id="bgClearScore" style="display:none">✕</button>
+              </div>
+
+              <!-- MVP -->
+              <div class="cfg-bg-row">
+                <div class="cfg-bg-preview" id="bgPreviewMvp">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </div>
+                <div class="cfg-bg-info">
+                  <div class="cfg-bg-label">Story MVP</div>
+                  <div class="cfg-bg-sub" id="bgSubMvp">Aucun background chargé</div>
+                </div>
+                <label class="cfg-bg-btn" title="Choisir une image">
+                  📂
+                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'mvp')" />
+                </label>
+                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('mvp')" id="bgClearMvp" style="display:none">✕</button>
+              </div>
+
+            </div>
+          </div>
+
+        <!-- PANEL : SÉCURITÉ -->
+        <div class="config-panel" id="cfgPanelSecurite">
+
+          <div class="config-section">
+            <div class="config-section-label">🔒 Mot de passe admin</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
+                <div class="form-group" style="min-width:180px">
+                  <label class="form-label">Mot de passe actuel</label>
+                  <input class="form-input" type="password" id="ifPwdCurrent" placeholder="••••••••" autocomplete="current-password" />
+                </div>
+                <div class="form-group" style="min-width:180px">
+                  <label class="form-label">Nouveau mot de passe</label>
+                  <input class="form-input" type="password" id="ifPwdNew" placeholder="••••••••" autocomplete="new-password" />
+                </div>
+                <div class="form-group" style="min-width:180px">
+                  <label class="form-label">Confirmer</label>
+                  <input class="form-input" type="password" id="ifPwdConfirm" placeholder="••••••••" autocomplete="new-password"
+                    onkeydown="if(event.key==='Enter') ifSavePassword()" />
+                </div>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="ifSavePassword()">Changer</button>
+              </div>
+              <div id="ifPwdMsg" class="if-pwd-msg" style="display:none"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /config-panels -->
+    </div><!-- /config-body -->
+  </div>
+
+  <div id="renameModal" class="cfg-modal-overlay" style="display:none" onclick="cfgCloseRenameModal(event)">
+    <div class="cfg-modal">
+      <div class="cfg-modal-title">Renommer l'équipe</div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Nouveau nom</label>
+        <input class="form-input" id="renameInput" placeholder="Nom de l'équipe" onkeydown="if(event.key==='Enter') cfgConfirmRename()" />
+      </div>
+      <div class="cfg-modal-actions">
+        <button class="cfg-modal-cancel" onclick="cfgCloseRenameModal()">Annuler</button>
+        <button class="cfg-modal-confirm" onclick="cfgConfirmRename()">Renommer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DELETE -->
+  <div id="deleteModal" class="cfg-modal-overlay" style="display:none" onclick="cfgCloseDeleteModal(event)">
+    <div class="cfg-modal cfg-modal-danger">
+      <div class="cfg-modal-title">⚠️ Supprimer l'équipe</div>
+      <div class="cfg-modal-body" id="deleteModalBody">Voulez-vous vraiment supprimer cette équipe ?</div>
+      <div class="cfg-modal-warning">Cette action supprimera tous les joueurs de l'équipe.</div>
+      <div class="cfg-modal-actions">
+        <button class="cfg-modal-cancel" onclick="cfgCloseDeleteModal()">Annuler</button>
+        <button class="cfg-modal-confirm cfg-modal-confirm-danger" onclick="cfgConfirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+  <div class="cheer-overlay" id="cheerOverlay">
+    <div>
+      <div class="cheer-text" id="cheerText"></div>
+      <div class="cheer-sub" id="cheerSub">Your Team</div>
+    </div>
+  </div>
+
+  <script>
+    // ── DATA ──
+    const EMOJIS = ['⚾','🏃','💥','🎯','⚡','🔥','💪','🌟','🎸','🏆','👊','🦅','🐻','💫','🎺'];
+
+    // Répertoire global des joueurs (nom, emoji)
+    // Répertoire global des joueurs — chargé depuis Supabase
+    let allPlayers = {};
+
+    // Chaque équipe a sa lineup : liste d'objets { pid, song, artist, url, start, present }
+    // Équipes par défaut depuis config.js — écrasées au chargement par Supabase
+    let teams = Object.fromEntries(
+      Object.entries(APP_CONFIG.defaultTeams || { Equipe1: 'Équipe 1' })
+        .map(([k, label]) => [k, { label, lineup: [] }])
+    );
+
+    let currentTeamId = Object.keys(teams)[0];
+    let currentAudio = null;
+    let currentPid = null; // pid de l'entrée en cours de lecture
+    let progressInterval = null;
+    let sortable = null;
+
+    // ✅ MODE ÉDITION (AJOUT)
+    let isEditMode = false;
+
+    let PLAY_DURATION = APP_CONFIG.playDuration || 15;
+
+    // Paramètres modifiables via l'interface — persistés dans Supabase
+    // config.js sert de valeurs par défaut au premier lancement uniquement
+    let appSettings = {
+      adminPassword: APP_CONFIG.adminPassword || 'ChangeMe2024!',
+      playDuration:  APP_CONFIG.playDuration  || 15,
+    };
+
+    // Identité du club — persistée dans Supabase
+    let clubSettings = {
+      name:      APP_CONFIG.clubName    || 'Your Team',
+      sub:       APP_CONFIG.clubSub     || 'Walk-Up Songs',
+      website:   APP_CONFIG.clubWebsite || 'yourclub.com',
+      logo:      null,
+      bgLineup:  null, // data URL base64
+      bgScore:   null,
+      bgMvp:     null,
+    };
+
+    async function applyClubSettings() {
+      if (clubSettings.name) {
+        document.querySelector('.header-club').textContent = clubSettings.name;
+        document.querySelector('.cheer-sub').textContent = clubSettings.name;
+        document.title = clubSettings.name + (clubSettings.sub ? ' — ' + clubSettings.sub : '');
+      }
+      if (clubSettings.sub) document.querySelector('.header-sub').textContent = clubSettings.sub;
+      if (clubSettings.logo) {
+        const img = document.getElementById('headerLogoImg');
+        const svg = document.getElementById('headerLogoSvg');
+        if (img && svg) {
+          img.src = clubSettings.logo;
+          img.style.display = 'block';
+          svg.style.display = 'none';
+        }
+        // Mettre à jour le favicon avec le logo du club
+        try {
+          const res = await fetch(clubSettings.logo);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          let favicon = document.querySelector('link[rel="icon"]');
+          if (!favicon) { favicon = document.createElement('link'); favicon.rel = 'icon'; document.head.appendChild(favicon); }
+          favicon.type = blob.type;
+          favicon.href = blobUrl;
+        } catch(e) { /* fallback emoji reste en place */ }
+      }
+    }
+
+    function currentLineup() { return teams[currentTeamId].lineup; }
+
+    // ✅ Toggle edit mode (AJOUT)
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+
+      // Stopper toute lecture en entrant en mode édition
+      if (isEditMode) stopPlayback();
+
+      // Classe sur body (CSS)
+      document.body.classList.toggle('edit-mode', isEditMode);
+
+      // Bouton état
+      const btn = document.getElementById('editModeBtn');
+      if (btn) {
+        btn.title = isEditMode ? 'Quitter le mode modification' : 'Mode modification';
+        btn.textContent = isEditMode ? '✅' : '✏️';
+      }
+
+      // Activer/désactiver drag&drop
+      if (sortable && typeof sortable.option === 'function') {
+        sortable.option('disabled', !isEditMode);
+      }
+
+      render();
+    }
+
+    // ── RENDER ──
+    function render() {
+      const lineup = document.getElementById('lineup');
+      lineup.innerHTML = '';
+      const entries = currentLineup();
+
+      entries.forEach((entry, i) => {
+        const player = allPlayers[entry.pid];
+        if (!player) return;
+
+        const isPlaying = currentPid === entry.pid;
+        const isAbsent = entry.present === false;
+
+        const presentCount = entries.slice(0, i + 1).filter(e => e.present !== false).length;
+        const orderNum = isAbsent ? '—' : presentCount;
+
+        const card = document.createElement('div');
+        card.className = 'player-card' + (isPlaying ? ' playing' : '') + (isAbsent ? ' absent' : '');
+        card.id = 'entry-' + i;
+        card.dataset.index = i;
+
+        
+      // ── POSITIONS ──
+      const ALL_POS = ['P','C','1B','2B','3B','SS','CF','LF','RF','DC','PC','SP','BC','B'];
+
+      // Positions autorisées plusieurs fois
+      const MULTI_POS = ['BC','DC','PC','SP','B'];
+
+      // Positions prises par d'autres joueurs : uniquement les positions UNIQUES
+      const takenPos = entries
+      .map((e, j) => (j !== i ? e.pos : null))
+      .filter(p => p && !MULTI_POS.includes(p));
+
+      const posOptions = ALL_POS.map(p => {
+      const isMulti = MULTI_POS.includes(p);
+      const taken = !isMulti && takenPos.includes(p) && entry.pos !== p;
+
+      return `<option value="${p}" ${entry.pos===p?'selected':''} ${taken?'disabled style="color:#555"':''}>
+            ${p}${taken ? ' ✕' : ''}
+          </option>`;
+      }).join('');
+
+        // ✅ AJOUT classes editable-field sur les champs modifiables
+        card.innerHTML = `
+          <div class="drag-handle" title="Déplacer">⠿</div>
+          <div class="order-num">${orderNum}</div>
+
+          <button class="presence-btn ${isAbsent ? '' : 'present'}" title="${isAbsent ? 'Absent' : 'Présent'}"></button>
+
+          <div class="player-avatar">
+            <select class="pos-select" title="Position">
+              <option value="">?</option>
+              ${posOptions}
+            </select>
+          </div>
+
+          <label class="photo-btn" title="Cliquer pour changer la photo">
+            ${player.photo
+              ? `<img src="${player.photo}" class="photo-img" alt="${player.name}">`
+              : `<svg width="28" height="28" viewBox="-16 -44 32 52" fill="none">
+                   <ellipse cx="0" cy="-18" rx="12" ry="14" class="avatar-head"/>
+                   <ellipse cx="0" cy="-30" rx="15" ry="7" class="avatar-cap"/>
+                   <rect x="-15" y="-34" width="30" height="5" rx="2" class="avatar-cap"/>
+                   <path d="M13,-30 L24,-28 L13,-26 Z" class="avatar-cap"/>
+                   <rect x="-14" y="-2" width="28" height="20" rx="3" class="avatar-body"/>
+                 </svg>`
+            }
+            <input type="file" accept="image/*" style="display:none" data-pid="${entry.pid}">
+          </label>
+
+          <div class="player-info">
+            <div class="player-name-wrap">
+              <div class="player-name editable-field" title="Double-cliquer pour modifier">${player.name}</div>
+              ${entry.jersey ? `<span class="jersey-num editable-field" title="Double-cliquer pour modifier">#${entry.jersey}</span>` : ''}
+            </div>
+          </div>
+
+          <div class="song-info">
+            <div class="song-title editable-field" title="Double-cliquer pour modifier">${entry.song || '—'}</div>
+            <div class="song-artist editable-field" title="Double-cliquer pour modifier">${entry.artist || '—'}</div>
+          </div>
+
+          <button class="upload-btn ${entry.url ? 'has-file' : ''}" title="${entry.url ? 'Fichier sauvé — cliquer pour changer' : 'Uploader un fichier audio'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+            <input type="file" accept="audio/*" style="display:none" data-entry-index="${i}">
+          </button>
+
+          <button class="play-btn ${isPlaying ? 'playing-btn' : ''}" title="Jouer ${entry.song || ''}" ${isAbsent ? 'disabled style="opacity:0.2;pointer-events:none"' : ''}>
+            ${isPlaying ? '⏹' : '▶'}
+          </button>
+
+          <button class="delete-btn" title="Supprimer">✕</button>
+        `;
+
+        // Upload photo joueur → Supabase
+        card.querySelector('.photo-btn').addEventListener('click', (e) => e.stopPropagation());
+        card.querySelector('.photo-btn input[type="file"]').addEventListener('change', async (e) => {
+          e.stopPropagation();
+          const file = e.target.files[0];
+          if (!file) return;
+          const pid = e.target.dataset.pid;
+          const photoBtn = card.querySelector('.photo-btn');
+          photoBtn.style.opacity = '0.5';
+          try {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const safeName = allPlayers[pid].name.toLowerCase()
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const path = `${safeName}.${ext}`;
+
+            let res = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${path}`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+              body: file,
+            });
+
+            if (!res.ok && res.status === 409) {
+              res = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${path}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+                body: file,
+              });
+            }
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            allPlayers[pid].photo = `${SUPABASE_URL}/storage/v1/object/public/photos/${path}`;
+            render();
+            saveConfig();
+          } catch (err) {
+            alert('Erreur upload photo : ' + err.message);
+            photoBtn.style.opacity = '1';
+          }
+        });
+
+        card.querySelector('.drag-handle').addEventListener('click', (e) => e.stopPropagation());
+
+        card.querySelector('.pos-select').addEventListener('click', (e) => e.stopPropagation());
+        card.querySelector('.pos-select').addEventListener('change', (e) => {
+          e.stopPropagation();
+          currentLineup()[i].pos = e.target.value;
+          render();
+          saveConfig();
+        });
+
+        // Supprimer
+        card.querySelector('.delete-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(card.dataset.index);
+          if (confirm(`Supprimer ${player.name} de cette équipe ?`)) {
+            if (currentPid === entry.pid) stopPlayback();
+            currentLineup().splice(idx, 1);
+            render();
+            saveConfig();
+          }
+        });
+
+        // Nom du joueur — double-clic pour modifier
+        card.querySelector('.player-name').addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          makeEditable(card.querySelector('.player-name'), val => {
+            allPlayers[entry.pid].name = val;
+            render();
+            saveConfig();
+          });
+        });
+        card.querySelector('.player-name').addEventListener('click', (e) => e.stopPropagation());
+
+        // Numéro de maillot — double-clic pour modifier
+        const jerseyEl = card.querySelector('.jersey-num');
+        if (jerseyEl) {
+          jerseyEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            makeEditable(jerseyEl, val => {
+              currentLineup()[i].jersey = val.replace('#', '');
+              saveConfig();
+            }, true);
+          });
+          jerseyEl.addEventListener('click', (e) => e.stopPropagation());
+        } else {
+          const wrap = card.querySelector('.player-name-wrap');
+          const addJerseyBtn = document.createElement('span');
+          addJerseyBtn.className = 'add-jersey-btn';
+          addJerseyBtn.textContent = '+#';
+          addJerseyBtn.title = 'Ajouter un numéro de maillot';
+          addJerseyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const num = prompt('Numéro de maillot :');
+            if (num && num.trim()) {
+              currentLineup()[i].jersey = num.trim().replace('#', '');
+              render();
+              saveConfig();
+            }
+          });
+          wrap.appendChild(addJerseyBtn);
+        }
+
+        // Édition titre et artiste au double-clic
+        card.querySelector('.song-title').addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          makeEditable(e.target, val => {
+            currentLineup()[i].song = val;
+            saveConfig();
+          });
+        });
+
+        card.querySelector('.song-artist').addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          makeEditable(e.target, val => {
+            currentLineup()[i].artist = val;
+            saveConfig();
+          });
+        });
+
+        card.querySelector('.song-title').addEventListener('click', (e) => e.stopPropagation());
+        card.querySelector('.song-artist').addEventListener('click', (e) => e.stopPropagation());
+
+        // Upload fichier audio → Supabase
+        card.querySelector('.upload-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          card.querySelector('input[type="file"]').click();
+        });
+        card.querySelector('input[type="file"]').addEventListener('click', (e) => e.stopPropagation());
+        card.querySelector('input[type="file"]').addEventListener('change', async (e) => {
+          e.stopPropagation();
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const idx = parseInt(e.target.dataset.entryIndex);
+          const entry = currentLineup()[idx];
+          const player = allPlayers[entry.pid];
+
+          const label = card.querySelector('.upload-btn');
+          label.textContent = '⏳';
+
+          try {
+            const publicUrl = await uploadToSupabase(file, currentTeamId, player.name);
+            currentLineup()[idx].url = publicUrl;
+            currentLineup()[idx].blobUrl = null;
+            render();
+            saveConfig();
+          } catch (err) {
+            label.textContent = '❌';
+            alert('Erreur upload : ' + err.message);
+            setTimeout(() => render(), 2000);
+          }
+        });
+
+        // Présence
+        card.querySelector('.presence-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(card.dataset.index);
+          const wasPresent = currentLineup()[idx].present !== false;
+          currentLineup()[idx].present = !wasPresent;
+
+          if (!wasPresent === false && currentPid === entry.pid) stopPlayback();
+
+          // Déplacer absent en fin de liste
+          if (currentLineup()[idx].present === false) {
+            const removed = currentLineup().splice(idx, 1)[0];
+            currentLineup().push(removed);
+          }
+          render();
+          saveConfig();
+        });
+
+        // Play bouton
+        card.querySelector('.play-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (isAbsent) return;
+          togglePlay(i, e);
+        });
+
+        // ✅ Clic carte : bloqué en mode édition (AJOUT)
+        card.addEventListener('click', (e) => {
+          if (isEditMode) return;
+          if (isAbsent) return;
+          togglePlay(parseInt(card.dataset.index), e);
+        });
+
+        lineup.appendChild(card);
+      });
+
+      if (typeof initSortable === 'function') initSortable();
+    }
+
+    // ── ÉDITION INLINE ──
+    function makeEditable(el, onSave) {
+      const original = el.textContent === '—' ? '' : el.textContent;
+      el.contentEditable = 'true';
+      el.classList.add('editing');
+      el.focus();
+
+      // Sélectionne tout le texte
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      const done = () => {
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        const newVal = el.textContent.trim();
+        if (newVal && newVal !== original) {
+          el.textContent = newVal;
+          onSave(newVal);
+        } else {
+          el.textContent = original;
+        }
+      };
+
+      el.addEventListener('blur', done, { once: true });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+        if (e.key === 'Escape') { el.textContent = original; el.blur(); }
+        e.stopPropagation();
+      });
+    }
+
+    // ── EXPORT STORY ──
+    function drawPhotoPlaceholder(ctx, x, y, size, mid) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x + size/2, mid, size/2, 0, Math.PI*2);
+      ctx.clip();
+
+      ctx.fillStyle = '#2a2a2a';
+      ctx.fillRect(x, y, size, size);
+
+      // silhouette
+      ctx.fillStyle = '#FF4500';
+      ctx.globalAlpha = 0.5;
+      const cx = x + size/2, s = size * 0.28;
+      ctx.beginPath(); ctx.arc(cx, mid - s*0.6, s*0.55, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(cx - s*0.7, mid - s*0.05, s*1.4, s);
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    let featuredPhotoURL = null;
+
+    function handleFeaturedPhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      if (featuredPhotoURL) URL.revokeObjectURL(featuredPhotoURL);
+      featuredPhotoURL = URL.createObjectURL(file);
+
+      document.getElementById('featuredPhotoText').textContent = '🖼️ ' + file.name;
+      document.getElementById('featuredPhotoLabel').classList.add('has-file');
+    }
+
+    function toggleStoryForm() {
+      const form = document.getElementById('storyForm');
+      form.classList.toggle('open');
+
+      if (!document.getElementById('storyDate').value) {
+        document.getElementById('storyDate').value = new Date().toISOString().split('T')[0];
+      }
+
+      // Peupler le select joueur en avant
+      const sel = document.getElementById('storyFeatured');
+      sel.innerHTML = '<option value="">— Aucun —</option>';
+
+      currentLineup().filter(e => e.present !== false).forEach((entry) => {
+        const player = allPlayers[entry.pid];
+        if (!player) return;
+        const opt = document.createElement('option');
+        opt.value = entry.pid;
+        opt.textContent = player.name + (entry.jersey ? ' #' + entry.jersey : '');
+        sel.appendChild(opt);
+      });
+
+      sel.onchange = () => {
+        document.getElementById('featuredPhotoGroup').style.display = sel.value ? 'flex' : 'none';
+      };
+    }
+
+    async function exportStory() {
+      const date = document.getElementById('storyDate').value;
+      const opponent = document.getElementById('storyOpponent').value.trim();
+      const featuredPid = document.getElementById('storyFeatured').value;
+      const team = teams[currentTeamId];
+      const entries = team.lineup.filter(e => e.present !== false);
+
+      const W = 1080, H = 1920;
+      const canvas = document.getElementById('storyCanvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // ── FOND ──
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const hasBgLineup = await drawStoryBg(ctx, W, H, clubSettings.bgLineup, 0.6);
+      if (!hasBgLineup) {
+        // Dégradé orange par défaut
+        const grad = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, H * 0.55);
+        grad.addColorStop(0, 'rgba(255,69,0,0.18)');
+        grad.addColorStop(1, 'rgba(255,69,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Ligne orange en haut
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, 0, W, 6);
+
+      // ── LOGO ──
+      const logoImg = new Image();
+      logoImg.src = clubSettings.logo || '';
+      await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
+
+      const logoH = 160;
+      const logoW = logoImg.width ? (logoImg.width / logoImg.height) * logoH : logoH;
+      ctx.drawImage(logoImg, W/2 - logoW/2, 60, logoW, logoH);
+
+      // ── TITRE CLUB ──
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 72px Oswald, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', W/2, 280);
+
+      ctx.fillStyle = '#FF4500';
+      ctx.font = '36px Oswald, sans-serif';
+      ctx.fillText((clubSettings.website || '').toUpperCase(), W/2, 330);
+
+      // ── ÉQUIPE ──
+      ctx.fillStyle = '#FF4500';
+      ctx.font = 'bold 52px Oswald, sans-serif';
+      ctx.fillText(team.label.toUpperCase(), W/2, 420);
+
+      // ── SÉPARATEUR ──
+      ctx.strokeStyle = '#FF4500';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, 450); ctx.lineTo(W - 80, 450);
+      ctx.stroke();
+
+      // ── DATE & ADVERSAIRE ──
+      if (date) {
+        const d = new Date(date);
+        const dateStr = d.toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '32px Barlow Condensed, sans-serif';
+        ctx.fillText(dateStr.toUpperCase(), W/2, 510);
+      }
+
+      if (opponent) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 40px Oswald, sans-serif';
+        ctx.fillText('VS ' + opponent.toUpperCase(), W/2, 565);
+      }
+
+      // ── TITRE LINEUP ──
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '28px Barlow Condensed, sans-serif';
+      ctx.fillText('BATTING ORDER', W/2, 630);
+
+      // ── SÉPARATEUR ──
+      ctx.strokeStyle = 'rgba(255,69,0,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(80, 650); ctx.lineTo(W - 80, 650);
+      ctx.stroke();
+
+      // ── JOUEURS ──
+      const startY = 680;
+      const rowH = Math.min(98, (H - startY - 120) / Math.max(entries.length, 1));
+      const maxRows = Math.floor((H - startY - 120) / rowH);
+
+      const drawPlayers = entries.slice(0, maxRows).map(async (entry, idx) => {
+        const player = allPlayers[entry.pid];
+        if (!player) return;
+
+        const y = startY + idx * rowH;
+        const mid = y + rowH / 2;
+
+        if (idx % 2 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.03)';
+          ctx.fillRect(60, y + 4, W - 120, rowH - 8);
+        }
+
+        // Numéro d'ordre
+        ctx.fillStyle = 'rgba(255,69,0,0.5)';
+        ctx.font = `bold ${Math.round(rowH * 0.45)}px Oswald, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText(String(idx + 1), 80, mid + rowH * 0.16);
+
+        // Photo joueur en rond
+        const photoSize = Math.round(rowH * 0.72);
+        const photoX = 150, photoY = mid - photoSize / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(photoX + photoSize/2, mid, photoSize/2, 0, Math.PI*2);
+        ctx.clip();
+
+        if (player.photo) {
+          try {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+              img.src = player.photo + '?t=' + Date.now();
+            });
+
+            if (img.complete && img.naturalWidth > 0) {
+              ctx.drawImage(img, photoX, photoY, photoSize, photoSize);
+            } else {
+              drawPhotoPlaceholder(ctx, photoX, photoY, photoSize, mid);
+            }
+          } catch {
+            drawPhotoPlaceholder(ctx, photoX, photoY, photoSize, mid);
+          }
+        } else {
+          drawPhotoPlaceholder(ctx, photoX, photoY, photoSize, mid);
+        }
+        ctx.restore();
+
+        // Cercle border
+        ctx.strokeStyle = '#FF4500';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(photoX + photoSize/2, mid, photoSize/2, 0, Math.PI*2);
+        ctx.stroke();
+
+        // Position
+        if (entry.pos) {
+          ctx.fillStyle = '#FF4500';
+          ctx.font = `bold ${Math.round(rowH * 0.32)}px Oswald, sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.fillText(entry.pos, photoX + photoSize + 20, mid + rowH * 0.12);
+        }
+
+        const isFeatured = String(entry.pid) === String(featuredPid);
+        const nameFontSize = isFeatured ? Math.round(rowH * 0.58) : Math.round(rowH * 0.42);
+
+        if (isFeatured) {
+          ctx.fillStyle = 'rgba(255,69,0,0.08)';
+          ctx.fillRect(60, y + 2, W - 120, rowH - 4);
+          ctx.fillStyle = '#FF4500';
+          ctx.fillRect(60, y + 2, 4, rowH - 4);
+        }
+
+        // Nom
+        ctx.fillStyle = isFeatured ? '#FF4500' : '#FFFFFF';
+        ctx.font = `bold ${nameFontSize}px Oswald, sans-serif`;
+        ctx.textAlign = 'left';
+        const nameX = photoX + photoSize + (entry.pos ? 100 : 20);
+        ctx.fillText(player.name.toUpperCase(), nameX, mid + nameFontSize * 0.38);
+
+        // Numéro maillot
+        if (entry.jersey) {
+          ctx.fillStyle = '#FF4500';
+          ctx.font = `bold ${Math.round(rowH * 0.38)}px Oswald, sans-serif`;
+          ctx.textAlign = 'right';
+          ctx.fillText('#' + entry.jersey, W - 80, mid + rowH * 0.14);
+        }
+
+        // Ligne séparatrice
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(80, y + rowH); ctx.lineTo(W - 80, y + rowH);
+        ctx.stroke();
+      });
+
+      await Promise.all(drawPlayers);
+
+      // ── JOUEUR EN AVANT ──
+      if (featuredPid && featuredPhotoURL) {
+        const img = new Image();
+        await new Promise(r => { img.onload = r; img.onerror = r; img.src = featuredPhotoURL; });
+
+        if (img.naturalWidth > 0) {
+          const fH = Math.round(H * 0.52);
+          const fW = Math.round(fH * img.naturalWidth / img.naturalHeight);
+          const fX = W - fW + Math.round(fW * 0.08);
+          const fY = H - fH - 60;
+          ctx.drawImage(img, fX, fY, fW, fH);
+        }
+      }
+
+      // ── LIGNE ORANGE EN BAS ──
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, H - 6, W, 6);
+
+      // ── FOOTER ──
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '28px Barlow Condensed, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H - 24);
+
+      // ── TÉLÉCHARGEMENT ──
+      const link = document.createElement('a');
+      link.download = `walkup-lineup-${currentTeamId}-${date || 'match'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // ── GESTION ÉQUIPES (CONFIG PAGE) ──
+    function checkAdmin() {
+      const pwd = prompt('Mot de passe admin :');
+      return pwd === appSettings.adminPassword;
+    }
+
+    // Anciens prompts conservés (appelés uniquement depuis la config page désormais)
+    function addTeam() { openConfig(); }
+    function renameTeam() { openConfig(); }
+    function removeTeam() { openConfig(); }
+
+    function updateTeamSelector() {
+      const sel = document.getElementById('teamSelect');
+      sel.innerHTML = Object.entries(teams)
+        .map(([key, t]) => `<option value="${key}" ${key === currentTeamId ? 'selected' : ''}>${t.label}</option>`)
+        .join('');
+    }
+
+    // ── SUPABASE CONFIG ──
+    const SUPABASE_URL  = APP_CONFIG.supabaseUrl;
+    const SUPABASE_KEY  = APP_CONFIG.supabaseKey;
+    const BUCKET        = APP_CONFIG.bucket;
+
+    async function uploadToSupabase(file, teamId, playerName) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const safeName = playerName.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const path = `${teamId}/${safeName}.${ext}`;
+
+      let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': file.type,
+          'x-upsert': 'true',
+        },
+        body: file,
+      });
+
+      if (!res.ok && res.status === 409) {
+        res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': file.type,
+            'x-upsert': 'true',
+          },
+          body: file,
+        });
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+
+      return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+    }
+
+    function switchTeam(teamId) {
+      stopPlayback();
+      currentTeamId = teamId;
+      localStorage.setItem('lastTeamId', teamId);
+      document.getElementById('sectionLabel').textContent = '⚾ Batting Order — ' + teams[teamId].label;
+      document.getElementById('addForm').classList.remove('open');
+      render();
+    }
+
+    // ── PLAY ──
+    function togglePlay(entryIndex, e) {
+      // ✅ BLOQUAGE en mode édition (AJOUT)
+      if (isEditMode) { if (e) e.stopPropagation(); return; }
+
+      e.stopPropagation();
+      const entry = currentLineup()[entryIndex];
+      if (!entry) return;
+
+      if (currentPid === entry.pid) { stopPlayback(); return; }
+
+      stopPlayback();
+      startPlayback(entry, entryIndex);
+    }
+
+    function startPlayback(entry, entryIndex) {
+      const player = allPlayers[entry.pid];
+      if (!player) return;
+
+      currentPid = entry.pid;
+
+      const np = document.getElementById('nowPlaying');
+      np.classList.add('active');
+
+      document.getElementById('nowLabel').textContent = '▶ En cours — Batter up!';
+      document.getElementById('nowName').textContent = player.name;
+      document.getElementById('nowSong').textContent = (entry.song || '') + (entry.artist ? ' — ' + entry.artist : '');
+      document.getElementById('progressWrap').style.display = 'block';
+
+      const icon = document.getElementById('nowIcon');
+      icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>';
+      icon.classList.remove('spinning');
+      void icon.offsetWidth;
+      icon.classList.add('spinning');
+
+      showCheer(player.name.split(' ')[0].toUpperCase());
+
+      const audioSrc = entry.blobUrl || entry.url;
+      if (audioSrc) {
+        currentAudio = new Audio(audioSrc);
+        currentAudio.currentTime = entry.start || 0;
+        currentAudio.play().catch(() => {});
+      }
+
+      let elapsed = 0;
+      document.getElementById('progressFill').style.width = '0%';
+
+      progressInterval = setInterval(() => {
+        elapsed += 0.1;
+        const pct = Math.min((elapsed / PLAY_DURATION) * 100, 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+
+        const s = Math.floor(elapsed);
+        document.getElementById('progressTime').textContent =
+          `0:${String(s).padStart(2,'0')} / 0:${PLAY_DURATION}`;
+
+        if (elapsed >= PLAY_DURATION) stopPlayback();
+      }, 100);
+
+      render();
+    }
+
+    function stopPlayback() {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      clearInterval(progressInterval);
+      currentPid = null;
+
+      document.getElementById('nowPlaying').classList.remove('active');
+      document.getElementById('nowLabel').textContent = 'En attente';
+      document.getElementById('nowName').textContent = 'Sélectionne un joueur';
+      document.getElementById('nowSong').textContent = '';
+      document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('nowIcon').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>';
+
+      render();
+    }
+
+    // ── CHEER ──
+    function showCheer(name) {
+      const ov = document.getElementById('cheerOverlay');
+      const ct = document.getElementById('cheerText');
+      const cs = document.getElementById('cheerSub');
+
+      ct.textContent = name + '!';
+      ov.classList.add('show');
+
+      ct.style.animation = 'none';
+      cs.style.animation = 'none';
+      void ct.offsetWidth;
+
+      ct.style.animation = 'cheer-in 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      cs.style.animation = 'sub-in 0.3s 0.3s ease forwards';
+
+      setTimeout(() => {
+        ov.classList.remove('show');
+        ct.style.animation = 'none';
+        cs.style.animation = 'none';
+        ct.style.transform = 'scale(0)';
+        ct.style.opacity = '0';
+        cs.style.opacity = '0';
+      }, 1400);
+    }
+
+    // ── ADD PLAYER ──
+    let uploadedAudioURL = null;
+    let uploadedAudioFile = null;
+
+    function handleAudioUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      uploadedAudioFile = file;
+
+      if (uploadedAudioURL && uploadedAudioURL.startsWith('blob:')) {
+        URL.revokeObjectURL(uploadedAudioURL);
+      }
+
+      uploadedAudioURL = URL.createObjectURL(file);
+
+      const preview = document.getElementById('audioPreview');
+      preview.src = uploadedAudioURL;
+      preview.style.display = 'block';
+
+      const label = document.getElementById('audioUploadLabel');
+      document.getElementById('audioUploadText').textContent = '🎵 ' + file.name;
+      label.classList.add('has-file');
+    }
+
+    function toggleForm() {
+      document.getElementById('addForm').classList.toggle('open');
+    }
+
+    async function addPlayer() {
+      const name = document.getElementById('newName').value.trim();
+      const jersey = document.getElementById('newJersey').value.trim();
+      const pos = document.getElementById('newPos').value;
+      const song = document.getElementById('newSong').value.trim();
+      const artist = document.getElementById('newArtist').value.trim();
+      const start = parseInt(document.getElementById('newStart').value) || 0;
+
+      if (!name) { alert('Le nom du joueur est requis !'); return; }
+
+      // Upload du fichier audio sur Supabase si présent
+      let url = uploadedAudioURL || '';
+      if (uploadedAudioFile) {
+        const addBtn = document.querySelector('.add-btn');
+        addBtn.textContent = '⏳ Upload…';
+        addBtn.disabled = true;
+
+        try {
+          url = await uploadToSupabase(uploadedAudioFile, currentTeamId, name);
+        } catch (err) {
+          alert('Erreur upload audio : ' + err.message);
+          addBtn.textContent = 'Ajouter';
+          addBtn.disabled = false;
+          return;
+        }
+
+        addBtn.textContent = 'Ajouter';
+        addBtn.disabled = false;
+      }
+
+      // Cherche si ce joueur existe déjà dans allPlayers
+      let pid = Object.keys(allPlayers).find(k => allPlayers[k].name.toLowerCase() === name.toLowerCase());
+      if (!pid) {
+        pid = Date.now();
+        allPlayers[pid] = {
+          name,
+          emoji: EMOJIS[Object.keys(allPlayers).length % EMOJIS.length]
+        };
+      }
+
+      if (currentLineup().find(e => e.pid == pid)) {
+        alert('Ce joueur est déjà dans cette équipe !');
+        return;
+      }
+
+      currentLineup().push({ pid: parseInt(pid) || pid, pos, jersey, song, artist, url, start, present: true });
+
+      // Reset form
+      ['newName','newSong','newArtist','newJersey'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('newPos').value = '';
+      document.getElementById('newStart').value = '0';
+      document.getElementById('newAudioFile').value = '';
+      document.getElementById('audioUploadText').textContent = '📂 Choisir un fichier mp3 / wav…';
+      document.getElementById('audioUploadLabel').classList.remove('has-file');
+      document.getElementById('audioPreview').style.display = 'none';
+      document.getElementById('audioPreview').src = '';
+
+      uploadedAudioURL = null;
+      uploadedAudioFile = null;
+
+      document.getElementById('addForm').classList.remove('open');
+      render();
+      saveConfig();
+    }
+
+    // ── SAUVEGARDE CONFIG SUPABASE ──
+    const HEADERS = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates',
+    };
+
+    async function saveConfig() {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/config`, {
+          method: 'POST',
+          headers: HEADERS,
+          body: JSON.stringify({
+            key: 'app',
+            value: { allPlayers, teams, clubSettings, appSettings },
+            updated_at: new Date().toISOString(),
+          }),
+        });
+        showSaveIndicator();
+      } catch (err) {
+        console.warn('Sauvegarde échouée:', err);
+      }
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        });
+        const data = await res.json();
+        if (data && data[0] && data[0].value) {
+          const v = data[0].value;
+
+          // Joueurs — remplacement complet
+          if (v.allPlayers) allPlayers = v.allPlayers;
+
+          // Équipes — remplacement complet depuis Supabase
+          // (config.js ne sert que de valeur par défaut si Supabase est vide)
+          if (v.teams && Object.keys(v.teams).length > 0) {
+            teams = v.teams;
+            // S'assurer que currentTeamId existe encore
+            if (!teams[currentTeamId]) currentTeamId = Object.keys(teams)[0];
+          }
+
+          // Identité du club
+          if (v.clubSettings) {
+            // Fusionner Supabase avec config.js
+            // config.js a la priorité si sa valeur n'est pas générique
+            const merged = { ...v.clubSettings };
+            const configName    = APP_CONFIG.clubName    || '';
+            const configSub     = APP_CONFIG.clubSub     || '';
+            const configWebsite = APP_CONFIG.clubWebsite || '';
+            const GENERIC = ['Your Team', 'Mon Club', 'Walk-Up Songs', 'yourclub.com', ''];
+            if (configName    && !GENERIC.includes(configName))    merged.name    = configName;
+            if (configSub     && !GENERIC.includes(configSub))     merged.sub     = configSub;
+            if (configWebsite && !GENERIC.includes(configWebsite)) merged.website = configWebsite;
+            clubSettings = { ...clubSettings, ...merged };
+            applyClubSettings();
+          } else {
+            // Pas encore de clubSettings en base — appliquer config.js directement
+            applyClubSettings();
+          }
+
+          // Paramètres app (mot de passe, durée, couleurs)
+          if (v.appSettings) {
+            appSettings   = { ...appSettings, ...v.appSettings };
+            PLAY_DURATION = appSettings.playDuration;
+
+            // Réappliquer les couleurs sauvegardées
+            if (appSettings.colorAccent) {
+              const accent = appSettings.colorAccent;
+              const bg     = appSettings.colorBg || '#0a0a0a';
+              const darken = (hex, amt) => {
+                let [r,g,b] = hex.match(/\w\w/g).map(x=>parseInt(x,16));
+                return '#'+[r,g,b].map(c=>Math.max(0,c-amt).toString(16).padStart(2,'0')).join('');
+              };
+              document.documentElement.style.setProperty('--orange', accent);
+              document.documentElement.style.setProperty('--orange-dark', darken(accent, 50));
+              document.documentElement.style.setProperty('--orange-glow',
+                `rgba(${parseInt(accent.slice(1,3),16)},${parseInt(accent.slice(3,5),16)},${parseInt(accent.slice(5,7),16)},0.25)`);
+              document.documentElement.style.setProperty('--orange-avatar',
+                `rgba(${parseInt(accent.slice(1,3),16)},${parseInt(accent.slice(3,5),16)},${parseInt(accent.slice(5,7),16)},0.5)`);
+              document.documentElement.style.setProperty('--black', bg);
+              document.documentElement.style.setProperty('--darkgray', shiftColor(bg, 10));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Chargement config échoué:', err);
+      }
+    }
+
+    function showSaveIndicator() {
+      const el = document.getElementById('saveIndicator');
+      el.textContent = '✓ Sauvé';
+      el.classList.add('visible');
+      setTimeout(() => el.classList.remove('visible'), 2000);
+    }
+
+    function saveAndRender() { render(); saveConfig(); }
+
+    // ── SORTABLE ──
+    function initSortable() {
+      if (sortable) { sortable.destroy(); sortable = null; }
+
+      sortable = Sortable.create(document.getElementById('lineup'), {
+        // ✅ Drag activé uniquement en mode édition (AJOUT)
+        disabled: !isEditMode,
+
+        handle: '.drag-handle',
+        animation: 150,
+        delay: 150,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 3,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+
+        onEnd() {
+          const newOrder = [...document.querySelectorAll('.player-card')]
+            .map(card => parseInt(card.dataset.index));
+
+          const oldLineup = [...currentLineup()];
+          teams[currentTeamId].lineup = newOrder.map(i => oldLineup[i]);
+
+          // Mettre à jour les numéros sans re-render complet
+          document.querySelectorAll('.player-card').forEach((card, i) => {
+            const entry = currentLineup()[i];
+            const isAbsent = entry && entry.present === false;
+            const presentCount = currentLineup().slice(0, i + 1).filter(e => e.present !== false).length;
+            const orderNum = isAbsent ? '—' : presentCount;
+            card.querySelector('.order-num').textContent = orderNum;
+            card.dataset.index = i;
+          });
+
+          saveConfig();
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // NAVIGATION PRINCIPALE
+    // ═══════════════════════════════════════════
+    function mainSwitchTab(tab) {
+      document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('mainNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('mainPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      // Fermer le formulaire d'ajout si on quitte Batting
+      if (tab !== 'batting') document.getElementById('addForm').classList.remove('open');
+    }
+
+    // ═══════════════════════════════════════════
+    // PAGE CONFIGURATION — JS
+    // ═══════════════════════════════════════════
+    let cfgAdminUnlocked = false;
+    let cfgRenameTargetKey = null;
+    let cfgDeleteTargetKey = null;
+
+    function cfgSwitchTab(tab) {
+      const tabs = { teams: 'Équipes', interface: 'Interface', securite: 'Sécurité' };
+      document.querySelectorAll('.cfg-nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('cfgNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('cfgPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      document.getElementById('cfgSubtitle').textContent = tabs[tab] || '';
+      if (tab === 'interface') ifInitPanel();
+    }
+
+    function openConfig() {
+      // Demander le mot de passe si pas encore déverrouillé
+      if (!cfgAdminUnlocked) {
+        const pwd = prompt('Mot de passe admin :');
+        if (pwd !== appSettings.adminPassword) {
+          alert('Mot de passe incorrect.');
+          return;
+        }
+        cfgAdminUnlocked = true;
+      }
+      // Stopper la lecture
+      stopPlayback();
+      // Afficher la page config
+      document.getElementById('configPage').style.display = 'flex';
+      document.getElementById('configPage').style.flexDirection = 'column';
+      // Reset champs ajout
+      document.getElementById('cfgNewTeamName').value = '';
+      document.getElementById('cfgNewTeamKey').value = '';
+      // Auto-remplir la clé depuis le nom
+      document.getElementById('cfgNewTeamName').oninput = function() {
+        const k = this.value.trim().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+        document.getElementById('cfgNewTeamKey').value = k;
+      };
+      cfgRenderTeamList();
+      cfgSwitchTab('teams');
+    }
+
+    function closeConfig() {
+      document.getElementById('configPage').style.display = 'none';
+    }
+
+    function cfgRenderTeamList() {
+      const container = document.getElementById('cfgTeamList');
+      container.innerHTML = '';
+
+      const entries = Object.entries(teams);
+      if (entries.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted);font-family:Barlow Condensed,sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;">Aucune équipe</div>';
+        return;
+      }
+
+      entries.forEach(([key, team]) => {
+        const isCurrent = key === currentTeamId;
+        const playerCount = team.lineup ? team.lineup.length : 0;
+        const row = document.createElement('div');
+        row.className = 'cfg-team-row' + (isCurrent ? ' current-team' : '');
+
+        row.innerHTML = `
+          <div class="cfg-team-info">
+            <div class="cfg-team-name">${team.label}</div>
+            <div class="cfg-team-key">ID : ${key}</div>
+            <div class="cfg-team-count">${playerCount} joueur${playerCount !== 1 ? 's' : ''}</div>
+          </div>
+          ${isCurrent ? '<div class="cfg-current-badge">Active</div>' : '<div></div>'}
+          <button class="cfg-team-action" title="Renommer" onclick="cfgOpenRenameModal('${key}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="cfg-team-action delete-action" title="Supprimer" ${entries.length <= 1 ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''} onclick="cfgOpenDeleteModal('${key}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        `;
+
+        container.appendChild(row);
+      });
+    }
+
+    function cfgAddTeam() {
+      const name = document.getElementById('cfgNewTeamName').value.trim();
+      let key = document.getElementById('cfgNewTeamKey').value.trim().replace(/[^a-zA-Z0-9]/g, '');
+
+      if (!name) { alert('Le nom de l\'équipe est requis.'); return; }
+      if (!key) { key = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); }
+      if (!key) { alert('L\'identifiant court est invalide.'); return; }
+      if (teams[key]) { alert(`Une équipe avec l'identifiant "${key}" existe déjà !`); return; }
+
+      teams[key] = { label: name, lineup: [] };
+      updateTeamSelector();
+      switchTeam(key);
+      saveConfig();
+
+      document.getElementById('cfgNewTeamName').value = '';
+      document.getElementById('cfgNewTeamKey').value = '';
+      cfgRenderTeamList();
+
+      // Flash success
+      const btn = document.querySelector('#configPage .add-btn');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Créée !';
+      btn.style.background = '#1a5c1a';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1800);
+    }
+
+    // ── MODAL RENAME ──
+    function cfgOpenRenameModal(key) {
+      cfgRenameTargetKey = key;
+      document.getElementById('renameInput').value = teams[key].label;
+      document.getElementById('renameModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('renameInput').focus(), 50);
+    }
+
+    function cfgCloseRenameModal(e) {
+      if (e && e.target !== document.getElementById('renameModal')) return;
+      document.getElementById('renameModal').style.display = 'none';
+      cfgRenameTargetKey = null;
+    }
+
+    function cfgConfirmRename() {
+      const key = cfgRenameTargetKey;
+      if (!key || !teams[key]) return;
+      const newName = document.getElementById('renameInput').value.trim();
+      if (!newName) { alert('Le nom ne peut pas être vide.'); return; }
+
+      teams[key].label = newName;
+      updateTeamSelector();
+      if (key === currentTeamId) {
+        document.getElementById('sectionLabel').textContent = '⚾ Batting Order — ' + newName;
+      }
+      saveConfig();
+      cfgRenderTeamList();
+      document.getElementById('renameModal').style.display = 'none';
+      cfgRenameTargetKey = null;
+      showCfgSaveIndicator();
+    }
+
+    // ── MODAL DELETE ──
+    function cfgOpenDeleteModal(key) {
+      const allKeys = Object.keys(teams);
+      if (allKeys.length <= 1) {
+        alert('Impossible de supprimer la dernière équipe.');
+        return;
+      }
+      cfgDeleteTargetKey = key;
+      document.getElementById('deleteModalBody').textContent =
+        `Voulez-vous vraiment supprimer l'équipe "${teams[key].label}" ?`;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function cfgCloseDeleteModal(e) {
+      if (e && e.target !== document.getElementById('deleteModal')) return;
+      document.getElementById('deleteModal').style.display = 'none';
+      cfgDeleteTargetKey = null;
+    }
+
+    function cfgConfirmDelete() {
+      const key = cfgDeleteTargetKey;
+      if (!key || !teams[key]) return;
+
+      delete teams[key];
+      const nextKey = Object.keys(teams)[0];
+      updateTeamSelector();
+      switchTeam(nextKey);
+      saveConfig();
+      cfgRenderTeamList();
+      document.getElementById('deleteModal').style.display = 'none';
+      cfgDeleteTargetKey = null;
+      showCfgSaveIndicator();
+    }
+
+    function showCfgSaveIndicator() {
+      const el = document.getElementById('configSaveIndicator');
+      el.textContent = '✓ Sauvé';
+      el.classList.add('visible');
+      setTimeout(() => el.classList.remove('visible'), 2000);
+    }
+
+    // ═══════════════════════════════════════════
+    // ONGLET INTERFACE — JS
+    // ═══════════════════════════════════════════
+    let ifLogoDataURL = null;
+
+    // Appelé à l'ouverture de l'onglet Interface pour pré-remplir les champs
+    function ifInitPanel() {
+      // Identité — depuis clubSettings (source de vérité)
+      document.getElementById('ifClubName').value    = clubSettings.name    || '';
+      document.getElementById('ifClubSub').value     = clubSettings.sub     || '';
+      document.getElementById('ifClubWebsite').value = clubSettings.website || '';
+      ifInitStoryBgs();
+      if (clubSettings.logo) {
+        document.getElementById('ifLogoImg').src = clubSettings.logo;
+        document.getElementById('ifLogoPreview').style.display = 'block';
+        document.getElementById('ifLogoText').textContent = '🖼️ Logo enregistré';
+        document.getElementById('ifLogoLabel').classList.add('has-file');
+      }
+
+      // Couleurs
+      const style = getComputedStyle(document.documentElement);
+      const accent = rgbToHex(style.getPropertyValue('--orange').trim()) || '#FF4500';
+      const bg     = rgbToHex(style.getPropertyValue('--black').trim())  || '#0a0a0a';
+      document.getElementById('ifColorAccent').value = accent;
+      document.getElementById('ifColorBg').value = bg;
+      document.getElementById('ifColorAccentHex').textContent = accent;
+      document.getElementById('ifColorBgHex').textContent = bg;
+      ifPreviewColor();
+
+      // Durée
+      document.getElementById('ifDuration').value = PLAY_DURATION;
+      document.getElementById('ifDurationVal').textContent = PLAY_DURATION;
+    }
+
+    // Convertit "rgb(r,g,b)" ou "#hex" en "#rrggbb"
+    function rgbToHex(color) {
+      if (!color) return null;
+      if (color.startsWith('#')) return color.length === 4
+        ? '#' + [...color.slice(1)].map(c => c+c).join('') : color;
+      const m = color.match(/\d+/g);
+      if (!m || m.length < 3) return null;
+      return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+    }
+
+    function ifPreviewColor() {
+      const accent = document.getElementById('ifColorAccent').value;
+      const bg     = document.getElementById('ifColorBg').value;
+      document.getElementById('ifColorAccentHex').textContent = accent;
+      document.getElementById('ifColorBgHex').textContent = bg;
+      document.getElementById('ifPreviewBar').style.background = accent;
+      document.getElementById('ifPreviewLabel').style.color = '#ffffff';
+      document.getElementById('ifColorPreview').style.background = bg;
+      document.getElementById('ifColorPreview').style.borderColor = accent + '55';
+    }
+
+    function ifHandleStoryBg(input, type) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const dataUrl = e.target.result;
+        const key = 'bg' + type.charAt(0).toUpperCase() + type.slice(1);
+        clubSettings[key] = dataUrl;
+
+        // Miniature preview
+        const preview = document.getElementById('bgPreview' + type.charAt(0).toUpperCase() + type.slice(1));
+        preview.innerHTML = `<img src="${dataUrl}" alt="bg" />`;
+
+        // Sub-label
+        document.getElementById('bgSub' + type.charAt(0).toUpperCase() + type.slice(1)).textContent = file.name;
+
+        // Bouton clear
+        document.getElementById('bgClear' + type.charAt(0).toUpperCase() + type.slice(1)).style.display = 'flex';
+
+        saveConfig();
+        showCfgSaveIndicator();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function ifClearStoryBg(type) {
+      const key = 'bg' + type.charAt(0).toUpperCase() + type.slice(1);
+      clubSettings[key] = null;
+
+      const capType = type.charAt(0).toUpperCase() + type.slice(1);
+      const preview = document.getElementById('bgPreview' + capType);
+      preview.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+      document.getElementById('bgSub' + capType).textContent = 'Aucun background chargé';
+      document.getElementById('bgClear' + capType).style.display = 'none';
+
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function ifInitStoryBgs() {
+      ['lineup','score','mvp'].forEach(type => {
+        const key = 'bg' + type.charAt(0).toUpperCase() + type.slice(1);
+        const capType = type.charAt(0).toUpperCase() + type.slice(1);
+        if (clubSettings[key]) {
+          const preview = document.getElementById('bgPreview' + capType);
+          if (preview) preview.innerHTML = `<img src="${clubSettings[key]}" alt="bg" />`;
+          const sub = document.getElementById('bgSub' + capType);
+          if (sub) sub.textContent = 'Background chargé ✓';
+          const clearBtn = document.getElementById('bgClear' + capType);
+          if (clearBtn) clearBtn.style.display = 'flex';
+        }
+      });
+    }
+
+    // Utilitaire : dessine un background custom sur le canvas
+    async function drawStoryBg(ctx, W, H, bgDataUrl, overlayOpacity = 0.55) {
+      if (bgDataUrl) {
+        const bgImg = new Image();
+        await new Promise(r => { bgImg.onload = r; bgImg.onerror = r; bgImg.src = bgDataUrl; });
+        if (bgImg.naturalWidth > 0) {
+          // Cover : remplir le canvas en gardant les proportions
+          const scale = Math.max(W / bgImg.naturalWidth, H / bgImg.naturalHeight);
+          const sw = bgImg.naturalWidth * scale;
+          const sh = bgImg.naturalHeight * scale;
+          ctx.drawImage(bgImg, (W - sw) / 2, (H - sh) / 2, sw, sh);
+          // Overlay semi-transparent pour lisibilité
+          ctx.fillStyle = `rgba(0,0,0,${overlayOpacity})`;
+          ctx.fillRect(0, 0, W, H);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function ifHandleLogo(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        ifLogoDataURL = e.target.result;
+        document.getElementById('ifLogoImg').src = ifLogoDataURL;
+        document.getElementById('ifLogoPreview').style.display = 'block';
+        document.getElementById('ifLogoText').textContent = '🖼️ ' + file.name;
+        document.getElementById('ifLogoLabel').classList.add('has-file');
+        // Aperçu live dans le header
+        const img = document.getElementById('headerLogoImg');
+        const svg = document.getElementById('headerLogoSvg');
+        if (img && svg) { img.src = ifLogoDataURL; img.style.display = 'block'; svg.style.display = 'none'; }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function ifSaveIdentity() {
+      const name    = document.getElementById('ifClubName').value.trim();
+      const sub     = document.getElementById('ifClubSub').value.trim();
+      const website = document.getElementById('ifClubWebsite').value.trim();
+
+      if (name)    clubSettings.name    = name;
+      if (sub)     clubSettings.sub     = sub;
+      if (website) clubSettings.website = website;
+      if (ifLogoDataURL) clubSettings.logo = ifLogoDataURL;
+
+      applyClubSettings();
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function ifSaveColors() {
+      const accent = document.getElementById('ifColorAccent').value;
+      const bg     = document.getElementById('ifColorBg').value;
+
+      // Calcul dérivés
+      const darken = (hex, amt) => {
+        let [r,g,b] = hex.match(/\w\w/g).map(x=>parseInt(x,16));
+        return '#'+[r,g,b].map(c=>Math.max(0,c-amt).toString(16).padStart(2,'0')).join('');
+      };
+
+      document.documentElement.style.setProperty('--orange', accent);
+      document.documentElement.style.setProperty('--orange-dark', darken(accent, 50));
+      document.documentElement.style.setProperty('--orange-glow',
+        `rgba(${parseInt(accent.slice(1,3),16)},${parseInt(accent.slice(3,5),16)},${parseInt(accent.slice(5,7),16)},0.25)`);
+      document.documentElement.style.setProperty('--orange-avatar',
+        `rgba(${parseInt(accent.slice(1,3),16)},${parseInt(accent.slice(3,5),16)},${parseInt(accent.slice(5,7),16)},0.5)`);
+      document.documentElement.style.setProperty('--black', bg);
+      document.documentElement.style.setProperty('--darkgray', shiftColor(bg, 10));
+
+      // Persister dans appSettings
+      appSettings.colorAccent = accent;
+      appSettings.colorBg     = bg;
+      saveConfig();
+
+      showCfgSaveIndicator();
+    }
+
+    function shiftColor(hex, amt) {
+      let [r,g,b] = hex.match(/\w\w/g).map(x=>parseInt(x,16));
+      return '#'+[r,g,b].map(c=>Math.min(255,c+amt).toString(16).padStart(2,'0')).join('');
+    }
+
+    function ifResetColors() {
+      document.documentElement.style.removeProperty('--orange');
+      document.documentElement.style.removeProperty('--orange-dark');
+      document.documentElement.style.removeProperty('--orange-glow');
+      document.documentElement.style.removeProperty('--orange-avatar');
+      document.documentElement.style.removeProperty('--black');
+      document.documentElement.style.removeProperty('--darkgray');
+      document.getElementById('ifColorAccent').value = '#FF4500';
+      document.getElementById('ifColorBg').value = '#0a0a0a';
+      ifPreviewColor();
+
+      delete appSettings.colorAccent;
+      delete appSettings.colorBg;
+      saveConfig();
+
+      showCfgSaveIndicator();
+    }
+
+    function ifSaveDuration() {
+      const val = parseInt(document.getElementById('ifDuration').value);
+      if (val >= 5 && val <= 60) {
+        PLAY_DURATION = val;
+        appSettings.playDuration = val;
+        saveConfig();
+        showCfgSaveIndicator();
+      }
+    }
+
+    function ifSavePassword() {
+      const current  = document.getElementById('ifPwdCurrent').value;
+      const newPwd   = document.getElementById('ifPwdNew').value;
+      const confirm  = document.getElementById('ifPwdConfirm').value;
+      const msgEl    = document.getElementById('ifPwdMsg');
+
+      const show = (text, type) => {
+        msgEl.textContent = text;
+        msgEl.className = 'if-pwd-msg ' + type;
+        msgEl.style.display = 'block';
+        if (type === 'success') setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+      };
+
+      if (current !== appSettings.adminPassword) { show('Mot de passe actuel incorrect.', 'error'); return; }
+      if (!newPwd || newPwd.length < 4) { show('Le nouveau mot de passe doit faire au moins 4 caractères.', 'error'); return; }
+      if (newPwd !== confirm) { show('Les deux mots de passe ne correspondent pas.', 'error'); return; }
+
+      appSettings.adminPassword = newPwd;
+      saveConfig();
+      document.getElementById('ifPwdCurrent').value = '';
+      document.getElementById('ifPwdNew').value = '';
+      document.getElementById('ifPwdConfirm').value = '';
+      show('Mot de passe modifié avec succès !', 'success');
+      showCfgSaveIndicator();
+    }
+
+    // ── SOCIAL : TOGGLE FORMS ──
+    function toggleScoreForm() {
+      const f = document.getElementById('scoreForm');
+      f.classList.toggle('open');
+      if (f.classList.contains('open') && !document.getElementById('scoreDate').value)
+        document.getElementById('scoreDate').value = new Date().toISOString().split('T')[0];
+    }
+
+    function toggleMvpForm() {
+      const f = document.getElementById('mvpForm');
+      f.classList.toggle('open');
+      if (f.classList.contains('open')) {
+        if (!document.getElementById('mvpDate').value)
+          document.getElementById('mvpDate').value = new Date().toISOString().split('T')[0];
+        // Peupler le select MVP
+        const sel = document.getElementById('mvpPlayer');
+        sel.innerHTML = '<option value="">— Choisir le MVP —</option>';
+        currentLineup().filter(e => e.present !== false).forEach(entry => {
+          const p = allPlayers[entry.pid];
+          if (!p) return;
+          const opt = document.createElement('option');
+          opt.value = entry.pid;
+          opt.textContent = p.name + (entry.jersey ? ' #' + entry.jersey : '') + (entry.pos ? ' · ' + entry.pos : '');
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function updateScoreResult() {
+      // visuel auto — géré par CSS :has()
+    }
+
+    let mvpPhotoURL = null;
+    function handleMvpPhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (mvpPhotoURL) URL.revokeObjectURL(mvpPhotoURL);
+      mvpPhotoURL = URL.createObjectURL(file);
+      document.getElementById('mvpPhotoText').textContent = '🖼️ ' + file.name;
+      document.getElementById('mvpPhotoLabel').classList.add('has-file');
+    }
+
+    function updateMvpPhoto() {
+      // Réinitialise la photo quand on change de joueur
+      mvpPhotoURL = null;
+      document.getElementById('mvpPhotoText').textContent = '📂 Choisir une photo PNG…';
+      document.getElementById('mvpPhotoLabel').classList.remove('has-file');
+      document.getElementById('mvpPhotoFile').value = '';
+    }
+
+    // ── EXPORT STORY SCORE ──
+    async function exportScoreStory() {
+      const date     = document.getElementById('scoreDate').value;
+      const opponent = document.getElementById('scoreOpponent').value.trim() || 'Adversaire';
+      const home     = document.getElementById('scoreHome').value || '0';
+      const away     = document.getElementById('scoreAway').value || '0';
+      const result   = document.querySelector('input[name="scoreResult"]:checked')?.value || '';
+      const team     = teams[currentTeamId];
+
+      const W = 1080, H = 1920;
+      const canvas = document.getElementById('scoreCanvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Fond
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      const hasBgScore = await drawStoryBg(ctx, W, H, clubSettings.bgScore, 0.6);
+      if (!hasBgScore) {
+        const grad = ctx.createRadialGradient(W/2, H*0.4, 0, W/2, H*0.4, H*0.7);
+        grad.addColorStop(0, 'rgba(255,69,0,0.2)');
+        grad.addColorStop(1, 'rgba(255,69,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Bande orange haut
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, 0, W, 6);
+
+      // Logo
+      const logoImg = new Image();
+      logoImg.src = clubSettings.logo || '';
+      await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
+      const logoH = 140, logoW = logoImg.width ? (logoImg.width / logoImg.height) * logoH : logoH;
+      if (logoImg.naturalWidth > 0) ctx.drawImage(logoImg, W/2 - logoW/2, 80, logoW, logoH);
+
+      // Nom club
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 64px Oswald, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', W/2, 272);
+
+      ctx.fillStyle = '#FF4500';
+      ctx.font = '34px Oswald, sans-serif';
+      ctx.fillText((team.label || currentTeamId).toUpperCase(), W/2, 320);
+
+      // Date & adversaire
+      if (date) {
+        const d = new Date(date);
+        const dateStr = d.toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '30px Barlow Condensed, sans-serif';
+        ctx.fillText(dateStr.toUpperCase(), W/2, 390);
+      }
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 38px Oswald, sans-serif';
+      ctx.fillText('VS ' + opponent.toUpperCase(), W/2, 440);
+
+      // Séparateur
+      ctx.strokeStyle = 'rgba(255,69,0,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(100, 470); ctx.lineTo(W-100, 470); ctx.stroke();
+
+      // Grand score central
+      const resultColors = { win: '#2ecc40', loss: '#cc2200', tie: '#FF4500' };
+      const resultLabels = { win: '🏆 VICTOIRE', loss: '❌ DÉFAITE', tie: '🤝 MATCH NUL' };
+      const accentColor = resultColors[result] || '#FF4500';
+
+      // Score box
+      const boxY = 520, boxH = 340;
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fillRect(80, boxY, W-160, boxH);
+      ctx.strokeStyle = accentColor + '44';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(80, boxY, W-160, boxH);
+
+      // Score chiffres
+      ctx.font = 'bold 220px Oswald, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(home, 140, boxY + 270);
+
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 120px Oswald, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('—', W/2, boxY + 220);
+
+      ctx.font = 'bold 220px Oswald, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillText(away, W-140, boxY + 270);
+
+      // Labels sous les scores
+      ctx.font = '28px Barlow Condensed, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#FF4500';
+      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 140, boxY + 320);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillText(opponent.toUpperCase(), W-140, boxY + 320);
+
+      // Badge résultat
+      if (result) {
+        const label = resultLabels[result];
+        ctx.font = 'bold 52px Oswald, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = accentColor;
+        ctx.fillText(label, W/2, boxY + boxH + 90);
+      }
+
+      // Footer
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, H-6, W, 6);
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = '28px Barlow Condensed, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
+
+      const link = document.createElement('a');
+      link.download = `walkup-score-${currentTeamId}-${date || 'match'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // ── EXPORT STORY MVP ──
+    async function exportMvpStory() {
+      const pid      = document.getElementById('mvpPlayer').value;
+      const date     = document.getElementById('mvpDate').value;
+      const opponent = document.getElementById('mvpOpponent').value.trim() || 'Adversaire';
+      const quote    = document.getElementById('mvpQuote').value.trim();
+
+      if (!pid) { alert('Sélectionne un joueur MVP !'); return; }
+
+      const player = allPlayers[pid];
+      const entry  = currentLineup().find(e => String(e.pid) === String(pid));
+      if (!player) return;
+
+      const W = 1080, H = 1920;
+      const canvas = document.getElementById('mvpCanvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Fond sombre diagonal
+      ctx.fillStyle = '#080808';
+      ctx.fillRect(0, 0, W, H);
+
+      const hasBgMvp = await drawStoryBg(ctx, W, H, clubSettings.bgMvp, 0.6);
+      if (!hasBgMvp) {
+        const sideGrad = ctx.createLinearGradient(0, 0, W*0.6, H);
+        sideGrad.addColorStop(0, 'rgba(255,69,0,0.18)');
+        sideGrad.addColorStop(0.5, 'rgba(255,69,0,0.05)');
+        sideGrad.addColorStop(1, 'rgba(255,69,0,0)');
+        ctx.fillStyle = sideGrad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Bande gauche orange
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, 0, 8, H);
+
+      // Logo + nom club (haut gauche)
+      const logoImg = new Image();
+      logoImg.src = clubSettings.logo || '';
+      await new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
+      const lH = 80, lW = logoImg.width ? (logoImg.width/logoImg.height)*lH : lH;
+      if (logoImg.naturalWidth > 0) ctx.drawImage(logoImg, 60, 60, lW, lH);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 44px Oswald, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 60 + lW + 20, 100);
+      ctx.fillStyle = '#FF4500';
+      ctx.font = '26px Barlow Condensed, sans-serif';
+      ctx.fillText((teams[currentTeamId]?.label || currentTeamId).toUpperCase(), 60 + lW + 20, 132);
+
+      // Date & adversaire
+      if (date) {
+        const d = new Date(date);
+        const ds = d.toLocaleDateString('fr-BE', { day:'numeric', month:'long', year:'numeric' });
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '28px Barlow Condensed, sans-serif';
+        ctx.fillText(ds.toUpperCase() + '  ·  VS ' + opponent.toUpperCase(), 60, 200);
+      }
+
+      // Grand titre MVP
+      ctx.fillStyle = '#FF4500';
+      ctx.font = 'bold 110px Oswald, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('MVP', 60, 340);
+
+      // Ligne déco
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(60, 360, 180, 4);
+
+      // Photo joueur si disponible
+      let photoLoaded = false;
+      if (mvpPhotoURL || player.photo) {
+        const pImg = new Image();
+        pImg.src = mvpPhotoURL || player.photo;
+        await new Promise(r => { pImg.onload = r; pImg.onerror = r; });
+        if (pImg.naturalWidth > 0) {
+          const pH = Math.round(H * 0.55);
+          const pW = Math.round(pH * pImg.naturalWidth / pImg.naturalHeight);
+          const pX = W - pW + Math.round(pW * 0.05);
+          const pY = H - pH - 80;
+          ctx.drawImage(pImg, pX, pY, pW, pH);
+          photoLoaded = true;
+        }
+      }
+
+      // Numéro de maillot géant en fond
+      if (entry?.jersey) {
+        ctx.font = 'bold 500px Oswald, sans-serif';
+        ctx.fillStyle = 'rgba(255,69,0,0.06)';
+        ctx.textAlign = 'right';
+        ctx.fillText('#' + entry.jersey, W - 40, H * 0.72);
+      }
+
+      // Nom joueur
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 96px Oswald, sans-serif';
+      ctx.textAlign = 'left';
+      const nameParts = player.name.toUpperCase().split(' ');
+      if (nameParts.length >= 2) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = 'bold 60px Oswald, sans-serif';
+        ctx.fillText(nameParts[0], 60, 470);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 96px Oswald, sans-serif';
+        ctx.fillText(nameParts.slice(1).join(' '), 60, 565);
+      } else {
+        ctx.fillText(player.name.toUpperCase(), 60, 540);
+      }
+
+      // Stats (position + maillot)
+      let statsY = 610;
+      if (entry?.jersey) {
+        ctx.fillStyle = '#FF4500';
+        ctx.font = 'bold 36px Oswald, sans-serif';
+        ctx.fillText('#' + entry.jersey, 60, statsY);
+        statsY += 50;
+      }
+      if (entry?.pos) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '30px Barlow Condensed, sans-serif';
+        ctx.fillText(entry.pos, 60, statsY);
+        statsY += 46;
+      }
+
+      // Citation
+      if (quote) {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = 'italic 34px Barlow, sans-serif';
+        // Wrap texte
+        const maxW = photoLoaded ? W * 0.5 : W - 120;
+        const words = quote.split(' ');
+        let line = '"', lineY = statsY + 40;
+        for (const word of words) {
+          const test = line + word + ' ';
+          if (ctx.measureText(test + '"').width > maxW && line !== '"') {
+            ctx.fillText(line, 60, lineY);
+            line = word + ' ';
+            lineY += 44;
+          } else { line = test; }
+        }
+        ctx.fillText(line.trimEnd() + '"', 60, lineY);
+      }
+
+      // Footer
+      ctx.fillStyle = '#FF4500';
+      ctx.fillRect(0, H-6, W, 6);
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = '28px Barlow Condensed, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
+
+      const link = document.createElement('a');
+      link.download = `walkup-mvp-${player.name.toLowerCase().replace(/\s+/g,'-')}-${date || 'match'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // ── INIT ──
+    async function init() {
+      document.getElementById('saveIndicator').textContent = '⏳ Chargement...';
+      document.getElementById('saveIndicator').classList.add('visible');
+
+      await loadConfig();
+
+      // Restaurer la dernière équipe sélectionnée
+      const lastTeamId = localStorage.getItem('lastTeamId');
+      if (lastTeamId && teams[lastTeamId]) {
+        currentTeamId = lastTeamId;
+      }
+
+      updateTeamSelector();
+
+      // ✅ Reset mode édition au chargement
+      document.body.classList.remove('edit-mode');
+      const eb = document.getElementById('editModeBtn');
+      if (eb) { eb.textContent = '✏️'; eb.title = 'Mode modification'; }
+      isEditMode = false;
+
+      document.getElementById('saveIndicator').classList.remove('visible');
+      render();
+    }
+
+    init();
+
+    // Service worker désactivé temporairement
+    // if ('serviceWorker' in navigator) {
+    //   window.addEventListener('load', () => {
+    //     navigator.serviceWorker.register('/sw.js')
+    //       .then(() => console.log('✅ SW actif'))
+    //       .catch(err => console.log('SW error:', err));
+    //   });
+    // }
+
+    // Désenregistre tout SW existant
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => reg.unregister());
+      });
+    }
+  </script>
+</body>
+</html>
