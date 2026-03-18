@@ -437,6 +437,7 @@
       letter-spacing: 1px;
       flex-shrink: 0;
       transition: all 0.2s;
+      position: relative;
     }
 
     .player-card:hover .player-avatar,
@@ -446,6 +447,8 @@
     }
 
     .pos-select {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       background: transparent;
@@ -457,6 +460,8 @@
       font-weight: 700;
       letter-spacing: 1px;
       text-align: center;
+      text-align-last: center;
+      -webkit-text-align-last: center;
       cursor: pointer;
       outline: none;
       appearance: none;
