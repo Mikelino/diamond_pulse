@@ -655,6 +655,14 @@
       z-index: 10;
     }
 
+    @media (max-width: 640px) {
+      .player-card.sortable-chosen {
+        transform: scale(1.03);
+        box-shadow: 0 8px 30px rgba(255,69,0,0.35);
+        border-color: rgba(255,69,0,0.7);
+      }
+    }
+
     /* ── PRESENCE BUTTON ── */
     .presence-btn {
       width: 20px;
@@ -3434,17 +3442,24 @@
     function initSortable() {
       if (sortable) { sortable.destroy(); sortable = null; }
 
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
       sortable = Sortable.create(document.getElementById('lineup'), {
         // ✅ Drag activé uniquement en mode édition (AJOUT)
         disabled: !isEditMode,
 
-        handle: '.drag-handle',
+        handle: isMobile ? '.player-card' : '.drag-handle',
         animation: 150,
-        delay: 150,
-        delayOnTouchOnly: false,
-        touchStartThreshold: 3,
+        delay: isMobile ? 500 : 150,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
+        forceFallback: isMobile,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
+
+        onChoose() {
+          if (isMobile && navigator.vibrate) navigator.vibrate(40);
+        },
 
         onEnd() {
           const newOrder = [...document.querySelectorAll('.player-card')]
