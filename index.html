@@ -2094,45 +2094,6 @@
           <canvas id="scoreCanvas" style="display:none"></canvas>
           <canvas id="mvpCanvas" style="display:none"></canvas>
 
-          <!-- MODAL PARTAGE INSTAGRAM -->
-          <div id="shareModal" class="cfg-modal-overlay" style="display:none" onclick="closeShareModal(event)">
-            <div class="cfg-modal" style="max-width:460px">
-              <div class="cfg-modal-title">📲 Partager la story</div>
-
-              <!-- Aperçu miniature -->
-              <div style="display:flex;justify-content:center;margin-bottom:20px">
-                <img id="sharePreviewImg" src="" alt="Aperçu" style="height:160px;width:auto;border-radius:6px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.5)" />
-              </div>
-
-              <!-- Bouton Instagram deep link (mobile uniquement) -->
-              <div id="shareBtnInstagram" style="display:none;margin-bottom:10px">
-                <button onclick="shareToInstagramDeeplink()" style="width:100%;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border:none;border-radius:6px;color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-                  Ouvrir dans Instagram Stories
-                </button>
-                <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:0.5px">L'image sera copiée — colle-la dans la story Instagram</p>
-              </div>
-
-              <!-- Bouton Web Share API (mobile) -->
-              <div id="shareBtnNative" style="display:none;margin-bottom:10px">
-                <button onclick="shareNative()" style="width:100%;background:var(--orange);border:none;border-radius:6px;color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
-                  Partager via…
-                </button>
-              </div>
-
-              <!-- Bouton téléchargement (toujours visible) -->
-              <button onclick="shareDownload()" style="width:100%;background:var(--gray);border:1px solid var(--border);border-radius:6px;color:var(--offwhite);font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Télécharger l'image
-              </button>
-
-              <div class="cfg-modal-actions" style="margin-top:16px">
-                <button class="cfg-modal-cancel" onclick="closeShareModal()">Fermer</button>
-              </div>
-            </div>
-          </div>
-
         </main>
       </div>
 
@@ -4686,79 +4647,31 @@
       shareStory(canvas, filename);
     }
 
-    // ── PARTAGE INSTAGRAM ──
-    let _shareDataURL = null;
-    let _shareFilename = null;
-
-    function shareStory(canvas, filename) {
-      _shareDataURL = canvas.toDataURL('image/png');
-      _shareFilename = filename;
-
-      // Aperçu miniature
-      document.getElementById('sharePreviewImg').src = _shareDataURL;
-
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      // Bouton Instagram deep link — mobile seulement
-      document.getElementById('shareBtnInstagram').style.display = isMobile ? 'block' : 'none';
-
-      // Bouton Web Share API — si supporté
-      document.getElementById('shareBtnNative').style.display =
-        (isMobile && navigator.share) ? 'block' : 'none';
-
-      document.getElementById('shareModal').style.display = 'flex';
-    }
-
-    function closeShareModal(e) {
-      if (e && e.target !== document.getElementById('shareModal')) return;
-      document.getElementById('shareModal').style.display = 'none';
-    }
-
-    async function shareNative() {
-      if (!navigator.share || !_shareDataURL) return;
+    // ── PARTAGE ──
+    async function shareStory(canvas, filename) {
       try {
-        const blob = await (await fetch(_shareDataURL)).blob();
-        const file = new File([blob], _shareFilename, { type: 'image/png' });
-        await navigator.share({
-          files: [file],
-          title: clubSettings.name || 'Walk-Up Songs',
-        });
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+        } else {
+          // Fallback téléchargement (desktop ou navigateur non compatible)
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
       } catch (err) {
-        if (err.name !== 'AbortError') alert('Erreur partage : ' + err.message);
+        if (err.name !== 'AbortError') {
+          // Dernier recours : dataURL
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = filename;
+          link.click();
+        }
       }
-    }
-
-    async function shareToInstagramDeeplink() {
-      if (!_shareDataURL) return;
-      try {
-        // Copier l'image dans le presse-papiers
-        const blob = await (await fetch(_shareDataURL)).blob();
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
-        // Ouvrir Instagram Stories via deep link
-        window.location.href = 'instagram://story-camera';
-        setTimeout(() => {
-          // Fallback si Instagram non installé
-          const hadFocus = document.hasFocus();
-          setTimeout(() => {
-            if (document.hasFocus() === hadFocus) {
-              alert('Instagram ne semble pas installé sur cet appareil.\nL\'image a été copiée dans le presse-papiers.');
-            }
-          }, 1500);
-        }, 500);
-      } catch (err) {
-        // Si clipboard write non supporté, juste ouvrir Instagram
-        window.location.href = 'instagram://story-camera';
-      }
-    }
-
-    function shareDownload() {
-      if (!_shareDataURL || !_shareFilename) return;
-      const link = document.createElement('a');
-      link.download = _shareFilename;
-      link.href = _shareDataURL;
-      link.click();
     }
 
     // ── INIT ──
