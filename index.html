@@ -2071,6 +2071,29 @@
       .song-info { display: none !important; }
     }
 
+    /* ── WALKUP MOBILE SUBTABS ── */
+    .walkup-subtabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .walkup-subtab {
+      flex: 1;
+      padding: 8px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .walkup-subtab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
     /* ── BATTING PANEL — TABS + RESPONSIVE ── */
     .batting-tabs { display: none; }
 
@@ -2496,7 +2519,6 @@
             <button class="live-mobile-tab active" id="liveTabSounds" onclick="switchLiveTab('sounds')">🔊<span>Sounds</span></button>
             <button class="live-mobile-tab" id="liveTabField" onclick="switchLiveTab('field')">⚾<span>Field</span></button>
             <button class="live-mobile-tab" id="liveTabWalkup" onclick="switchLiveTab('walkup')">🎵<span>Walk-Up</span></button>
-            <button class="live-mobile-tab" id="liveTabVisitors" onclick="switchLiveTab('visitors')" style="display:none">🏃<span>Visitors</span></button>
           </div>
 
           <!-- ── COLUMN 1: SOUNDS ── -->
@@ -2594,8 +2616,17 @@
                 Team Intro
               </button>
             </div>
+
+            <!-- Mobile sub-tabs HOME / VISITORS -->
+            <div class="walkup-subtabs" id="walkupSubtabs" style="display:none">
+              <button class="walkup-subtab active" id="walkupSubHome" onclick="switchWalkupSubtab('home')">⚾ Home</button>
+              <button class="walkup-subtab" id="walkupSubVisitors" onclick="switchWalkupSubtab('visitors')">🏃 Visitors</button>
+            </div>
+
             <div class="live-col-body">
               <div id="liveLineupList"></div>
+              <!-- Mobile visitors list (shown via subtab) -->
+              <div id="liveVisitorsListMobile" style="display:none"></div>
             </div>
           </div>
 
@@ -6991,6 +7022,27 @@
       }
       if (e.key === 'ArrowRight' && document.getElementById('introOverlay')?.style.display !== 'none') introNext();
       if (e.key === 'ArrowLeft'  && document.getElementById('introOverlay')?.style.display !== 'none') introPrev();
+
+    // ── Touch swipe on intro overlay ──
+    (function() {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      const overlay = document.getElementById('introOverlay');
+      if (!overlay) return;
+      overlay.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      overlay.addEventListener('touchend', e => {
+        if (overlay.style.display === 'none') return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        // Only horizontal swipe (dx > dy to avoid scroll conflicts)
+        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+        if (dx < 0) introNext();
+        else introPrev();
+      }, { passive: true });
+    })();
       if (e.key === ' '          && document.getElementById('introOverlay')?.style.display !== 'none') {
         e.preventDefault(); introTogglePause();
       }
@@ -7194,9 +7246,42 @@
       });
     }
 
+    function switchWalkupSubtab(tab) {
+      const homeList     = document.getElementById('liveLineupList');
+      const visitorsList = document.getElementById('liveVisitorsListMobile');
+      const btnHome      = document.getElementById('walkupSubHome');
+      const btnVisitors  = document.getElementById('walkupSubVisitors');
+      const introBtn     = document.querySelector('#liveColWalkup .live-col-header button');
+      if (!homeList || !visitorsList) return;
+
+      if (tab === 'home') {
+        homeList.style.display = '';
+        visitorsList.style.display = 'none';
+        btnHome?.classList.add('active');
+        btnVisitors?.classList.remove('active');
+        if (introBtn) { introBtn.style.display = ''; introBtn.textContent = ''; introBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg> Team Intro'; introBtn.onclick = startTeamIntro; }
+      } else {
+        homeList.style.display = 'none';
+        visitorsList.style.display = '';
+        btnVisitors?.classList.add('active');
+        btnHome?.classList.remove('active');
+        // Sync visitors list content
+        const desktopList = document.getElementById('liveVisitorsList');
+        if (desktopList) visitorsList.innerHTML = desktopList.innerHTML;
+        if (introBtn) { introBtn.style.display = ''; introBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg> Visitor Intro'; introBtn.onclick = startVisitorIntro; }
+      }
+    }
+
     function initLiveMobileTabs() {
       if (window.innerWidth > 700) return;
-      switchLiveTab('walkup'); // default to walk-up on mobile
+      // Show/hide visitors subtab based on visitors data
+      const hasVisitors = visitorsLineup.length > 0;
+      const subtabs = document.getElementById('walkupSubtabs');
+      const subVisitorsBtn = document.getElementById('walkupSubVisitors');
+      if (subtabs) subtabs.style.display = hasVisitors ? 'flex' : 'none';
+      if (subVisitorsBtn) subVisitorsBtn.style.display = hasVisitors ? '' : 'none';
+      switchLiveTab('walkup');
+      switchWalkupSubtab('home');
     }
 
     function switchBattingTab(tab) {
@@ -7313,7 +7398,13 @@
         if (resizer) resizer.style.display = hasVisitors ? '' : 'none';
       }
 
-      // Mobile: show/hide tab button
+      // Mobile: show/hide subtab
+      const subtabs = document.getElementById('walkupSubtabs');
+      const subVisitorsBtn = document.getElementById('walkupSubVisitors');
+      if (subtabs) subtabs.style.display = (window.innerWidth <= 700 && hasVisitors) ? 'flex' : (window.innerWidth <= 700 ? 'none' : subtabs.style.display);
+      if (subVisitorsBtn) subVisitorsBtn.style.display = hasVisitors ? '' : 'none';
+
+      // Mobile tab button
       const tabBtn = document.getElementById('liveTabVisitors');
       if (tabBtn) tabBtn.style.display = hasVisitors ? '' : 'none';
 
