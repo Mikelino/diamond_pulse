@@ -6210,7 +6210,7 @@
         let resolved = false;
         const done = () => { if (!resolved) { resolved = true; clearInterval(keepAlive); resolve(); } };
 
-        // iOS Safari workaround: speechSynthesis stalls without periodic resume()
+        // iOS/Chrome iOS: speechSynthesis stalls without periodic resume()
         const keepAlive = setInterval(() => {
           if (speechSynthesis.speaking) {
             speechSynthesis.pause();
@@ -6218,25 +6218,50 @@
           }
         }, 5000);
 
-        // Safety timeout based on text length (~130 wpm at rate 0.92), min 6s, +3s buffer
+        // Safety timeout based on text length
         const words = text.trim().split(/\s+/).length;
         const estimatedMs = Math.round(words / (130 * 0.92) * 60 * 1000);
         const timeout = setTimeout(done, Math.max(6000, estimatedMs + 3000));
 
-        // Prefix with pause to simulate natural breath before speaking
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.rate   = 0.92;
-        utt.pitch  = 0.95;
-        utt.volume = 1;
-        if (voiceName) {
-          const v = speechSynthesis.getVoices().find(v => v.name === voiceName);
-          if (v) utt.voice = v;
+        function doSpeak() {
+          // Prefix with soft hyphen (invisible pause) to prime the TTS engine
+          const primed = '\u00ad ' + text;
+          const utt = new SpeechSynthesisUtterance(primed);
+          utt.rate   = 0.92;
+          utt.pitch  = 0.95;
+          utt.volume = 1;
+          // Try to assign a voice if available
+          const voices = speechSynthesis.getVoices();
+          if (voices.length > 0) {
+            if (voiceName) {
+              const v = voices.find(v => v.name === voiceName);
+              if (v) utt.voice = v;
+            }
+            // Chrome iOS fallback: pick first available voice if none matched
+            if (!utt.voice && voices.length > 0) utt.voice = voices[0];
+          }
+          utt.onend   = () => { clearTimeout(timeout); done(); };
+          utt.onerror = (e) => { console.warn('TTS error:', e); clearTimeout(timeout); done(); };
+          speechSynthesis.cancel();
+          setTimeout(() => speechSynthesis.speak(utt), 200);
         }
-        utt.onend   = () => { clearTimeout(timeout); done(); };
-        utt.onerror = () => { clearTimeout(timeout); done(); };
 
-        speechSynthesis.cancel();
-        setTimeout(() => speechSynthesis.speak(utt), 200);
+        // Wait for voices to be loaded (Chrome iOS loads them async)
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          doSpeak();
+        } else {
+          // Voices not ready yet — wait for onvoiceschanged
+          const onVoices = () => {
+            speechSynthesis.onvoiceschanged = null;
+            doSpeak();
+          };
+          speechSynthesis.onvoiceschanged = onVoices;
+          // Fallback if onvoiceschanged never fires
+          setTimeout(() => {
+            if (!resolved) { speechSynthesis.onvoiceschanged = null; doSpeak(); }
+          }, 500);
+        }
       });
     }
 
