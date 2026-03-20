@@ -7937,7 +7937,9 @@
       render();
       renderCustomSounds();
       renderLiveLineup();
+      renderLiveVisitors();
       renderFieldSongs();
+      initLiveMobileTabs();
 
       const sb = appSettings.soundboard || {};
       Object.keys(LIVE_SOUNDS).forEach(key => {
