@@ -856,9 +856,11 @@
     .live-col-body {
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       padding: 14px 12px;
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
+      position: relative;
     }
 
     .live-col-body::-webkit-scrollbar { width: 4px; }
@@ -938,7 +940,7 @@
       border-radius: 5px;
       color: var(--orange);
       cursor: not-allowed;
-      padding: 10px 8px 26px;
+      padding: 10px 8px 4px;
       transition: all 0.12s;
       font-family: 'Barlow Condensed', sans-serif;
       filter: grayscale(1);
@@ -947,7 +949,6 @@
       box-sizing: border-box;
       min-height: 88px;
       overflow: hidden;
-      contain: layout;
     }
 
     .sound-btn.has-file,
@@ -985,27 +986,8 @@
       background: rgba(255,69,0,0.1);
     }
 
-    /* LED indicator */
-    .sound-led {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: rgba(255,69,0,0.15);
-      border: 1px solid rgba(255,69,0,0.3);
-      transition: all 0.2s;
-      flex-shrink: 0;
-      order: -1;
-      align-self: flex-end;
-    }
-    .sound-btn.has-file .sound-led,
-    .sound-btn.custom-active .sound-led { background: rgba(255,69,0,0.3); border-color: rgba(255,69,0,0.5); }
-    .sound-btn.playing .sound-led {
-      background: var(--orange);
-      border-color: #ff6622;
-      box-shadow: 0 0 5px var(--orange);
-      animation: led-blink 0.8s infinite;
-    }
-    @keyframes led-blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    @keyframes btn-blink { 0%,100%{border-color:var(--orange);background:rgba(255,69,0,0.18);} 50%{border-color:rgba(255,69,0,0.3);background:rgba(255,69,0,0.06);} }
+    .sound-btn.playing { animation: btn-blink 0.8s infinite; }
 
     .sound-btn-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
 
@@ -1061,38 +1043,38 @@
     .sound-action.del { color: #ff6655; border-color: rgba(200,30,0,0.3); }
     .sound-action.del:hover { border-color: #cc2200; background: rgba(200,30,0,0.2); }
 
-    .sound-btn.has-file:hover .sound-btn-icon,
-    .sound-btn.has-file:hover .sound-btn-label,
-    .sound-btn.custom-active:hover .sound-btn-icon,
-    .sound-btn.custom-active:hover .sound-btn-label,
-    .sound-btn.empty:hover .sound-btn-icon,
-    .sound-btn.empty:hover .sound-btn-label,
-    .sound-btn.playing .sound-btn-icon,
-    .sound-btn.playing .sound-btn-label { display: none; }
+    .sound-btn.has-file:hover:not(.playing) .sound-btn-icon,
+    .sound-btn.has-file:hover:not(.playing) .sound-btn-label,
+    .sound-btn.custom-active:hover:not(.playing) .sound-btn-icon,
+    .sound-btn.custom-active:hover:not(.playing) .sound-btn-label,
+    .sound-btn.empty:hover:not(.playing) .sound-btn-icon,
+    .sound-btn.empty:hover:not(.playing) .sound-btn-label { display: none; }
 
     .sound-btn:not(.playing) .sound-action.stop { display: none; }
     .sound-btn.playing .sound-action.play,
     .sound-btn.playing .sound-action.edit,
     .sound-btn.playing .sound-action.del { display: none; }
 
-    .sound-btn.has-file:hover .sound-upload-lbl,
-    .sound-btn.custom-active:hover .sound-upload-lbl,
-    .sound-btn.empty:hover .sound-upload-lbl,
-    .sound-btn.playing .sound-upload-lbl { display: none; }
+    /* Stop button inline quand playing — pas de position absolute */
+    .sound-btn.playing .sound-btn-actions {
+      display: flex;
+      position: static;
+    }
+    .sound-btn.playing .sound-action.stop {
+      display: flex;
+      width: 32px; height: 32px;
+      font-size: 14px;
+    }
 
-    .sound-btn.has-file:hover .sound-led,
-    .sound-btn.custom-active:hover .sound-led,
-    .sound-btn.empty:hover .sound-led,
-    .sound-btn.playing .sound-led { display: none; }
-
-    /* Bottom bar — upload / stop */
+    /* Bottom bar — upload / replace */
     .sound-upload-lbl {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 22px;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: calc(100% + 16px);
+      margin: auto -8px -4px;
+      height: 22px;
+      flex-shrink: 0;
       font-size: 8px;
       letter-spacing: 1px;
       text-transform: uppercase;
@@ -1104,9 +1086,15 @@
       transition: all 0.12s;
     }
     .sound-upload-lbl:hover { color: var(--orange); background: rgba(255,69,0,0.12); border-color: rgba(255,69,0,0.4); }
+
+    /* has-file/custom-active : label caché au repos, visible au hover pour "replace" */
+    .sound-btn.has-file .sound-upload-lbl,
+    .sound-btn.custom-active .sound-upload-lbl { display: none; }
     .sound-btn.has-file:hover .sound-upload-lbl,
-    .sound-btn.custom-active:hover .sound-upload-lbl,
-    .sound-btn.playing .sound-upload-lbl { display: none; }
+    .sound-btn.custom-active:hover .sound-upload-lbl { display: flex; }
+
+    /* playing : label toujours caché */
+    .sound-btn.playing .sound-upload-lbl { display: none !important; }
     .live-custom-sounds {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1202,21 +1190,6 @@
       color: var(--orange);
       background: rgba(255,69,0,0.15);
     }
-
-    .sound-upload-lbl {
-      position: absolute;
-      bottom: 6px;
-      left: 8px;
-      font-size: 10px;
-      color: var(--muted);
-      cursor: pointer;
-      opacity: 0.4;
-      transition: opacity 0.15s;
-      padding: 2px 4px;
-      border-radius: 2px;
-    }
-    .sound-btn:hover .sound-upload-lbl { opacity: 0.8; color: var(--orange); }
-    .sound-btn.has-file .sound-upload-lbl { color: var(--orange); opacity: 0.7; }
 
     /* ── ADD PLAYER ── */
     .add-card { background: var(--darkgray); border: 1px solid var(--border); }
@@ -1964,6 +1937,11 @@
       padding: 24px 14px 60px;
     }
 
+    #mainPanelBatting main {
+      max-width: 100%;
+      margin: 0;
+    }
+
     @media (max-width: 640px) {
       .main-body {
         flex-direction: column;
@@ -2389,7 +2367,6 @@
               <div class="live-col-section-label">Soundboard</div>
               <div class="live-soundboard">
                 <div class="sound-btn empty" id="sbtnAnthem" onclick="liveSoundPlay('anthem')">
-                  <div class="sound-led"></div>
                   <span class="sound-btn-icon">🎺</span>
                   <span class="sound-btn-label" id="slblAnthem">National Anthem</span>
                   <div class="sound-btn-actions">
@@ -2401,7 +2378,6 @@
                   <label class="sound-upload-lbl" id="sulblAnthem" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('anthem',this)"/></label>
                 </div>
                 <div class="sound-btn empty" id="sbtnApplause" onclick="liveSoundPlay('applause')">
-                  <div class="sound-led"></div>
                   <span class="sound-btn-icon">👏</span>
                   <span class="sound-btn-label" id="slblApplause">Applause</span>
                   <div class="sound-btn-actions">
@@ -2413,7 +2389,6 @@
                   <label class="sound-upload-lbl" id="sulblApplause" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('applause',this)"/></label>
                 </div>
                 <div class="sound-btn empty" id="sbtnLetsgo" onclick="liveSoundPlay('letsgo')">
-                  <div class="sound-led"></div>
                   <span class="sound-btn-icon">📣</span>
                   <span class="sound-btn-label" id="slblLetsgo">Let's Go!</span>
                   <div class="sound-btn-actions">
@@ -2425,7 +2400,6 @@
                   <label class="sound-upload-lbl" id="sulblLetsgo" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('letsgo',this)"/></label>
                 </div>
                 <div class="sound-btn empty" id="sbtnHomerun" onclick="liveSoundPlay('homerun')">
-                  <div class="sound-led"></div>
                   <span class="sound-btn-icon">💥</span>
                   <span class="sound-btn-label" id="slblHomerun">Home Run!</span>
                   <div class="sound-btn-actions">
@@ -2485,17 +2459,37 @@
             </div>
           </div>
 
+          <!-- ── RESIZER 3 ── -->
+          <div class="live-resizer" id="liveResizer3" onmousedown="liveResizerStart(event,2)" id="liveResizer3"></div>
+
+          <!-- ── COLUMN 4: VISITORS ── -->
+          <div class="live-col" id="liveColVisitors" style="display:none">
+            <div class="live-col-header" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>🏃 Visitors</span>
+              <button onclick="startVisitorIntro()" title="Visitor Introduction" style="display:flex;align-items:center;gap:5px;background:var(--gray);border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:all 0.15s"
+                onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg>
+                Intro
+              </button>
+            </div>
+            <div class="live-col-body">
+              <div id="liveVisitorsList"></div>
+            </div>
+          </div>
+
         </div><!-- /live-columns -->
       </div>
 
       <!-- PANEL : LINEUP MODE -->
       <div class="main-panel" id="mainPanelBatting">
-        <main>
+        <main style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;max-width:100%;padding:24px 14px 60px">
+
+          <!-- HOME LINEUP -->
+          <div style="flex:1;min-width:360px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div class="section-label" id="sectionLabel" style="margin-bottom:0;flex:1">⚾ Batting Order — U12</div>
           </div>
           <div class="lineup" id="lineup"></div>
-
 
           <div class="divider"></div>
 
@@ -2554,6 +2548,43 @@
               <button class="add-btn" onclick="addPlayer().catch(e => console.error(e))">Add</button>
             </div>
           </div>
+          </div><!-- /home lineup -->
+
+          <!-- VISITORS LINEUP -->
+          <div style="flex:1;min-width:360px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+              <div class="section-label" style="margin-bottom:0;flex:1">🏃 Visitors Batting Order</div>
+              <button onclick="visitorsClear()" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid rgba(200,30,0,0.3);background:none;color:#ff6655;cursor:pointer;transition:all 0.15s"
+                onmouseover="this.style.borderColor='#cc2200';this.style.background='rgba(200,30,0,0.1)'" onmouseout="this.style.borderColor='rgba(200,30,0,0.3)';this.style.background='none'">✕ Clear</button>
+            </div>
+            <div style="margin-bottom:10px">
+              <select id="visitorOpponentSelect" class="form-input" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px" onchange="visitorOpponentChanged(this.value)">
+                <option value="">— Select opponent —</option>
+              </select>
+            </div>
+            <div id="visitorsLineupList"></div>
+            <div class="divider"></div>
+            <div class="section-label">+ Visitor</div>
+            <div class="add-card">
+              <button class="add-toggle" onclick="toggleVisitorForm()">+ Add a visitor player</button>
+              <div class="add-form" id="addVisitorForm">
+                <div class="form-group">
+                  <label class="form-label">Name</label>
+                  <input class="form-input" id="visitorName" placeholder="First Last" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pronunciation <span style="color:var(--muted);font-size:10px;letter-spacing:1px">(optional)</span></label>
+                  <input class="form-input" id="visitorPronunciation" placeholder='e.g. "Doo-PON"' />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Jersey #</label>
+                  <input class="form-input" id="visitorJersey" type="number" min="0" max="99" placeholder="e.g. 7" />
+                </div>
+                <button class="add-btn" onclick="addVisitor()">Add</button>
+              </div>
+            </div>
+          </div><!-- /visitors lineup -->
+
         </main>
       </div><!-- /mainPanelBatting -->
 
@@ -2934,7 +2965,9 @@
                     <label class="form-label">Announcement language</label>
                     <select class="form-input" id="ttsLang" onchange="appSettings.tts = appSettings.tts||{}; appSettings.tts.lang = this.value; ttsPopulateVoices()">
                       <option value="en">🇬🇧 English</option>
-                      <option value="fr">🇫🇷 Français</option>
+                      <option value="fr">🇫🇷 Français (France)</option>
+                      <option value="fr-be">🇧🇪 Français (Belgique)</option>
+                      <option value="fr-ch">🇨🇭 Français (Suisse)</option>
                     </select>
                   </div>
 
@@ -3008,6 +3041,127 @@
                   <div class="form-group" style="min-width:100%;display:flex;gap:10px;flex-wrap:wrap" id="ttsTestGroup">
                     <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ttsTest()">🔊 Test announcement</button>
                     <button class="add-btn" style="margin-top:0;padding:9px 24px;background:var(--gray);border:1px solid var(--border)" onclick="ttsSave()">Save settings</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <div class="config-section-label">⚾ Team Intro</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="flex-direction:column;gap:14px">
+
+                  <div class="form-group">
+                    <label class="form-label">Background music (loops during entire intro)</label>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                      <label style="display:flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);transition:all 0.15s;background:var(--gray)"
+                        onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                        📂 <span id="ifIntroBgLabel">Upload MP3</span>
+                        <input type="file" accept="audio/mp3,audio/mpeg" style="display:none" onchange="ifUploadIntroBg(this)"/>
+                      </label>
+                      <button id="ifIntroBgClear" onclick="ifClearIntroBg()" style="display:none;padding:7px 12px;background:none;border:1px solid rgba(200,30,0,0.3);border-radius:3px;color:#ff6655;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer"
+                        onmouseover="this.style.borderColor='#cc2200';this.style.background='rgba(200,30,0,0.1)'" onmouseout="this.style.borderColor='rgba(200,30,0,0.3)';this.style.background='none'">✕ Remove</button>
+                      <span id="ifIntroBgStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted)"></span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Default volumes</label>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);width:100px;text-transform:uppercase">🎙️ TTS</span>
+                        <input type="range" class="if-slider" id="ifIntroVolTTS" min="0" max="100" step="1" value="100" style="flex:1"
+                          oninput="document.getElementById('ifIntroVolTTSVal').textContent=this.value+'%'"/>
+                        <span id="ifIntroVolTTSVal" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--orange);width:36px;text-align:right">100%</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);width:100px;text-transform:uppercase">🎵 Music</span>
+                        <input type="range" class="if-slider" id="ifIntroVolBG" min="0" max="100" step="1" value="40" style="flex:1"
+                          oninput="document.getElementById('ifIntroVolBGVal').textContent=this.value+'%'"/>
+                        <span id="ifIntroVolBGVal" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--orange);width:36px;text-align:right">40%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Opening text (spoken by TTS before the lineup)</label>
+                    <textarea class="form-input" id="ifIntroText" rows="3"
+                      placeholder="e.g. Ladies and gentlemen, please welcome your Andenne Black Bears!"
+                      style="resize:vertical;font-family:'Barlow Condensed',sans-serif;font-size:14px"></textarea>
+                    <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">Leave empty to start the lineup immediately.</p>
+                    <button onclick="ifTestIntroTTS(this)" style="margin-top:8px;padding:6px 16px;background:none;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s"
+                      onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="if(!this.dataset.playing){this.style.borderColor='var(--border)';this.style.color='var(--muted)'}">▶ Test TTS</button>
+                  </div>
+
+                  <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:12px;cursor:pointer">
+                      <div id="ifIntroRestToggle" onclick="ifIntroRestToggleClick()" style="width:44px;height:24px;border-radius:12px;background:var(--border);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0">
+                        <div id="ifIntroRestKnob" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>
+                      </div>
+                      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--offwhite)">Announce "And now… the rest of the team!"</span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveIntro()">Apply</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="config-section">
+              <div class="config-section-label">🏃 Visitor Intro</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="flex-direction:column;gap:14px">
+
+                  <div class="form-group">
+                    <label class="form-label">Background music (loops during entire visitor intro)</label>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                      <label style="display:flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);transition:all 0.15s;background:var(--gray)"
+                        onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                        📂 <span id="ifVisitorBgLabel">Upload MP3</span>
+                        <input type="file" accept="audio/mp3,audio/mpeg" style="display:none" onchange="ifUploadVisitorBg(this)"/>
+                      </label>
+                      <button id="ifVisitorBgClear" onclick="ifClearVisitorBg()" style="display:none;padding:7px 12px;background:none;border:1px solid rgba(200,30,0,0.3);border-radius:3px;color:#ff6655;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer"
+                        onmouseover="this.style.borderColor='#cc2200';this.style.background='rgba(200,30,0,0.1)'" onmouseout="this.style.borderColor='rgba(200,30,0,0.3)';this.style.background='none'">✕ Remove</button>
+                      <span id="ifVisitorBgStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted)"></span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Default volumes</label>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);width:100px;text-transform:uppercase">🎙️ TTS</span>
+                        <input type="range" class="if-slider" id="ifVisitorVolTTS" min="0" max="100" step="1" value="100" style="flex:1"
+                          oninput="document.getElementById('ifVisitorVolTTSVal').textContent=this.value+'%'"/>
+                        <span id="ifVisitorVolTTSVal" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--orange);width:36px;text-align:right">100%</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);width:100px;text-transform:uppercase">🎵 Music</span>
+                        <input type="range" class="if-slider" id="ifVisitorVolBG" min="0" max="100" step="1" value="40" style="flex:1"
+                          oninput="document.getElementById('ifVisitorVolBGVal').textContent=this.value+'%'"/>
+                        <span id="ifVisitorVolBGVal" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--orange);width:36px;text-align:right">40%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Opening text (spoken by TTS before the visitor lineup)</label>
+                    <textarea class="form-input" id="ifVisitorText" rows="3"
+                      placeholder="e.g. And now, let's welcome our opponents, the {opponent}!"
+                      style="resize:vertical;font-family:'Barlow Condensed',sans-serif;font-size:14px"></textarea>
+                    <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">
+                      Use <code style="color:var(--orange)">{opponent}</code> to insert the selected opponent's name. Leave empty to start immediately.
+                    </p>
+                    <button onclick="ifTestVisitorTTS(this)" style="margin-top:8px;padding:6px 16px;background:none;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s"
+                      onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="if(!this.dataset.playing){this.style.borderColor='var(--border)';this.style.color='var(--muted)'}">▶ Test TTS</button>
+                  </div>
+
+                  <div>
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveVisitorIntro()">Apply</button>
                   </div>
 
                 </div>
@@ -3267,6 +3421,10 @@
         applause: null,
         letsgo:   null,
         homerun:  null,
+      },
+      intro: {
+        openingText:  '',
+        showRestOfTeam: true,
       },
     };
 
@@ -3652,6 +3810,8 @@
 
       if (typeof initSortable === 'function') initSortable();
       renderLiveLineup();
+      renderVisitorsLineup();
+      renderLiveVisitors();
     }
 
     // ── ÉDITION INLINE ──
@@ -4535,7 +4695,8 @@
       document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('mainPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
       if (tab !== 'batting') document.getElementById('addForm').classList.remove('open');
-      if (tab === 'live') renderLiveLineup();
+      if (tab === 'live') { renderLiveLineup(); renderLiveVisitors(); }
+      if (tab === 'batting') renderVisitorsLineup();
       liveSoundEditClose(); // always close modal on tab switch
     }
 
@@ -5199,6 +5360,39 @@
       document.getElementById('ifDuration').value = PLAY_DURATION;
       document.getElementById('ifDurationVal').textContent = PLAY_DURATION;
 
+      // Team Intro
+      const intro = appSettings.intro || {};
+      document.getElementById('ifIntroText').value = intro.openingText || '';
+      ifIntroRestSetUI(intro.showRestOfTeam !== false);
+      // Volumes
+      const ttsVol = intro.volTTS !== undefined ? intro.volTTS : 100;
+      const bgVol  = intro.volBG  !== undefined ? intro.volBG  : 40;
+      document.getElementById('ifIntroVolTTS').value = ttsVol;
+      document.getElementById('ifIntroVolTTSVal').textContent = ttsVol + '%';
+      document.getElementById('ifIntroVolBG').value  = bgVol;
+      document.getElementById('ifIntroVolBGVal').textContent  = bgVol + '%';
+      // BG music status
+      if (intro.bgMusic) {
+        document.getElementById('ifIntroBgLabel').textContent = '📂 Replace MP3';
+        document.getElementById('ifIntroBgStatus').textContent = '✅ File loaded';
+        document.getElementById('ifIntroBgClear').style.display = '';
+      }
+
+      // Visitor Intro
+      const vi = appSettings.visitorIntro || {};
+      document.getElementById('ifVisitorText').value = vi.openingText || '';
+      const viTtsVol = vi.volTTS !== undefined ? vi.volTTS : 100;
+      const viBgVol  = vi.volBG  !== undefined ? vi.volBG  : 40;
+      document.getElementById('ifVisitorVolTTS').value = viTtsVol;
+      document.getElementById('ifVisitorVolTTSVal').textContent = viTtsVol + '%';
+      document.getElementById('ifVisitorVolBG').value  = viBgVol;
+      document.getElementById('ifVisitorVolBGVal').textContent  = viBgVol + '%';
+      if (vi.bgMusic) {
+        document.getElementById('ifVisitorBgLabel').textContent = '📂 Replace MP3';
+        document.getElementById('ifVisitorBgStatus').textContent = '✅ File loaded';
+        document.getElementById('ifVisitorBgClear').style.display = '';
+      }
+
       // TTS
       ttsInitPanel();
     }
@@ -5391,6 +5585,226 @@
       }
     }
 
+    function ifIntroRestSetUI(on) {
+      const toggle = document.getElementById('ifIntroRestToggle');
+      const knob   = document.getElementById('ifIntroRestKnob');
+      if (!toggle || !knob) return;
+      toggle.style.background = on ? 'var(--orange)' : 'var(--border)';
+      knob.style.left = on ? '22px' : '2px';
+      toggle.dataset.on = on ? '1' : '0';
+    }
+
+    function ifIntroRestToggleClick() {
+      const on = document.getElementById('ifIntroRestToggle').dataset.on !== '1';
+      ifIntroRestSetUI(on);
+    }
+
+    async function ifUploadIntroBg(input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const statusEl = document.getElementById('ifIntroBgStatus');
+      const labelEl  = document.getElementById('ifIntroBgLabel');
+      statusEl.textContent = '⏳ Uploading…';
+      try {
+        const ext  = file.name.split('.').pop().toLowerCase();
+        const path = `intro/bg.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+          body: file,
+        });
+        if (!res.ok && res.status === 409) {
+          res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+            body: file,
+          });
+        }
+        if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.message || `HTTP ${res.status}`); }
+        const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        if (!appSettings.intro) appSettings.intro = {};
+        appSettings.intro.bgMusic = url;
+        saveConfig();
+        labelEl.textContent = '📂 Replace MP3';
+        statusEl.textContent = '✅ ' + file.name;
+        document.getElementById('ifIntroBgClear').style.display = '';
+      } catch(e) {
+        statusEl.textContent = '❌ Error: ' + e.message;
+      }
+    }
+
+    function ifClearIntroBg() {
+      if (!appSettings.intro) appSettings.intro = {};
+      appSettings.intro.bgMusic = null;
+      saveConfig();
+      document.getElementById('ifIntroBgLabel').textContent = 'Upload MP3';
+      document.getElementById('ifIntroBgStatus').textContent = '';
+      document.getElementById('ifIntroBgClear').style.display = 'none';
+    }
+
+    // ── MIXER ──
+    const mixerState = { ttsMuted: false, bgMuted: false, ttsVol: 1, bgVol: 0.4 };
+
+    function mixerSetVol(chan, val) {
+      const v = parseInt(val) / 100;
+      document.getElementById(`mixerVol${chan === 'tts' ? 'TTS' : 'BG'}Val`).textContent = val + '%';
+      if (chan === 'tts') {
+        mixerState.ttsVol = v;
+        mixerState.ttsMuted = false;
+        document.getElementById('mixerMuteTTS').style.opacity = '1';
+        // Apply to current speech (WebSpeech doesn't allow volume change mid-utterance,
+        // but store for next utterance)
+      } else {
+        mixerState.bgVol = v;
+        mixerState.bgMuted = false;
+        document.getElementById('mixerMuteBG').style.opacity = '1';
+        if (introState._bgAudio) introState._bgAudio.volume = v;
+      }
+    }
+
+    function mixerToggleMute(chan) {
+      if (chan === 'tts') {
+        mixerState.ttsMuted = !mixerState.ttsMuted;
+        document.getElementById('mixerMuteTTS').style.opacity = mixerState.ttsMuted ? '0.3' : '1';
+      } else {
+        mixerState.bgMuted = !mixerState.bgMuted;
+        document.getElementById('mixerMuteBG').style.opacity = mixerState.bgMuted ? '0.3' : '1';
+        if (introState._bgAudio) introState._bgAudio.volume = mixerState.bgMuted ? 0 : mixerState.bgVol;
+      }
+    }
+
+    function mixerOpen() {
+      const intro = appSettings.intro || {};
+      const ttsVol = intro.volTTS !== undefined ? intro.volTTS : 100;
+      const bgVol  = intro.volBG  !== undefined ? intro.volBG  : 40;
+      mixerState.ttsVol = ttsVol / 100;
+      mixerState.bgVol  = bgVol  / 100;
+      mixerState.ttsMuted = false;
+      mixerState.bgMuted  = false;
+      document.getElementById('mixerVolTTS').value    = ttsVol;
+      document.getElementById('mixerVolTTSVal').textContent = ttsVol + '%';
+      document.getElementById('mixerVolBG').value     = bgVol;
+      document.getElementById('mixerVolBGVal').textContent  = bgVol + '%';
+      document.getElementById('mixerMuteTTS').style.opacity = '1';
+      document.getElementById('mixerMuteBG').style.opacity  = '1';
+      const hasBg = !!(appSettings.intro || {}).bgMusic;
+      document.getElementById('mixerMuteBG').closest('div').style.opacity = hasBg ? '1' : '0.3';
+      document.getElementById('mixerVolBG').disabled = !hasBg;
+      document.getElementById('introMixer').style.display = 'block';
+    }
+
+    function mixerClose() {
+      document.getElementById('introMixer').style.display = 'none';
+    }
+
+    function ifSaveIntro() {
+      if (!appSettings.intro) appSettings.intro = {};
+      appSettings.intro.openingText    = document.getElementById('ifIntroText').value.trim();
+      appSettings.intro.showRestOfTeam = document.getElementById('ifIntroRestToggle').dataset.on === '1';
+      appSettings.intro.volTTS         = parseInt(document.getElementById('ifIntroVolTTS').value);
+      appSettings.intro.volBG          = parseInt(document.getElementById('ifIntroVolBG').value);
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function ifSaveVisitorIntro() {
+      if (!appSettings.visitorIntro) appSettings.visitorIntro = {};
+      appSettings.visitorIntro.openingText = document.getElementById('ifVisitorText').value.trim();
+      appSettings.visitorIntro.volTTS      = parseInt(document.getElementById('ifVisitorVolTTS').value);
+      appSettings.visitorIntro.volBG       = parseInt(document.getElementById('ifVisitorVolBG').value);
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    async function ifUploadVisitorBg(input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const statusEl = document.getElementById('ifVisitorBgStatus');
+      const labelEl  = document.getElementById('ifVisitorBgLabel');
+      statusEl.textContent = '⏳ Uploading…';
+      try {
+        const ext  = file.name.split('.').pop().toLowerCase();
+        const path = `intro/visitor-bg.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+          body: file,
+        });
+        if (!res.ok && res.status === 409) {
+          res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+            body: file,
+          });
+        }
+        if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.message || `HTTP ${res.status}`); }
+        const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        if (!appSettings.visitorIntro) appSettings.visitorIntro = {};
+        appSettings.visitorIntro.bgMusic = url;
+        saveConfig();
+        labelEl.textContent = '📂 Replace MP3';
+        statusEl.textContent = '✅ ' + file.name;
+        document.getElementById('ifVisitorBgClear').style.display = '';
+      } catch(e) {
+        statusEl.textContent = '❌ Error: ' + e.message;
+      }
+    }
+
+    function ifClearVisitorBg() {
+      if (!appSettings.visitorIntro) appSettings.visitorIntro = {};
+      appSettings.visitorIntro.bgMusic = null;
+      saveConfig();
+      document.getElementById('ifVisitorBgLabel').textContent = 'Upload MP3';
+      document.getElementById('ifVisitorBgStatus').textContent = '';
+      document.getElementById('ifVisitorBgClear').style.display = 'none';
+    }
+
+    async function ifTestVisitorTTS(btn) {
+      const text = document.getElementById('ifVisitorText').value.trim();
+      if (!text) return;
+      if (btn.dataset.playing) {
+        if (window.speechSynthesis) speechSynthesis.cancel();
+        btn.dataset.playing = '';
+        btn.textContent = '▶ Test TTS';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--muted)';
+        return;
+      }
+      btn.dataset.playing = '1';
+      btn.textContent = '■ Stop';
+      btn.style.borderColor = 'var(--orange)';
+      btn.style.color = 'var(--orange)';
+      try { await ttsSpeak(text); } catch(e) {}
+      btn.dataset.playing = '';
+      btn.textContent = '▶ Test TTS';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--muted)';
+    }
+
+    async function ifTestIntroTTS(btn) {
+      const text = document.getElementById('ifIntroText').value.trim();
+      if (!text) return;
+      if (btn.dataset.playing) {
+        if (window.speechSynthesis) speechSynthesis.cancel();
+        btn.dataset.playing = '';
+        btn.textContent = '▶ Test TTS';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--muted)';
+        return;
+      }
+      btn.dataset.playing = '1';
+      btn.textContent = '■ Stop';
+      btn.style.borderColor = 'var(--orange)';
+      btn.style.color = 'var(--orange)';
+      try { await ttsSpeak(text); } catch(e) {}
+      btn.dataset.playing = '';
+      btn.textContent = '▶ Test TTS';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--muted)';
+    }
+
     // ── TTS — ANNOUNCEMENTS ──
 
     function ttsInitPanel() {
@@ -5458,7 +5872,8 @@
       if (!sel || !window.speechSynthesis) return;
       const fill = () => {
         const lang = appSettings.tts?.lang || 'en';
-        const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith(lang));
+        const langPrefix = lang.startsWith('fr') ? 'fr' : lang;
+        const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith(langPrefix));
         sel.innerHTML = voices.map(v =>
           `<option value="${v.name}" ${v.name === (appSettings.tts?.voiceName || '') ? 'selected' : ''}>${v.name} (${v.lang})</option>`
         ).join('') || '<option value="">Default</option>';
@@ -5470,14 +5885,52 @@
     const ORDINALS_FR = ['Premier','Deuxième','Troisième','Quatrième','Cinquième','Sixième','Septième','Huitième','Neuvième'];
     const ORDINALS_EN = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth'];
 
+    function spellJersey(num, lang) {
+      const fr = lang.startsWith('fr');
+      const be = lang === 'fr-be';
+      const ch = lang === 'fr-ch';
+      if (!fr) return String(num);
+      const n = parseInt(num);
+      if (isNaN(n) || n < 0 || n > 99) return String(num);
+      const units = ['','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
+                     'dix','onze','douze','treize','quatorze','quinze','seize',
+                     'dix-sept','dix-huit','dix-neuf'];
+      if (n < 20) return units[n] || String(n);
+      const tens_fr = ['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];
+      const tens_be = ['','','vingt','trente','quarante','cinquante','soixante','septante','quatre-vingt','nonante'];
+      const tens_ch = ['','','vingt','trente','quarante','cinquante','soixante','septante','huitante','nonante'];
+      const tens = ch ? tens_ch : (be ? tens_be : tens_fr);
+      const t = Math.floor(n / 10);
+      const u = n % 10;
+      if (ch) {
+        if (u === 0) return tens[t];
+        if (u === 1) return tens[t] + '-et-un';
+        return tens[t] + '-' + units[u];
+      } else if (be) {
+        if (t === 8) { return u === 0 ? 'quatre-vingts' : 'quatre-vingt-' + units[u]; }
+        if (u === 0) return tens[t];
+        if (u === 1) return tens[t] + '-et-un';
+        return tens[t] + '-' + units[u];
+      } else {
+        if (t === 7) return 'soixante-' + units[10 + u];
+        if (t === 8) { return u === 0 ? 'quatre-vingts' : 'quatre-vingt-' + units[u]; }
+        if (t === 9) return 'quatre-vingt-' + units[10 + u];
+        if (u === 0) return tens[t];
+        if (u === 1) return tens[t] + '-et-un';
+        return tens[t] + '-' + units[u];
+      }
+    }
+
     function ttsBuildText(entry) {
       const player = allPlayers[entry.pid] || {};
       const t = appSettings.tts || {};
+      const lang = t.lang || 'en';
       const pron = appSettings.posPronunciations || {};
       const posLabel = pron[entry.pos] || entry.pos || '';
+      const jerseySpelled = entry.jersey ? spellJersey(entry.jersey, lang) : '';
       return (t.template || 'Now batting, number {jersey}, {name}!')
         .replace('{name}',     player.pronunciation || player.name || '')
-        .replace('{jersey}',   entry.jersey    || '')
+        .replace('{jersey}',   jerseySpelled)
         .replace('{position}', posLabel)
         .replace('{team}',     teams[currentTeamId]?.label || '');
     }
@@ -5485,11 +5938,21 @@
     function ttsBuildIntroText(entry, orderIndex) {
       const player  = allPlayers[entry.pid] || {};
       const t       = appSettings.tts || {};
-      const useFr   = (t.lang || 'en') === 'fr';
-      const isBench = orderIndex >= 9;
+      const lang   = t.lang || 'en';
+      const useFr  = lang.startsWith('fr');
+      const isBe   = lang === 'fr-be';
+      const isCh   = lang === 'fr-ch';
 
       const name   = player.pronunciation || player.name || '';
-      const jersey = entry.jersey ? (useFr ? `numéro ${entry.jersey}` : `number ${entry.jersey}`) : '';
+
+      // Visitor entry: just jersey + name, no ordinal/position
+      if (entry._visitor) {
+        const jersey = entry.jersey ? (useFr ? `numéro ${spellJersey(entry.jersey, lang)}` : `number ${entry.jersey}`) : '';
+        return useFr ? `${jersey ? jersey + ', ' : ''}${name} !` : `${jersey ? jersey + ', ' : ''}${name}!`;
+      }
+
+      const isBench = orderIndex >= 9;
+      const jersey = entry.jersey ? (useFr ? `numéro ${spellJersey(entry.jersey, lang)}` : `number ${entry.jersey}`) : '';
 
       // Bench players (10+): jersey + name only
       if (isBench) {
@@ -5540,24 +6003,41 @@
       return new Promise((resolve) => {
         if (!window.speechSynthesis) return resolve();
         let resolved = false;
-        const done = () => { if (!resolved) { resolved = true; resolve(); } };
+        const done = () => { if (!resolved) { resolved = true; clearInterval(keepAlive); resolve(); } };
 
-        // Safety timeout — if speech never fires onend, continue after 10s
-        const timeout = setTimeout(done, 10000);
-
-        setTimeout(() => {
-          const utt = new SpeechSynthesisUtterance(text);
-          utt.rate   = 0.92;
-          utt.pitch  = 0.95;
-          utt.volume = 1;
-          if (voiceName) {
-            const v = speechSynthesis.getVoices().find(v => v.name === voiceName);
-            if (v) utt.voice = v;
+        // iOS Safari workaround: speechSynthesis stalls without periodic resume()
+        const keepAlive = setInterval(() => {
+          if (speechSynthesis.speaking) {
+            speechSynthesis.pause();
+            speechSynthesis.resume();
           }
-          utt.onend   = () => { clearTimeout(timeout); done(); };
-          utt.onerror = () => { clearTimeout(timeout); done(); };
-          speechSynthesis.speak(utt);
-        }, 150);
+        }, 5000);
+
+        // Safety timeout based on text length (~130 wpm at rate 0.92), min 6s, +3s buffer
+        const words = text.trim().split(/\s+/).length;
+        const estimatedMs = Math.round(words / (130 * 0.92) * 60 * 1000);
+        const timeout = setTimeout(done, Math.max(6000, estimatedMs + 3000));
+
+        // Prefix with pause to simulate natural breath before speaking
+        const primed = '... ' + text;
+        const utt = new SpeechSynthesisUtterance(primed);
+        utt.rate   = 0.92;
+        utt.pitch  = 0.95;
+        utt.volume = 1;
+        if (voiceName) {
+          const v = speechSynthesis.getVoices().find(v => v.name === voiceName);
+          if (v) utt.voice = v;
+        }
+        utt.onend   = () => { clearTimeout(timeout); done(); };
+        utt.onerror = () => { clearTimeout(timeout); done(); };
+
+        speechSynthesis.cancel();
+        // Wait until engine is fully stopped before speaking
+        const waitReady = (cb) => {
+          if (!speechSynthesis.speaking && !speechSynthesis.pending) { cb(); return; }
+          setTimeout(() => waitReady(cb), 30);
+        };
+        waitReady(() => speechSynthesis.speak(utt));
       });
     }
 
@@ -6106,25 +6586,87 @@
     };
 
     function startTeamIntro() {
-      stopPlayback();
       const entries = currentLineup().filter(e => e.present !== false);
       if (entries.length === 0) { alert('No present players in the lineup.'); return; }
+      launchTeamIntro(entries);
+    }
 
+    async function launchTeamIntro(entries) {
+      stopPlayback();
       introState = { entries, index: 0, paused: false, timer: null, elapsed: 0 };
 
       const overlay = document.getElementById('introOverlay');
       overlay.style.display = 'flex';
-
-      // Prevent scroll behind overlay
       document.body.style.overflow = 'hidden';
 
       introBuildDots();
+
+      // Open mixer
+      mixerOpen();
+
+      // Start background music if configured
+      const bgUrl = (appSettings.intro || {}).bgMusic;
+      if (bgUrl) {
+        const bgAudio = new Audio(bgUrl);
+        bgAudio.loop   = true;
+        bgAudio.volume = mixerState.bgMuted ? 0 : mixerState.bgVol;
+        bgAudio.play().catch(() => {});
+        introState._bgAudio = bgAudio;
+      }
+
+      // Keep audio channel open continuously to prevent OS fade-in on each utterance
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0; // silent
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        introState._audioCtx = ctx;
+        introState._audioOsc = osc;
+      } catch(e) {}
+
+      // Pre-warm Web Speech engine to eliminate first-utterance lag
+      if (appSettings.tts?.enabled && (!appSettings.tts?.engine || appSettings.tts?.engine === 'webspeech') && window.speechSynthesis) {
+        const warmup = new SpeechSynthesisUtterance(' ');
+        warmup.volume = 0;
+        speechSynthesis.speak(warmup);
+        speechSynthesis.cancel();
+      }
+
+      // Opening text — show in overlay and speak/wait before lineup
+      const openingText = (appSettings.intro || {}).openingText;
+      if (openingText) {
+        // Display opening text in the intro card area
+        document.getElementById('introOrderNum').textContent  = '';
+        document.getElementById('introName').textContent      = '';
+        document.getElementById('introJersey').textContent    = '';
+        document.getElementById('introPosBadge').style.display = 'none';
+        document.getElementById('introPlayingLabel').textContent = openingText;
+        document.getElementById('introCounter').textContent   = '';
+        document.getElementById('introAvatar').innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><text x="30" y="42" text-anchor="middle" font-size="40">🎤</text></svg>`;
+
+        if (appSettings.tts?.enabled) {
+          try { await ttsSpeak(openingText); } catch(e) { console.warn('TTS failed:', e); }
+        } else {
+          // Estimate reading time: ~130 words/min, min 2s
+          const words = openingText.trim().split(/\s+/).length;
+          const ms = Math.max(2000, Math.round(words / 130 * 60 * 1000));
+          await new Promise(r => setTimeout(r, ms));
+        }
+      }
+
       introShowPlayer(0);
     }
 
     function stopTeamIntro() {
       clearInterval(introState.timer);
       if (window.speechSynthesis) speechSynthesis.cancel();
+      if (introState._bgAudio)   { introState._bgAudio.pause(); introState._bgAudio = null; }
+      if (introState._audioOsc)  { try { introState._audioOsc.stop(); } catch(e) {} }
+      if (introState._audioCtx)  { introState._audioCtx.close().catch(()=>{}); }
+      mixerClose();
       introState = { entries: [], index: 0, paused: false, timer: null, elapsed: 0 };
       document.getElementById('introOverlay').style.display = 'none';
       document.body.style.overflow = '';
@@ -6161,14 +6703,17 @@
       introUpdateDots(idx);
 
       const entry  = introState.entries[idx];
-      const player = allPlayers[entry.pid];
+      // For visitor entries, build player object directly from entry
+      const player = entry._visitor
+        ? { name: entry._name, pronunciation: entry._name }
+        : allPlayers[entry.pid];
       if (!player) { setTimeout(() => introNext(), 500); return; }
 
-      const useFr    = (appSettings.tts?.lang || 'en') === 'fr';
+      const useFr    = (appSettings.tts?.lang || 'en').startsWith('fr');
       const isBench  = idx >= 9;
 
       // ── Transition announcement before first bench player ──
-      if (idx === 9) {
+      if (idx === 9 && appSettings.intro?.showRestOfTeam !== false) {
         // Show transition card in UI
         document.getElementById('introOrderNum').textContent  = '';
         document.getElementById('introName').textContent      = useFr ? 'ET MAINTENANT…' : 'AND NOW…';
@@ -6242,8 +6787,8 @@
         </svg>`;
       }
 
-      // ── 1 second pause before announcement ──
-      await new Promise(r => setTimeout(r, 1000));
+      // ── Short pause before announcement ──
+      await new Promise(r => setTimeout(r, 300));
       if (introState.index !== idx) return;
 
       // ── TTS ──
@@ -6445,6 +6990,208 @@
     let liveCustomSounds = JSON.parse(localStorage.getItem('liveCustomSounds') || '[]');
     // [{id, label, url}]
 
+    // ── VISITORS LINEUP ──
+    // [{name, jersey, pronunciation}] — persisté en localStorage
+    let visitorsLineup = JSON.parse(localStorage.getItem('visitorsLineup') || '[]');
+    function saveVisitors() { localStorage.setItem('visitorsLineup', JSON.stringify(visitorsLineup)); }
+
+    let currentOpponentId = localStorage.getItem('currentOpponentId') || '';
+    function saveCurrentOpponent() { localStorage.setItem('currentOpponentId', currentOpponentId); }
+
+    // ── VISITORS LINEUP — CRUD ──
+
+    function visitorOpponentChanged(val) {
+      currentOpponentId = val;
+      saveCurrentOpponent();
+    }
+
+    function populateVisitorOpponentSelect() {
+      const sel = document.getElementById('visitorOpponentSelect');
+      if (!sel) return;
+      const opponents = appSettings.opponents || [];
+      sel.innerHTML = '<option value="">— Select opponent —</option>' +
+        opponents.map(o => `<option value="${o.id}" ${o.id === currentOpponentId ? 'selected' : ''}>${o.name}</option>`).join('');
+    }
+
+    function toggleVisitorForm() {
+      const f = document.getElementById('addVisitorForm');
+      f.style.display = f.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function addVisitor() {
+      const name  = document.getElementById('visitorName').value.trim();
+      const pron  = document.getElementById('visitorPronunciation').value.trim();
+      const jersey = document.getElementById('visitorJersey').value.trim();
+      if (!name) return;
+      visitorsLineup.push({ name, pronunciation: pron, jersey });
+      saveVisitors();
+      renderVisitorsLineup();
+      renderLiveVisitors();
+      document.getElementById('visitorName').value = '';
+      document.getElementById('visitorPronunciation').value = '';
+      document.getElementById('visitorJersey').value = '';
+    }
+
+    function removeVisitor(idx) {
+      visitorsLineup.splice(idx, 1);
+      saveVisitors();
+      renderVisitorsLineup();
+      renderLiveVisitors();
+    }
+
+    function visitorsClear() {
+      if (!visitorsLineup.length) return;
+      if (!confirm('Clear all visitors?')) return;
+      visitorsLineup = [];
+      saveVisitors();
+      renderVisitorsLineup();
+      renderLiveVisitors();
+    }
+
+    function renderVisitorsLineup() {
+      populateVisitorOpponentSelect();
+      const el = document.getElementById('visitorsLineupList');
+      if (!el) return;
+      if (!visitorsLineup.length) {
+        el.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);padding:8px 0">No visitors added yet.</div>';
+        return;
+      }
+      el.innerHTML = visitorsLineup.map((v, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--darkgray);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:2px;margin-bottom:3px">
+          <span style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--border);width:22px;text-align:center;flex-shrink:0">${i+1}</span>
+          ${v.jersey ? `<span style="font-family:'Oswald',sans-serif;font-size:13px;color:var(--orange);flex-shrink:0">#${v.jersey}</span>` : ''}
+          <span style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--white);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</span>
+          ${v.pronunciation ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--muted);letter-spacing:1px;flex-shrink:0">"${v.pronunciation}"</span>` : ''}
+          <button onclick="editVisitor(${i})" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+            onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">✏</button>
+          <button onclick="removeVisitor(${i})" style="width:24px;height:24px;border-radius:3px;border:1px solid rgba(200,30,0,0.3);background:none;color:#ff6655;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+            onmouseover="this.style.background='rgba(200,30,0,0.1)'" onmouseout="this.style.background='none'">✕</button>
+        </div>`).join('');
+    }
+
+    function editVisitor(idx) {
+      const v = visitorsLineup[idx];
+      const name  = prompt('Name:', v.name);
+      if (name === null) return;
+      const pron  = prompt('Pronunciation (optional):', v.pronunciation || '');
+      if (pron === null) return;
+      const jersey = prompt('Jersey # (optional):', v.jersey || '');
+      if (jersey === null) return;
+      visitorsLineup[idx] = { name: name.trim(), pronunciation: pron.trim(), jersey: jersey.trim() };
+      saveVisitors();
+      renderVisitorsLineup();
+      renderLiveVisitors();
+    }
+
+    // ── VISITORS — LIVE MODE ──
+
+    function renderLiveVisitors() {
+      const col = document.getElementById('liveColVisitors');
+      const el  = document.getElementById('liveVisitorsList');
+      if (!col || !el) return;
+
+      // Show/hide column
+      const hasVisitors = visitorsLineup.length > 0;
+      col.style.display = hasVisitors ? '' : 'none';
+      const resizer = document.getElementById('liveResizer3');
+      if (resizer) resizer.style.display = hasVisitors ? '' : 'none';
+
+      if (!hasVisitors) { el.innerHTML = ''; return; }
+
+      el.innerHTML = visitorsLineup.map((v, i) => `
+        <div class="live-player-card" onclick="liveAnnounceVisitor(${i})">
+          <div class="live-order">${i+1}</div>
+          <div class="live-player-info">
+            <div class="live-player-name">${v.jersey ? '#'+v.jersey+' · ' : ''}${v.name}</div>
+            ${v.pronunciation ? `<div class="live-player-meta">"${v.pronunciation}"</div>` : ''}
+          </div>
+          <button style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;font-size:14px"
+            onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'"
+            onclick="event.stopPropagation();liveAnnounceVisitor(${i})" title="Announce">🎙️</button>
+        </div>`).join('');
+    }
+
+    async function liveAnnounceVisitor(idx) {
+      const v = visitorsLineup[idx];
+      if (!v || !appSettings.tts?.enabled) return;
+      const t = appSettings.tts || {};
+      const lang = t.lang || 'en';
+      const jerseySpelled = v.jersey ? spellJersey(v.jersey, lang) : '';
+      const text = (t.template || 'Now batting, number {jersey}, {name}!')
+        .replace('{name}',     v.pronunciation || v.name || '')
+        .replace('{jersey}',   jerseySpelled)
+        .replace('{position}', '')
+        .replace('{team}',     '');
+      try { await ttsSpeak(text.replace(/,\s*,/g, ',').replace(/^\s*,\s*/, '').trim()); } catch(e) {}
+    }
+
+    async function startVisitorIntro() {
+      if (!visitorsLineup.length) return;
+      stopPlayback();
+      const entries = visitorsLineup.map((v, i) => ({
+        _visitor: true,
+        pid: `visitor_${i}`,
+        jersey: v.jersey,
+        _name: v.pronunciation || v.name,
+        pos: '',
+      }));
+      introState = { entries, index: 0, paused: false, timer: null, elapsed: 0 };
+      const overlay = document.getElementById('introOverlay');
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      introBuildDots();
+
+      // Use visitorIntro settings
+      const vi = appSettings.visitorIntro || {};
+      mixerState.ttsVol = (vi.volTTS !== undefined ? vi.volTTS : 100) / 100;
+      mixerState.bgVol  = (vi.volBG  !== undefined ? vi.volBG  : 40)  / 100;
+      mixerOpen();
+
+      const bgUrl = vi.bgMusic;
+      if (bgUrl) {
+        const bgAudio = new Audio(bgUrl);
+        bgAudio.loop = true;
+        bgAudio.volume = mixerState.bgMuted ? 0 : mixerState.bgVol;
+        bgAudio.play().catch(() => {});
+        introState._bgAudio = bgAudio;
+      }
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        introState._audioCtx = ctx;
+        introState._audioOsc = osc;
+      } catch(e) {}
+
+      // Opening text
+      const openingText = vi.openingText;
+      if (openingText) {
+        // Resolve {opponent} variable
+        const opp = (appSettings.opponents || []).find(o => o.id === currentOpponentId);
+        const oppName = opp?.name || '';
+        const resolvedText = openingText.replace(/\{opponent\}/gi, oppName).trim();
+        document.getElementById('introOrderNum').textContent  = '';
+        document.getElementById('introName').textContent      = '';
+        document.getElementById('introJersey').textContent    = '';
+        document.getElementById('introPosBadge').style.display = 'none';
+        document.getElementById('introPlayingLabel').textContent = resolvedText;
+        document.getElementById('introCounter').textContent   = '';
+        document.getElementById('introAvatar').innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><text x="30" y="42" text-anchor="middle" font-size="40">🎤</text></svg>`;
+        if (appSettings.tts?.enabled) {
+          try { await ttsSpeak(resolvedText); } catch(e) {}
+        } else {
+          const words = resolvedText.trim().split(/\s+/).length;
+          await new Promise(r => setTimeout(r, Math.max(2000, Math.round(words / 130 * 60 * 1000))));
+        }
+      }
+
+      introShowPlayer(0);
+    }
+
     function liveSoundPlay(key) {
       const def = LIVE_SOUNDS[key];
       if (!def?.url) return; // greyed out — no file uploaded
@@ -6568,9 +7315,9 @@
 
     (function initLiveColumns() {
       const saved = JSON.parse(localStorage.getItem('liveColWidths') || 'null');
-      const cols = ['liveColSounds','liveColField','liveColWalkup'];
-      if (saved && saved.length === 3) {
-        cols.forEach((id, i) => { const el = document.getElementById(id); if (el) el.style.flex = `0 0 ${saved[i]}px`; });
+      const cols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
+      if (saved && saved.length === cols.length) {
+        cols.forEach((id, i) => { const el = document.getElementById(id); if (el && el.style.display !== 'none') el.style.flex = `0 0 ${saved[i]}px`; });
       } else {
         cols.forEach(id => { const el = document.getElementById(id); if (el) el.style.flex = '1 1 0'; });
       }
@@ -6580,10 +7327,12 @@
       e.preventDefault();
       const resizer = e.currentTarget;
       resizer.classList.add('dragging');
-      const cols = ['liveColSounds','liveColField','liveColWalkup'];
-      const leftCol  = document.getElementById(cols[resizerIndex]);
-      const rightCol = document.getElementById(cols[resizerIndex + 1]);
-      const startX   = e.clientX;
+      const allCols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
+      const visibleCols = allCols.filter(id => { const el = document.getElementById(id); return el && el.style.display !== 'none'; });
+      const leftCol  = document.getElementById(visibleCols[resizerIndex]);
+      const rightCol = document.getElementById(visibleCols[resizerIndex + 1]);
+      if (!leftCol || !rightCol) return;
+      const startX     = e.clientX;
       const startLeft  = leftCol.getBoundingClientRect().width;
       const startRight = rightCol.getBoundingClientRect().width;
       function onMove(ev) {
@@ -6595,7 +7344,7 @@
         resizer.classList.remove('dragging');
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        const widths = cols.map(id => document.getElementById(id).getBoundingClientRect().width);
+        const widths = allCols.map(id => document.getElementById(id)?.getBoundingClientRect().width || 0);
         localStorage.setItem('liveColWidths', JSON.stringify(widths));
       }
       document.addEventListener('mousemove', onMove);
@@ -6617,7 +7366,6 @@
         const cls = hasFile ? 'has-file custom-active' : 'empty';
         return `
           <div class="sound-btn ${cls}" id="lfsBtn_${s.id}" onclick="${hasFile ? `liveFieldSongPlay('${s.id}')` : ''}">
-            <div class="sound-led"></div>
             <span class="sound-btn-icon">${hasFile ? '🎸' : '➕'}</span>
             <span class="sound-btn-label">${s.label}</span>
             <div class="sound-btn-actions">
@@ -6793,7 +7541,6 @@
         const cls = hasFile ? 'has-file custom-active' : 'empty';
         return `
           <div class="sound-btn ${cls}" id="lcsBtn_${s.id}" onclick="${hasFile ? `liveCustomSoundPlay('${s.id}')` : ''}">
-            <div class="sound-led"></div>
             <span class="sound-btn-icon">${hasFile ? '🎵' : '➕'}</span>
             <span class="sound-btn-label">${s.label}</span>
             <div class="sound-btn-actions">
@@ -6942,6 +7689,31 @@
     </div>
   </div>
 
+
+  <!-- TEAM INTRO MIXER -->
+  <div id="introMixer" style="display:none;position:fixed;bottom:24px;right:24px;z-index:400;background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:16px 20px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:14px">🎚️ Mixer</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="mixerMuteTTS" onclick="mixerToggleMute('tts')" title="Mute TTS"
+          style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">🎙️</button>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;width:44px;flex-shrink:0">TTS</span>
+        <input type="range" id="mixerVolTTS" min="0" max="100" step="1" value="100"
+          oninput="mixerSetVol('tts', this.value)"
+          style="flex:1;accent-color:var(--orange);cursor:pointer"/>
+        <span id="mixerVolTTSVal" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--orange);width:32px;text-align:right">100%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button id="mixerMuteBG" onclick="mixerToggleMute('bg')" title="Mute music"
+          style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">🎵</button>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;width:44px;flex-shrink:0">Music</span>
+        <input type="range" id="mixerVolBG" min="0" max="100" step="1" value="40"
+          oninput="mixerSetVol('bg', this.value)"
+          style="flex:1;accent-color:var(--orange);cursor:pointer"/>
+        <span id="mixerVolBGVal" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--orange);width:32px;text-align:right">40%</span>
+      </div>
+    </div>
+  </div>
 
   <!-- TEAM INTRO OVERLAY — body level -->
   <!-- SEQUENTIAL INTRO OVERLAY -->
