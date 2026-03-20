@@ -2001,27 +2001,28 @@
     }
 
     @media (max-width: 640px) {
+
+      /* Main body : panels prennent toute la hauteur */
       .main-body {
-        flex-direction: column;
+        overflow: visible;
+        position: relative;
       }
 
-      /* Sidebar devient une bottom nav bar fixe */
+      /* Sidebar = bottom nav fixe */
       .main-sidebar {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         width: 100% !important;
-        height: 64px;
+        height: 60px;
         box-sizing: border-box;
         flex-direction: row;
-        flex-wrap: nowrap;
         padding: 0;
         border-right: none;
-        border-top: 1px solid var(--border);
+        border-top: 2px solid var(--border);
         gap: 0;
-        z-index: 100;
-        overflow: visible;
+        z-index: 200;
       }
 
       .main-nav-btn {
@@ -2029,32 +2030,34 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 8px 4px;
+        padding: 6px 4px;
         gap: 3px;
         border-radius: 0;
         border: none;
         border-top: 3px solid transparent;
         min-width: 0;
         height: 100%;
+        width: auto;
+        text-align: center;
       }
 
       .main-nav-btn.active {
         border-top-color: var(--orange);
-        background: rgba(255,69,0,0.08);
+        background: rgba(255,69,0,0.1);
       }
 
-      .main-nav-icon { font-size: 22px; }
+      .main-nav-icon { font-size: 20px; }
 
       .main-nav-label {
         font-size: 9px;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
       }
 
-      /* Padding bottom pour que le contenu ne soit pas caché par la nav */
+      /* Panels : toute la largeur, padding bottom pour nav */
       .main-panels {
-        flex: 1;
+        width: 100%;
         overflow-y: auto;
-        padding-bottom: 64px;
+        padding-bottom: 60px;
       }
 
       /* Grille player compacte */
@@ -7166,24 +7169,27 @@
       const isMobile = window.innerWidth <= 700;
       if (!isMobile) return;
       const cols = {
-        sounds:  'liveColSounds',
-        field:   'liveColField',
-        walkup:  'liveColWalkup',
-        visitors:'liveColVisitors',
+        sounds:   'liveColSounds',
+        field:    'liveColField',
+        walkup:   'liveColWalkup',
+        visitors: 'liveColVisitors',
       };
       const tabs = {
-        sounds:  'liveTabSounds',
-        field:   'liveTabField',
-        walkup:  'liveTabWalkup',
-        visitors:'liveTabVisitors',
+        sounds:   'liveTabSounds',
+        field:    'liveTabField',
+        walkup:   'liveTabWalkup',
+        visitors: 'liveTabVisitors',
       };
       Object.keys(cols).forEach(key => {
         const col = document.getElementById(cols[key]);
         const btn = document.getElementById(tabs[key]);
         if (!col) return;
-        // Skip visitors col if it has display:none from renderLiveVisitors
+        // Skip visitors if not available
         if (key === 'visitors' && col.dataset.hasVisitors !== '1') return;
-        col.classList.toggle('mobile-hidden', key !== tab);
+        // Use style.display directly to override any inline flex styles
+        col.style.display = key === tab ? 'flex' : 'none';
+        col.style.flex = key === tab ? '1 1 auto' : '';
+        col.style.width = key === tab ? '100%' : '';
         btn?.classList.toggle('active', key === tab);
       });
     }
@@ -7530,6 +7536,7 @@
     let liveFieldSongs = JSON.parse(localStorage.getItem('liveFieldSongs') || '[]');
 
     (function initLiveColumns() {
+      if (window.innerWidth <= 700) return; // mobile uses tab switching instead
       const saved = JSON.parse(localStorage.getItem('liveColWidths') || 'null');
       const cols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
       if (saved && saved.length === cols.length) {
