@@ -6221,12 +6221,7 @@
         utt.onerror = () => { clearTimeout(timeout); done(); };
 
         speechSynthesis.cancel();
-        // Wait until engine is fully stopped, then small breath pause before speaking
-        const waitReady = (cb) => {
-          if (!speechSynthesis.speaking && !speechSynthesis.pending) { cb(); return; }
-          setTimeout(() => waitReady(cb), 30);
-        };
-        waitReady(() => setTimeout(() => speechSynthesis.speak(utt), 200));
+        setTimeout(() => speechSynthesis.speak(utt), 200);
       });
     }
 
@@ -6884,6 +6879,8 @@
       introState.timer = null;
 
       if (idx >= introState.entries.length) {
+        // Wait 15s on last player before closing
+        await new Promise(r => { introState.timer = setTimeout(r, 15000); });
         stopTeamIntro();
         return;
       }
@@ -6988,8 +6985,9 @@
       }
       if (introState.index !== idx) return;
 
-      // ── 10 seconds after TTS ends before next player ──
-      await new Promise(r => { introState.timer = setTimeout(r, 10000); });
+      // ── Delay before next player — shorter for bench players ──
+      const delay = idx >= 9 ? 1000 : 10000;
+      await new Promise(r => { introState.timer = setTimeout(r, delay); });
       if (introState.index !== idx) return;
       introNext();
     }
