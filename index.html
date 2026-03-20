@@ -4467,6 +4467,7 @@
     }
 
     async function startPlayback(entry, entryIndex) {
+      ttsUnlock();
       const player = allPlayers[entry.pid];
       if (!player) return;
 
