@@ -2749,10 +2749,17 @@
 
           <!-- ── COLUMN 1: SOUNDS ── -->
           <div class="live-col" id="liveColSounds">
-            <div class="live-col-header">🔊 Sounds</div>
+            <div class="live-col-header" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>🔊 Sounds</span>
+              <button onclick="liveSoundStopAll()" title="Stop all sounds"
+                style="display:flex;align-items:center;gap:4px;background:rgba(200,30,0,0.15);border:1px solid rgba(200,30,0,0.4);border-radius:3px;color:#ff6655;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;cursor:pointer;transition:all 0.15s"
+                onmouseover="this.style.background='rgba(200,30,0,0.28)'" onmouseout="this.style.background='rgba(200,30,0,0.15)'">
+                ⏹ Stop All
+              </button>
+            </div>
             <div class="live-col-body">
 
-              <div class="live-col-section-label">Soundboard</div>
+              <div class="live-col-section-label">⚾ Baseball</div>
               <div class="live-soundboard">
                 <div class="sound-btn empty" id="sbtnAnthem" onclick="liveSoundPlay('anthem')">
                   <span class="sound-btn-icon">🎺</span>
@@ -2765,6 +2772,43 @@
                   </div>
                   <label class="sound-upload-lbl" id="sulblAnthem" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('anthem',this)"/></label>
                 </div>
+                <div class="sound-btn empty" id="sbtnHomerun" onclick="liveSoundPlay('homerun')">
+                  <span class="sound-btn-icon">💥</span>
+                  <span class="sound-btn-label" id="slblHomerun">Home Run!</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('homerun')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('homerun')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('homerun')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('homerun')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblHomerun" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('homerun',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnStrikeout" onclick="liveSoundPlay('strikeout')">
+                  <span class="sound-btn-icon">⚡</span>
+                  <span class="sound-btn-label" id="slblStrikeout">Strike Out</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('strikeout')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('strikeout')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('strikeout')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('strikeout')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblStrikeout" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('strikeout',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnWalkoff" onclick="liveSoundPlay('walkoff')">
+                  <span class="sound-btn-icon">🏆</span>
+                  <span class="sound-btn-label" id="slblWalkoff">Walk Off</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('walkoff')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('walkoff')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('walkoff')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('walkoff')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblWalkoff" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('walkoff',this)"/></label>
+                </div>
+              </div>
+
+              <div class="live-col-section-label" style="margin-top:14px">🎭 Ambiance</div>
+              <div class="live-soundboard">
                 <div class="sound-btn empty" id="sbtnApplause" onclick="liveSoundPlay('applause')">
                   <span class="sound-btn-icon">👏</span>
                   <span class="sound-btn-label" id="slblApplause">Applause</span>
@@ -2787,20 +2831,53 @@
                   </div>
                   <label class="sound-upload-lbl" id="sulblLetsgo" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('letsgo',this)"/></label>
                 </div>
-                <div class="sound-btn empty" id="sbtnHomerun" onclick="liveSoundPlay('homerun')">
-                  <span class="sound-btn-icon">💥</span>
-                  <span class="sound-btn-label" id="slblHomerun">Home Run!</span>
+                <div class="sound-btn empty" id="sbtnCharge" onclick="liveSoundPlay('charge')">
+                  <span class="sound-btn-icon">🥁</span>
+                  <span class="sound-btn-label" id="slblCharge">Charge!</span>
                   <div class="sound-btn-actions">
-                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('homerun')" title="Play">▶</span>
-                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('homerun')" title="Stop">■</span>
-                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('homerun')" title="Edit">✏</span>
-                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('homerun')" title="Remove">✕</span>
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('charge')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('charge')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('charge')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('charge')" title="Remove">✕</span>
                   </div>
-                  <label class="sound-upload-lbl" id="sulblHomerun" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('homerun',this)"/></label>
+                  <label class="sound-upload-lbl" id="sulblCharge" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('charge',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnDrumroll" onclick="liveSoundPlay('drumroll')">
+                  <span class="sound-btn-icon">🪘</span>
+                  <span class="sound-btn-label" id="slblDrumroll">Drumroll</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('drumroll')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('drumroll')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('drumroll')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('drumroll')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblDrumroll" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('drumroll',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnAirhorn" onclick="liveSoundPlay('airhorn')">
+                  <span class="sound-btn-icon">📯</span>
+                  <span class="sound-btn-label" id="slblAirhorn">Air Horn</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('airhorn')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('airhorn')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('airhorn')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('airhorn')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblAirhorn" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('airhorn',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnSadtrombone" onclick="liveSoundPlay('sadtrombone')">
+                  <span class="sound-btn-icon">😢</span>
+                  <span class="sound-btn-label" id="slblSadtrombone">Sad Trombone</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('sadtrombone')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('sadtrombone')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('sadtrombone')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('sadtrombone')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblSadtrombone" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('sadtrombone',this)"/></label>
                 </div>
               </div>
 
-              <div class="live-col-section-label" style="margin-top:16px">Custom</div>
+              <div class="live-col-section-label" style="margin-top:14px">⭐ Custom</div>
               <div class="live-custom-sounds" id="liveCustomSoundsGrid"></div>
               <div style="margin-top:8px">
                 <label class="live-add-btn" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
@@ -2812,7 +2889,7 @@
             </div>
           </div>
 
-          <!-- ── RESIZER 1 ── -->
+                    <!-- ── RESIZER 1 ── -->
           <div class="live-resizer" id="liveResizer1" onmousedown="liveResizerStart(event,0)"></div>
 
           <!-- ── COLUMN 2: CHANGE FIELD SONGS ── -->
@@ -7501,7 +7578,7 @@
           }
           saveBtn.textContent = 'Save'; saveBtn.disabled = false;
         }
-        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        saveCustomSoundsToConfig();
         renderCustomSounds();
         liveSoundEditClose();
         return;
@@ -7549,7 +7626,7 @@
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
-        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        saveCustomSoundsToConfig();
         renderCustomSounds();
       } catch(err) {
         alert('Upload error: ' + err.message);
@@ -7559,14 +7636,22 @@
     // ── LIVE MODE — SOUNDBOARD ──
 
     const LIVE_SOUNDS = {
-      anthem:   { label: 'National Anthem', icon: '🎺', url: null },
-      applause: { label: 'Applause', icon: '👏', url: null },
-      letsgo:   { label: "Let's Go!", icon: '📣', url: null },
-      homerun:  { label: 'Home Run!', icon: '💥', url: null },
+      // Baseball
+      anthem:      { label: 'National Anthem', icon: '🎺', url: null, cat: 'baseball' },
+      homerun:     { label: 'Home Run!',        icon: '💥', url: null, cat: 'baseball' },
+      strikeout:   { label: 'Strike Out',       icon: '⚡', url: null, cat: 'baseball' },
+      walkoff:     { label: 'Walk Off',         icon: '🏆', url: null, cat: 'baseball' },
+      // Ambiance
+      applause:    { label: 'Applause',         icon: '👏', url: null, cat: 'ambiance' },
+      letsgo:      { label: "Let's Go!",        icon: '📣', url: null, cat: 'ambiance' },
+      charge:      { label: 'Charge!',          icon: '🥁', url: null, cat: 'ambiance' },
+      drumroll:    { label: 'Drumroll',         icon: '🪘', url: null, cat: 'ambiance' },
+      airhorn:     { label: 'Air Horn',         icon: '📯', url: null, cat: 'ambiance' },
+      sadtrombone: { label: 'Sad Trombone',     icon: '😢', url: null, cat: 'ambiance' },
     };
 
     const liveSoundAudios = {}; // key → Audio instance
-    let liveCustomSounds = JSON.parse(localStorage.getItem('liveCustomSounds') || '[]');
+    let liveCustomSounds = []; // sera chargé depuis appSettings.soundboard.customSounds après loadConfig()
     // [{id, label, url}]
 
     // ── VISITORS LINEUP ──
@@ -7904,6 +7989,14 @@
       btn?.classList.remove('playing');
     }
 
+    function liveSoundStopAll() {
+      // Stop all preset sounds
+      Object.keys(LIVE_SOUNDS).forEach(key => liveSoundStop(key));
+      // Stop all custom sounds
+      liveCustomSounds.forEach(s => liveCustomSoundStop(s.id));
+      // Stop all field songs
+      liveFieldSongs.forEach(s => liveFieldSongStop(s.id));
+    }
 
     function liveCustomSoundPlay(id) {
       const s = liveCustomSounds.find(s => s.id === id);
@@ -7935,7 +8028,7 @@
 
     function liveCustomSoundDelete(id) {
       liveCustomSounds = liveCustomSounds.filter(s => s.id !== id);
-      localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+      saveCustomSoundsToConfig();
       renderCustomSounds();
     }
 
@@ -7961,7 +8054,7 @@
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
-        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        saveCustomSoundsToConfig();
         renderCustomSounds();
       } catch(err) {
         alert('Upload error: ' + err.message);
@@ -8214,15 +8307,36 @@
       if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '📂 Replace MP3\n'; }
     }
 
+    function liveCustomSoundToggleFav(id) {
+      const s = liveCustomSounds.find(s => s.id === id);
+      if (!s) return;
+      s.favorite = !s.favorite;
+      saveCustomSoundsToConfig();
+      renderCustomSounds();
+    }
+
+    function saveCustomSoundsToConfig() {
+      if (!appSettings.soundboard) appSettings.soundboard = {};
+      appSettings.soundboard.customSounds = liveCustomSounds;
+      saveConfig();
+    }
+
     function renderCustomSounds() {
       const grid = document.getElementById('liveCustomSoundsGrid');
       if (!grid) return;
       if (liveCustomSounds.length === 0) { grid.innerHTML = ''; return; }
-      grid.innerHTML = liveCustomSounds.map(s => {
+      // Favoris en premier
+      const sorted = [...liveCustomSounds].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+      grid.innerHTML = sorted.map(s => {
         const hasFile = !!s.url;
         const cls = hasFile ? 'has-file custom-active' : 'empty';
+        const favIcon = s.favorite ? '⭐' : '☆';
+        const favStyle = s.favorite
+          ? 'position:absolute;top:3px;right:4px;font-size:10px;cursor:pointer;opacity:1;line-height:1'
+          : 'position:absolute;top:3px;right:4px;font-size:10px;cursor:pointer;opacity:0.3;line-height:1';
         return `
-          <div class="sound-btn ${cls}" id="lcsBtn_${s.id}" onclick="${hasFile ? `liveCustomSoundPlay('${s.id}')` : ''}">
+          <div class="sound-btn ${cls}" id="lcsBtn_${s.id}" onclick="${hasFile ? `liveCustomSoundPlay('${s.id}')` : ''}" style="position:relative">
+            <span onclick="event.stopPropagation();liveCustomSoundToggleFav('${s.id}')" style="${favStyle}" title="Favori">${favIcon}</span>
             <span class="sound-btn-icon">${hasFile ? '🎵' : '➕'}</span>
             <span class="sound-btn-label">${s.label}</span>
             <div class="sound-btn-actions">
@@ -8314,6 +8428,22 @@
       initLiveMobileTabs();
 
       const sb = appSettings.soundboard || {};
+
+      // Charger les custom sounds depuis Supabase (fallback localStorage)
+      if (sb.customSounds && Array.isArray(sb.customSounds)) {
+        liveCustomSounds = sb.customSounds;
+      } else {
+        // Migration one-shot depuis localStorage
+        const local = JSON.parse(localStorage.getItem('liveCustomSounds') || '[]');
+        if (local.length > 0) {
+          liveCustomSounds = local;
+          saveCustomSoundsToConfig(); // migrer vers Supabase
+          localStorage.removeItem('liveCustomSounds');
+        }
+      }
+      renderCustomSounds();
+
+      // Charger les sons prédéfinis
       Object.keys(LIVE_SOUNDS).forEach(key => {
         const url = sb[key];
         const label = sb[key + '_label'];
