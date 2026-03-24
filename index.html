@@ -8828,7 +8828,8 @@
 
         const isUrl = typeof fileOrUrl === 'string';
         const url = isUrl ? fileOrUrl : URL.createObjectURL(fileOrUrl);
-        img.crossOrigin = 'anonymous';
+        // Ne pas mettre crossOrigin sur les blob URLs (fichiers locaux) — ça taint le canvas
+        img.crossOrigin = isUrl ? 'anonymous' : null;
         img.onload = () => {
           _imgW = img.naturalWidth;
           _imgH = img.naturalHeight;
@@ -9065,6 +9066,11 @@
           try {
             canvas.toBlob((blob) => {
               modal.classList.remove('open');
+              if (!blob) {
+                alert("Impossible de recadrer : problème CORS. Utilisez \"Remplacer\" à la place.");
+                _resolve = null;
+                return;
+              }
               if (_resolve) _resolve(blob);
               _resolve = null;
             }, 'image/jpeg', 0.92);
