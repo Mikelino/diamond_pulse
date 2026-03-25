@@ -2,7 +2,7 @@
 
 **The game-day experience manager for baseball & softball clubs.**
 
-Diamond Pulse is a self-hosted progressive web app (PWA) that gives your announcer full control over the atmosphere at every game — walk-up songs, team introductions, soundboard, inning change music, visitor lineup, and social media exports. All from a single HTML file, deployed on your own infrastructure.
+Diamond Pulse is a self-hosted progressive web app (PWA) that gives your announcer full control over the atmosphere at every game — walk-up songs, team introductions, soundboard, inning change music, visitor lineup, and social media exports. No build step, no framework — just static files deployed on your own infrastructure.
 
 ---
 
@@ -12,6 +12,8 @@ Diamond Pulse is a self-hosted progressive web app (PWA) that gives your announc
 2. [Installation & Setup](#installation--setup)
 3. [Advanced Configuration](#advanced-configuration)
 4. [Self-Hosting & Commercialization](#self-hosting--commercialization)
+5. [Project Structure](#project-structure)
+6. [Developer Notes](#developer-notes)
 
 ---
 
@@ -107,7 +109,7 @@ This creates:
 
 ### Step 3 — Configure the app
 
-Edit `config.js` with your Supabase credentials and club defaults:
+Edit `js/config.js` with your Supabase credentials and club defaults:
 
 ```js
 const APP_CONFIG = {
@@ -119,16 +121,29 @@ const APP_CONFIG = {
 };
 ```
 
-> `config.js` is only used on first launch. Once saved, all settings are read from Supabase and `config.js` is ignored.
+> `js/config.js` is only used on first launch. Once saved, all settings are read from Supabase and `config.js` is ignored.
 
 ### Step 4 — Deploy
 
-Upload these files to your hosting provider:
+Upload the full project folder to your hosting provider:
+
 ```
 index.html
-config.js
 manifest.json
-setup.sql        ← for reference only, not served
+setup.sql          ← for reference only, not served
+README.md          ← this file
+css/
+  style.css
+js/
+  config.js        ← fill in your Supabase credentials here
+  data.js
+  players.js
+  audio.js
+  social.js
+  settings.js
+  soundboard.js
+icons/
+  apple-touch-icon.png
 ```
 
 For **GitHub Pages**: push to a public repository, enable Pages under *Settings → Pages*, and set the source to the `main` branch root.
@@ -136,7 +151,7 @@ For **GitHub Pages**: push to a public repository, enable Pages under *Settings 
 ### Step 5 — First launch
 
 Open the app in a browser (Chrome or Safari recommended). On first load it will:
-1. Read `config.js` defaults
+1. Read `js/config.js` defaults
 2. Create the initial config entry in Supabase
 3. Redirect you to the Config panel to complete setup
 
@@ -152,7 +167,7 @@ All audio is stored in the `songs` Supabase bucket with the following path conve
 
 | Type | Path prefix |
 |------|-------------|
-| Walk-up songs | `{playerid}.mp3` |
+| Walk-up songs | `{teamId}/{playerName}.mp3` |
 | Preset soundboard | `soundboard/{key}.mp3` |
 | Custom soundboard | `soundboard/custom_{id}.mp3` |
 | Change field songs | `soundboard/field_{id}.mp3` |
@@ -174,7 +189,7 @@ Diamond Pulse supports multiple teams within a single club (e.g. A-team, B-team,
 
 ### Password protection
 
-Enable password protection under *Config → Security*. This adds a lock screen on app load. The password is stored (hashed) in Supabase config. Useful for shared devices where you don't want unauthorized changes.
+Enable password protection under *Config → Security*. This adds a lock screen on app load. The password is stored in Supabase config. Useful for shared devices where you don't want unauthorized changes.
 
 ### Language
 
@@ -199,24 +214,16 @@ Diamond Pulse is designed from the ground up as a **self-hosted product**. There
 | **Reliability** | No dependency on a central service. If Supabase is up, the app works. |
 | **Cost** | Supabase free tier covers most small clubs (500MB storage, 50,000 monthly active users). |
 
-### Deployment package
+### Deployment package for a new club
 
-When distributing Diamond Pulse to a new club, provide:
-
-```
-index.html       ← the entire application
-config.js        ← template to fill in with their Supabase credentials
-manifest.json    ← PWA manifest
-setup.sql        ← one-time database setup script
-README.md        ← this file
-```
+When distributing Diamond Pulse to a new club, provide the full project folder (see structure above). The only file the club needs to edit is `js/config.js`.
 
 ### Setup for a new club — checklist
 
 - [ ] Club creates a Supabase project (free)
 - [ ] Club runs `setup.sql` in the SQL Editor
-- [ ] Club fills in `config.js` with their URL and anon key
-- [ ] Files deployed to GitHub Pages or any static host
+- [ ] Club fills in `js/config.js` with their URL and anon key
+- [ ] Full project folder deployed to GitHub Pages or any static host
 - [ ] App opened in browser, initial configuration completed
 - [ ] Players added, photos uploaded, walk-up songs assigned
 - [ ] Done — ready for game day
@@ -242,13 +249,74 @@ A club with a full roster and complete soundboard will use well under 100MB, lea
 
 ---
 
-## Tech Stack
+## Project Structure
 
-- **Frontend**: Vanilla HTML/CSS/JS — single file, no build step
-- **Backend**: [Supabase](https://supabase.com) (PostgreSQL + Storage)
-- **Drag & drop**: [Sortable.js](https://sortablejs.github.io/Sortable/)
-- **Fonts**: Oswald, Barlow Condensed (Google Fonts)
-- **PWA**: Web App Manifest + installable on iOS/Android
+```
+diamond-pulse/
+├── index.html              ← App shell — HTML structure only (~1 900 lines)
+├── manifest.json           ← PWA manifest
+├── setup.sql               ← One-time Supabase database setup
+├── README.md               ← This file
+├── css/
+│   └── style.css           ← All styles (~2 600 lines)
+├── js/
+│   ├── config.js           ← Club configuration — edit this for each deployment
+│   ├── data.js             ← Global state + Supabase persistence (saveConfig/loadConfig)
+│   ├── players.js          ← Player rendering, add/edit, photo upload
+│   ├── audio.js            ← Walk-up song playback, TTS, drag & drop, tab navigation
+│   ├── social.js           ← Instagram story exports, team intro overlay, visitor lineup
+│   ├── settings.js         ← Full config page (teams, colors, fonts, TTS, password)
+│   └── soundboard.js       ← Soundboard, field songs, live lineup, match panel, app init
+└── icons/
+    └── apple-touch-icon.png
+```
+
+### File responsibilities at a glance
+
+| File | What to edit when… |
+|---|---|
+| `js/config.js` | Setting up a new club |
+| `js/data.js` | Changing how data is saved/loaded from Supabase |
+| `js/players.js` | Modifying player cards, lineup rendering, photo crop |
+| `js/audio.js` | Changing playback behavior, TTS engines, drag & drop |
+| `js/social.js` | Modifying story exports (canvas layout, colors, fonts) |
+| `js/settings.js` | Adding new config options, changing the config UI |
+| `js/soundboard.js` | Soundboard presets, field songs, match overlay, init logic |
+| `css/style.css` | Any visual/layout change |
+
+---
+
+## Developer Notes
+
+### No build step
+
+Diamond Pulse uses plain HTML, CSS, and JavaScript — no Node.js, no bundler, no compilation. Open `index.html` in a browser and it works. Deploy by uploading files to any static host.
+
+### Adding a new feature
+
+1. Identify which file the feature belongs to (see table above)
+2. Add your functions to that file
+3. If the feature needs new UI, add the HTML to `index.html`
+4. If the feature needs new styles, add them to `css/style.css`
+5. If the feature needs to persist data, use `saveConfig()` from `js/data.js`
+
+### Global scope
+
+All JavaScript files are loaded as regular `<script>` tags (not ES modules), so all functions are in the global scope and can call each other freely. This is intentional — it keeps the architecture simple and avoids import/export complexity without a build tool.
+
+### Script load order
+
+Scripts are loaded in this order in `index.html`:
+
+```html
+<script src="js/config.js"></script>     <!-- Must be first — defines APP_CONFIG -->
+<script src="js/data.js"></script>        <!-- Must be second — defines global state -->
+<script src="js/players.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/social.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/soundboard.js"></script>  <!-- Must be last — calls init() on DOMContentLoaded -->
+```
 
 ---
 
