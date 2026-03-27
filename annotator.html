@@ -120,7 +120,7 @@ main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:9
 #size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer}
 
 /* ANNOTATIONS */
-#annotations-panel{background:var(--darkgray);border-radius:var(--radius);overflow:hidden}
+#annotations-panel{background:var(--darkgray);border-radius:var(--radius);overflow:hidden;display:none}
 #annotations-header{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--midgray);gap:8px}
 #annotations-header h3{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);flex:1}
 #annotation-count{background:var(--orange);color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-family:'Oswald',sans-serif;font-weight:700}
@@ -442,6 +442,7 @@ function loadFile(f) {
   video.src = URL.createObjectURL(f); video.load();
   video.addEventListener('loadedmetadata', () => {
     drop.classList.add('hidden'); ws.classList.add('visible');
+    document.getElementById('annotations-panel').style.display = 'block';
     tl.max = video.duration; resize(); updateTD();
   }, {once:true});
 }
@@ -1067,6 +1068,8 @@ async function initFromURL() {
     if (SB_URL && SB_KEY) {
       setSaveStatus('Chargement annotations…');
       await loadAnnotations();
+      // Rendre le panel d'annotations visible même sans vidéo chargée
+      document.getElementById('annotations-panel').style.display = 'block';
     }
   } catch(e) {
     console.warn('[init] URL player load error:', e);
