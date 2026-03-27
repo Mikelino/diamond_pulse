@@ -949,6 +949,7 @@ async function init() {
 
   await loadConfig();
   await loadLicense();
+  await loadAnnotatedPids();
 
   // Restaurer la dernière équipe sélectionnée
   const lastTeamId = localStorage.getItem('lastTeamId');
@@ -1010,7 +1011,11 @@ async function init() {
   });
 }
 
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 // Service worker désactivé temporairement
 // if ('serviceWorker' in navigator) {
@@ -1027,4 +1032,3 @@ if ('serviceWorker' in navigator) {
     regs.forEach(reg => reg.unregister());
   });
 }
-  </script>

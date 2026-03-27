@@ -72,6 +72,43 @@ function toggleOpponentInput(prefix) {
   }
 }
 
+function refreshStorySelects() {
+  // Rafraîchit les selects story/MVP si leurs formulaires sont ouverts
+  const storyForm = document.getElementById('storyForm');
+  if (storyForm && storyForm.classList.contains('open')) {
+    const sel = document.getElementById('storyFeatured');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— None —</option>';
+    currentLineup().filter(e => e.present !== false).forEach((entry) => {
+      const player = allPlayers[entry.pid];
+      if (!player || player.gdprRestricted) return;
+      const opt = document.createElement('option');
+      opt.value = entry.pid;
+      opt.textContent = player.name + (entry.jersey ? ' #' + entry.jersey : '');
+      sel.appendChild(opt);
+    });
+    // Restaurer la sélection si toujours valide
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+    document.getElementById('featuredPhotoGroup').style.display = sel.value ? 'flex' : 'none';
+  }
+
+  const mvpForm = document.getElementById('mvpForm');
+  if (mvpForm && mvpForm.classList.contains('open')) {
+    const sel = document.getElementById('mvpPlayer');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Choose MVP —</option>';
+    currentLineup().filter(e => e.present !== false).forEach(entry => {
+      const p = allPlayers[entry.pid];
+      if (!p || p.gdprRestricted) return;
+      const opt = document.createElement('option');
+      opt.value = entry.pid;
+      opt.textContent = p.name + (entry.jersey ? ' #' + entry.jersey : '') + (entry.pos ? ' · ' + entry.pos : '');
+      sel.appendChild(opt);
+    });
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+  }
+}
+
 function toggleStoryForm() {
   const form = document.getElementById('storyForm');
   form.classList.toggle('open');
@@ -80,13 +117,12 @@ function toggleStoryForm() {
     document.getElementById('storyDate').value = new Date().toISOString().split('T')[0];
   }
 
-  // Peupler le select player en avant
   const sel = document.getElementById('storyFeatured');
   sel.innerHTML = '<option value="">— None —</option>';
 
   currentLineup().filter(e => e.present !== false).forEach((entry) => {
     const player = allPlayers[entry.pid];
-    if (!player) return;
+    if (!player || player.gdprRestricted) return;
     const opt = document.createElement('option');
     opt.value = entry.pid;
     opt.textContent = player.name + (entry.jersey ? ' #' + entry.jersey : '');
@@ -414,12 +450,14 @@ function toggleMvpForm() {
     sel.innerHTML = '<option value="">— Choose MVP —</option>';
     currentLineup().filter(e => e.present !== false).forEach(entry => {
       const p = allPlayers[entry.pid];
-      if (!p) return;
+      if (!p || p.gdprRestricted) return;
       const opt = document.createElement('option');
       opt.value = entry.pid;
       opt.textContent = p.name + (entry.jersey ? ' #' + entry.jersey : '') + (entry.pos ? ' · ' + entry.pos : '');
       sel.appendChild(opt);
     });
+    // Lier onchange pour mise à jour photo
+    sel.onchange = updateMvpPhoto;
   }
 }
 
@@ -1230,23 +1268,4 @@ async function liveCustomSoundUpload(id, input) {
 
 // ── LIVE MODE — SOUNDBOARD ──
 
-const LIVE_SOUNDS = {
-  // Baseball
-  anthem:      { label: 'National Anthem', icon: '🎺', url: null, cat: 'baseball' },
-  homerun:     { label: 'Home Run!',        icon: '💥', url: null, cat: 'baseball' },
-  strikeout:   { label: 'Strike Out',       icon: '⚡', url: null, cat: 'baseball' },
-  walkoff:     { label: 'Walk Off',         icon: '🏆', url: null, cat: 'baseball' },
-  // Ambiance
-  applause:    { label: 'Applause',         icon: '👏', url: null, cat: 'ambiance' },
-  letsgo:      { label: "Let's Go!",        icon: '📣', url: null, cat: 'ambiance' },
-  charge:      { label: 'Charge!',          icon: '🥁', url: null, cat: 'ambiance' },
-  drumroll:    { label: 'Drumroll',         icon: '🪘', url: null, cat: 'ambiance' },
-  airhorn:     { label: 'Air Horn',         icon: '📯', url: null, cat: 'ambiance' },
-  sadtrombone: { label: 'Sad Trombone',     icon: '😢', url: null, cat: 'ambiance' },
-};
-
-const liveSoundAudios = {}; // key → Audio instance
-let liveCustomSounds = []; // sera chargé depuis appSettings.soundboard.customSounds après loadConfig()
 // [{id, label, url}]
-
-
