@@ -60,10 +60,8 @@ async function startPlayback(entry, entryIndex) {
   if (typeof matchState !== 'undefined' && typeof teams !== 'undefined') {
     const team = teams[currentTeamId];
     if (team) {
-      const lineup = (team.order || [])
-        .map(id => allPlayers[id])
-        .filter(p => p && !p.absent);
-      const idx = lineup.findIndex(p => p === allPlayers[entry.pid]);
+      const lineup = (team.lineup || []).filter(e => e.present !== false);
+      const idx = lineup.findIndex(e => e.pid == entry.pid);
       if (idx !== -1) {
         matchState.batterIdx = idx;
         matchState.balls = 0;

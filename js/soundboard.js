@@ -895,15 +895,19 @@ function matchRenderPanel() {
   });
 
   const team = teams[currentTeamId];
-  const players = team
-    ? (team.order || []).map(id => allPlayers[id]).filter(Boolean).filter(p => !p.absent)
+  const entries = team
+    ? (team.lineup || []).filter(e => e.present !== false)
     : [];
-  const n = players.length;
+  const n = entries.length;
   const batterIdx  = n ? matchState.batterIdx % n : 0;
   const onDeckIdx  = n ? (batterIdx + 1) % n : 0;
-  const batter  = players[batterIdx];
-  const onDeck  = players[onDeckIdx];
-  const fmt = p => p ? `#${p.jersey || '—'} ${p.name}${p.position ? ' · ' + p.position : ''}` : '—';
+  const batter  = entries[batterIdx];
+  const onDeck  = entries[onDeckIdx];
+  const fmt = e => {
+    if (!e) return '—';
+    const p = allPlayers[e.pid];
+    return `${e.jersey ? '#' + e.jersey : '—'} ${p?.name || '—'}${e.pos ? ' · ' + e.pos : ''}`;
+  };
   document.getElementById('matchBatterDisplay').textContent  = fmt(batter);
   document.getElementById('matchOnDeckDisplay').textContent  = fmt(onDeck);
 
@@ -958,11 +962,11 @@ function matchResetCount() {
 
 function matchBatterAdj(delta) {
   const team = teams[currentTeamId];
-  const players = team
-    ? (team.order || []).map(id => allPlayers[id]).filter(Boolean).filter(p => !p.absent)
+  const entries = team
+    ? (team.lineup || []).filter(e => e.present !== false)
     : [];
-  if (!players.length) return;
-  matchState.batterIdx = (matchState.batterIdx + delta + players.length) % players.length;
+  if (!entries.length) return;
+  matchState.batterIdx = (matchState.batterIdx + delta + entries.length) % entries.length;
   matchState.balls = 0;
   matchState.strikes = 0;
   matchRenderPanel(); matchSave();

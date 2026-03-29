@@ -621,10 +621,14 @@
         document.getElementById('teamHome').textContent = teamNames.home.toUpperCase();
         document.getElementById('teamAway').textContent = teamNames.away.toUpperCase();
 
-        // Joueurs
+        // Joueurs — construits depuis team.lineup (même structure que le LineupMode)
         const allPlayers = app.players || {};
-        const order = homeTeam?.order || [];
-        players = order.map(id => allPlayers[id]).filter(p => p && !p.absent);
+        const lineupEntries = (homeTeam?.lineup || []).filter(e => e && e.present !== false);
+        players = lineupEntries.map(e => {
+          const p = allPlayers[e.pid];
+          if (!p) return null;
+          return { ...p, id: e.pid, jersey: e.jersey || '', position: e.pos || '' };
+        }).filter(Boolean);
 
         // Pré-charger les photos
         await preloadPhotos(players);
