@@ -243,7 +243,6 @@ function renderLiveVisitors() {
 
   // Desktop: show/hide column + resizer
   if (window.innerWidth > 700) {
-    if (hasVisitors && !col.style.flex) col.style.flex = '1 1 0';
     col.style.display = hasVisitors ? '' : 'none';
     const resizer = document.getElementById('liveResizer3');
     if (resizer) resizer.style.display = hasVisitors ? '' : 'none';
@@ -486,48 +485,23 @@ function liveFieldSongDelete(id) {
 // ── LIVE MODE — RESIZABLE COLUMNS ──
 let liveFieldSongs = JSON.parse(localStorage.getItem('liveFieldSongs') || '[]');
 
-const LIVE_COLS = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
-
-function applyLiveColRatios() {
-  if (window.innerWidth <= 700) return;
-  const saved = JSON.parse(localStorage.getItem('liveColRatios') || 'null');
-  if (saved && saved.length === LIVE_COLS.length) {
-    LIVE_COLS.forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el && el.style.display !== 'none') el.style.flex = `${saved[i]} 1 0`;
-    });
-  } else {
-    LIVE_COLS.forEach(id => { const el = document.getElementById(id); if (el) el.style.flex = '1 1 0'; });
-  }
-}
-
-function saveLiveColRatios() {
-  const container = document.getElementById('liveColumns');
-  const totalWidth = container ? container.getBoundingClientRect().width : 0;
-  if (!totalWidth) return;
-  const ratios = LIVE_COLS.map(id => {
-    const el = document.getElementById(id);
-    if (!el || el.style.display === 'none') return 0;
-    return el.getBoundingClientRect().width / totalWidth;
-  });
-  localStorage.setItem('liveColRatios', JSON.stringify(ratios));
-}
-
 (function initLiveColumns() {
-  if (window.innerWidth <= 700) return;
-  applyLiveColRatios();
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(applyLiveColRatios, 100);
-  });
+  if (window.innerWidth <= 700) return; // mobile uses tab switching instead
+  const saved = JSON.parse(localStorage.getItem('liveColWidths') || 'null');
+  const cols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
+  if (saved && saved.length === cols.length) {
+    cols.forEach((id, i) => { const el = document.getElementById(id); if (el && el.style.display !== 'none') el.style.flex = `0 0 ${saved[i]}px`; });
+  } else {
+    cols.forEach(id => { const el = document.getElementById(id); if (el) el.style.flex = '1 1 0'; });
+  }
 })();
 
 function liveResizerStart(e, resizerIndex) {
   e.preventDefault();
   const resizer = e.currentTarget;
   resizer.classList.add('dragging');
-  const visibleCols = LIVE_COLS.filter(id => { const el = document.getElementById(id); return el && el.style.display !== 'none'; });
+  const allCols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
+  const visibleCols = allCols.filter(id => { const el = document.getElementById(id); return el && el.style.display !== 'none'; });
   const leftCol  = document.getElementById(visibleCols[resizerIndex]);
   const rightCol = document.getElementById(visibleCols[resizerIndex + 1]);
   if (!leftCol || !rightCol) return;
@@ -543,8 +517,8 @@ function liveResizerStart(e, resizerIndex) {
     resizer.classList.remove('dragging');
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
-    saveLiveColRatios();
-    applyLiveColRatios();
+    const widths = allCols.map(id => document.getElementById(id)?.getBoundingClientRect().width || 0);
+    localStorage.setItem('liveColWidths', JSON.stringify(widths));
   }
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
@@ -834,7 +808,7 @@ function liveTogglePlay(liveIndex) {
 //   alter table licenses enable row level security;
 //   create policy "Public read" on licenses for select using (true);
 // ═══════════════════════════════════════════
-let FEATURES = { overlay: false };
+let FEATURES = { overlay: true };
 
 async function loadLicense() {
   try {
@@ -865,8 +839,8 @@ async function loadLicense() {
 function applyFeatures() {
   const btnMatch   = document.getElementById('mainNavMatch');
   const panelMatch = document.getElementById('mainPanelMatch');
-  if (btnMatch)   btnMatch.style.display   = FEATURES.overlay ? '' : 'none';
-  if (panelMatch) panelMatch.style.display  = FEATURES.overlay ? '' : 'none';
+  if (btnMatch)   btnMatch.style.display   = '';
+  if (panelMatch) panelMatch.style.display  = '';
 }
 
 // ═══════════════════════════════════════════
@@ -975,7 +949,6 @@ async function init() {
 
   await loadConfig();
   await loadLicense();
-  await loadAnnotatedPids();
 
   // Restaurer la dernière équipe sélectionnée
   const lastTeamId = localStorage.getItem('lastTeamId');
