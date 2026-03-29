@@ -850,7 +850,8 @@ let matchState = {
   scoreHome: 0, scoreAway: 0,
   inning: 1, inningTop: true,
   balls: 0, strikes: 0, outs: 0,
-  batterIdx: 0
+  batterIdx: 0,
+  runners: { first: false, second: false, third: false }
 };
 
 async function matchSave() {
@@ -898,6 +899,25 @@ function matchRenderPanel() {
     ? `#${batter.jersey || '—'} ${batter.name} (${batter.position || '—'})`
     : '—';
 
+  // Runners
+  const runnerMap = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
+  const btnMap    = { first: 'matchBtnRunner1', second: 'matchBtnRunner2', third: 'matchBtnRunner3' };
+  const runners = matchState.runners || { first: false, second: false, third: false };
+  Object.keys(runnerMap).forEach(base => {
+    const on = runners[base];
+    const baseEl = document.getElementById(runnerMap[base]);
+    const btnEl  = document.getElementById(btnMap[base]);
+    if (baseEl) {
+      baseEl.setAttribute('fill', on ? 'var(--orange)' : 'transparent');
+      baseEl.setAttribute('stroke', on ? 'var(--orange)' : 'var(--border)');
+    }
+    if (btnEl) {
+      btnEl.style.background    = on ? 'rgba(255,69,0,0.15)' : 'transparent';
+      btnEl.style.borderColor   = on ? 'var(--orange)' : 'var(--border)';
+      btnEl.style.color         = on ? 'var(--orange)' : 'var(--muted)';
+    }
+  });
+
   const overlayUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'overlay.html';
   document.getElementById('matchOverlayUrl').textContent = overlayUrl;
 }
@@ -935,6 +955,17 @@ function matchBatterAdj(delta) {
     : [];
   if (!players.length) return;
   matchState.batterIdx = (matchState.batterIdx + delta + players.length) % players.length;
+  matchRenderPanel(); matchSave();
+}
+
+function matchToggleRunner(base) {
+  if (!matchState.runners) matchState.runners = { first: false, second: false, third: false };
+  matchState.runners[base] = !matchState.runners[base];
+  matchRenderPanel(); matchSave();
+}
+
+function matchClearRunners() {
+  matchState.runners = { first: false, second: false, third: false };
   matchRenderPanel(); matchSave();
 }
 
