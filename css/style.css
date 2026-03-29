@@ -2243,9 +2243,8 @@
       .upload-btn  { display: none; }
       .delete-btn  { display: none; }
       .song-info   { display: none; }
-      /* S'assurer que le nom ne soit pas tronqué trop tôt */
       .player-name {
-        font-size: 14px;
+        font-size: 15px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -2402,13 +2401,23 @@
 
       /* Grille player compacte */
       .player-card {
-        grid-template-columns: 20px 30px 44px 1fr 32px;
-        gap: 6px;
+        grid-template-columns: 20px 36px 1fr 32px 22px;
+        gap: 8px;
         padding: 8px 10px;
       }
       .player-card .photo-btn,
       .player-card .drag-handle { display: none; }
       .song-info { display: none !important; }
+      /* Masquer l'avatar pour libérer de l'espace au nom */
+      .player-avatar { display: none; }
+      .player-name {
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .jersey-num { font-size: 13px; }
+      .player-info { min-width: 0; overflow: hidden; }
     }
 
     /* ── WALKUP MOBILE SUBTABS ── */
