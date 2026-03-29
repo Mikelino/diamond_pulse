@@ -71,24 +71,25 @@ function switchLiveTab(tab) {
   const isMobile = window.innerWidth <= 700;
   if (!isMobile) return;
   const cols = {
-    sounds:   'liveColSounds',
-    field:    'liveColField',
-    walkup:   'liveColWalkup',
-    visitors: 'liveColVisitors',
+    sounds:    'liveColSounds',
+    field:     'liveColField',
+    walkup:    'liveColWalkup',
+    visitors:  'liveColVisitors',
+    broadcast: 'liveColBroadcast',
   };
   const tabs = {
-    sounds:   'liveTabSounds',
-    field:    'liveTabField',
-    walkup:   'liveTabWalkup',
-    visitors: 'liveTabVisitors',
+    sounds:    'liveTabSounds',
+    field:     'liveTabField',
+    walkup:    'liveTabWalkup',
+    visitors:  'liveTabVisitors',
+    broadcast: 'liveTabBroadcast',
   };
   Object.keys(cols).forEach(key => {
     const col = document.getElementById(cols[key]);
     const btn = document.getElementById(tabs[key]);
     if (!col) return;
-    // Skip visitors if not available
-    if (key === 'visitors' && col.dataset.hasVisitors !== '1') return;
-    // Use style.display directly to override any inline flex styles
+    if (key === 'visitors'  && col.dataset.hasVisitors  !== '1') return;
+    if (key === 'broadcast' && col.dataset.hasBroadcast !== '1') return;
     col.style.display = key === tab ? 'flex' : 'none';
     col.style.flex = key === tab ? '1 1 auto' : '';
     col.style.width = key === tab ? '100%' : '';
@@ -485,23 +486,18 @@ function liveFieldSongDelete(id) {
 // ── LIVE MODE — RESIZABLE COLUMNS ──
 let liveFieldSongs = JSON.parse(localStorage.getItem('liveFieldSongs') || '[]');
 
+const ALL_LIVE_COLS = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors','liveColBroadcast'];
+
 (function initLiveColumns() {
-  if (window.innerWidth <= 700) return; // mobile uses tab switching instead
-  const saved = JSON.parse(localStorage.getItem('liveColWidths') || 'null');
-  const cols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
-  if (saved && saved.length === cols.length) {
-    cols.forEach((id, i) => { const el = document.getElementById(id); if (el && el.style.display !== 'none') el.style.flex = `0 0 ${saved[i]}px`; });
-  } else {
-    cols.forEach(id => { const el = document.getElementById(id); if (el) el.style.flex = '1 1 0'; });
-  }
+  if (window.innerWidth <= 700) return;
+  ALL_LIVE_COLS.forEach(id => { const el = document.getElementById(id); if (el && el.style.display !== 'none') el.style.flex = '1 1 0'; });
 })();
 
 function liveResizerStart(e, resizerIndex) {
   e.preventDefault();
   const resizer = e.currentTarget;
   resizer.classList.add('dragging');
-  const allCols = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors'];
-  const visibleCols = allCols.filter(id => { const el = document.getElementById(id); return el && el.style.display !== 'none'; });
+  const visibleCols = ALL_LIVE_COLS.filter(id => { const el = document.getElementById(id); return el && el.style.display !== 'none'; });
   const leftCol  = document.getElementById(visibleCols[resizerIndex]);
   const rightCol = document.getElementById(visibleCols[resizerIndex + 1]);
   if (!leftCol || !rightCol) return;
@@ -517,8 +513,6 @@ function liveResizerStart(e, resizerIndex) {
     resizer.classList.remove('dragging');
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
-    const widths = allCols.map(id => document.getElementById(id)?.getBoundingClientRect().width || 0);
-    localStorage.setItem('liveColWidths', JSON.stringify(widths));
   }
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
@@ -837,10 +831,21 @@ async function loadLicense() {
 }
 
 function applyFeatures() {
-  const btnMatch   = document.getElementById('mainNavMatch');
-  const panelMatch = document.getElementById('mainPanelMatch');
-  if (btnMatch)   btnMatch.style.display   = '';
-  if (panelMatch) panelMatch.style.display  = '';
+  if (!FEATURES.overlay) return;
+  const col     = document.getElementById('liveColBroadcast');
+  const resizer = document.getElementById('liveResizer4');
+  const tabBtn  = document.getElementById('liveTabBroadcast');
+  if (col) {
+    col.dataset.hasBroadcast = '1';
+    if (window.innerWidth > 700) {
+      col.style.display = '';
+      col.style.flex = '1 1 0';
+      if (resizer) resizer.style.display = '';
+    } else {
+      if (tabBtn) tabBtn.style.display = '';
+    }
+  }
+  matchRenderPanel();
 }
 
 // ═══════════════════════════════════════════

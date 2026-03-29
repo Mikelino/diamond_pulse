@@ -103,10 +103,6 @@
         <span class="main-nav-icon">📸</span>
         <span class="main-nav-label">Social Mode</span>
       </button>
-      <button class="main-nav-btn" id="mainNavMatch" onclick="mainSwitchTab('match')" style="display:none">
-        <span class="main-nav-icon">📺</span>
-        <span class="main-nav-label">Broadcast Mode</span>
-      </button>
     </nav>
 
     <!-- PANELS -->
@@ -122,6 +118,7 @@
             <button class="live-mobile-tab active" id="liveTabSounds" onclick="switchLiveTab('sounds')">🔊<span>Sounds</span></button>
             <button class="live-mobile-tab" id="liveTabField" onclick="switchLiveTab('field')">⚾<span>Field</span></button>
             <button class="live-mobile-tab" id="liveTabWalkup" onclick="switchLiveTab('walkup')">🎵<span>Walk-Up</span></button>
+            <button class="live-mobile-tab" id="liveTabBroadcast" onclick="switchLiveTab('broadcast')" style="display:none">📺<span>Broadcast</span></button>
           </div>
 
           <!-- ── COLUMN 1: SOUNDS ── -->
@@ -311,7 +308,7 @@
           </div>
 
           <!-- ── RESIZER 3 ── -->
-          <div class="live-resizer" id="liveResizer3" onmousedown="liveResizerStart(event,2)" id="liveResizer3"></div>
+          <div class="live-resizer" id="liveResizer3" onmousedown="liveResizerStart(event,2)"></div>
 
           <!-- ── COLUMN 4: VISITORS ── -->
           <div class="live-col" id="liveColVisitors" style="display:none">
@@ -325,6 +322,126 @@
             </div>
             <div class="live-col-body">
               <div id="liveVisitorsList"></div>
+            </div>
+          </div>
+
+          <!-- ── RESIZER 4 ── -->
+          <div class="live-resizer" id="liveResizer4" onmousedown="liveResizerStart(event,3)" style="display:none"></div>
+
+          <!-- ── COLUMN 5: BROADCAST ── -->
+          <div class="live-col" id="liveColBroadcast" style="display:none">
+            <div class="live-col-header">📺 Broadcast</div>
+            <div class="live-col-body">
+
+              <!-- Score -->
+              <div class="live-col-section-label">Score</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Home</span>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <button onclick="matchScoreAdj('home',-1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <span id="matchScoreHome" style="font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--white);min-width:28px;text-align:center">0</span>
+                    <button onclick="matchScoreAdj('home',1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+                <span style="font-family:'Oswald',sans-serif;font-size:18px;color:var(--border);align-self:flex-end;padding-bottom:2px">–</span>
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Away</span>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <button onclick="matchScoreAdj('away',-1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <span id="matchScoreAway" style="font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--white);min-width:28px;text-align:center">0</span>
+                    <button onclick="matchScoreAdj('away',1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Inning</span>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <button onclick="matchInningAdj(-1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+                      <button onclick="matchInningToggle()" id="matchInningArrow" style="background:transparent;border:none;color:var(--orange);font-size:12px;cursor:pointer;line-height:1">▲</button>
+                      <span id="matchInningNum" style="font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--white);min-width:28px;text-align:center;line-height:1">1</span>
+                    </div>
+                    <button onclick="matchInningAdj(1)" style="width:24px;height:24px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Count -->
+              <div class="live-col-section-label">Count</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Balls</span>
+                  <div style="display:flex;gap:4px" id="matchBalls">
+                    <div class="match-dot" onclick="matchSetCount('balls',0)" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('balls',1)" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('balls',2)" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Strikes</span>
+                  <div style="display:flex;gap:4px" id="matchStrikes">
+                    <div class="match-dot" onclick="matchSetCount('strikes',0)" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('strikes',1)" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Outs</span>
+                  <div style="display:flex;gap:4px" id="matchOuts">
+                    <div class="match-dot" onclick="matchSetCount('outs',0)" style="width:18px;height:18px;border-radius:3px;transform:rotate(45deg);border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('outs',1)" style="width:18px;height:18px;border-radius:3px;transform:rotate(45deg);border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+              </div>
+              <button onclick="matchResetCount()" style="margin-bottom:14px;padding:4px 10px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Reset</button>
+
+              <!-- Runners -->
+              <div class="live-col-section-label">Runners</div>
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+                <svg id="matchBasesDiamond" width="90" height="90" viewBox="0 0 100 100" style="flex-shrink:0;overflow:visible">
+                  <line x1="50" y1="8" x2="90" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                  <line x1="90" y1="50" x2="50" y2="92" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                  <line x1="50" y1="92" x2="10" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                  <line x1="10" y1="50" x2="50" y2="8"  stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                  <polygon points="50,98 43,89 43,83 57,83 57,89" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                  <rect id="matchBase2" x="40" y="2"  width="20" height="20" rx="2" transform="rotate(45 50 12)" fill="transparent" stroke="var(--border)" stroke-width="1.5" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" onclick="matchToggleRunner('second')"/>
+                  <rect id="matchBase1" x="80" y="40" width="20" height="20" rx="2" transform="rotate(45 90 50)" fill="transparent" stroke="var(--border)" stroke-width="1.5" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" onclick="matchToggleRunner('first')"/>
+                  <rect id="matchBase3" x="0"  y="40" width="20" height="20" rx="2" transform="rotate(45 10 50)" fill="transparent" stroke="var(--border)" stroke-width="1.5" style="cursor:pointer;transition:fill 0.15s,stroke 0.15s" onclick="matchToggleRunner('third')"/>
+                  <text x="50" y="11" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="6" fill="rgba(255,255,255,0.3)" style="pointer-events:none">2B</text>
+                  <text x="89" y="53" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="6" fill="rgba(255,255,255,0.3)" style="pointer-events:none">1B</text>
+                  <text x="11" y="53" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="6" fill="rgba(255,255,255,0.3)" style="pointer-events:none">3B</text>
+                </svg>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <button onclick="matchToggleRunner('third')"  id="matchBtnRunner3" style="padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s">3rd</button>
+                  <button onclick="matchToggleRunner('second')" id="matchBtnRunner2" style="padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s">2nd</button>
+                  <button onclick="matchToggleRunner('first')"  id="matchBtnRunner1" style="padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s">1st</button>
+                  <button onclick="matchClearRunners()" style="padding:4px 10px;border-radius:3px;border:1px solid rgba(200,30,0,0.3);background:transparent;color:#ff6655;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s">Clear</button>
+                </div>
+              </div>
+
+              <!-- Batter -->
+              <div class="live-col-section-label">Batter</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--orange);text-transform:uppercase;flex-shrink:0;width:48px">At Bat</span>
+                  <button onclick="matchBatterAdj(-1)" style="width:22px;height:22px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">◀</button>
+                  <div id="matchBatterDisplay" style="flex:1;min-width:0;background:var(--gray);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:3px;padding:5px 8px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:var(--white);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+                  <button onclick="matchBatterAdj(1)"  style="width:22px;height:22px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">▶</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;flex-shrink:0;width:48px">On Deck</span>
+                  <div style="width:22px;flex-shrink:0"></div>
+                  <div id="matchOnDeckDisplay" style="flex:1;min-width:0;background:var(--darkgray);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:3px;padding:5px 8px;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+                  <div style="width:22px;flex-shrink:0"></div>
+                </div>
+              </div>
+
+              <!-- OBS -->
+              <div class="live-col-section-label" style="margin-top:8px">OBS Source</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <code id="matchOverlayUrl" style="flex:1;min-width:0;background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:5px 8px;font-size:10px;color:var(--muted);word-break:break-all;overflow:hidden"></code>
+                <button onclick="matchCopyOverlayUrl()" style="padding:5px 10px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;flex-shrink:0">Copy</button>
+              </div>
+
             </div>
           </div>
 
@@ -570,7 +687,7 @@
         </main>
       </div>
 
-      <!-- PANEL : BROADCAST MODE (licence requise) -->
+      <!-- PANEL : BROADCAST MODE — contenu déplacé dans liveColBroadcast -->
       <div class="main-panel" id="mainPanelMatch" style="display:none">
         <main>
           <div class="section-label">Broadcast Mode</div>
