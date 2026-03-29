@@ -779,6 +779,19 @@
       }
     }
 
+    @media (max-width: 480px) {
+      .player-card {
+        grid-template-columns: 20px 28px 18px 44px 40px 1fr 28px 44px 28px;
+        gap: 6px;
+        padding: 8px 8px;
+      }
+      /* Masquer titre/artiste chanson sur mobile — visible dans la barre Now Playing */
+      .player-card .song-info { display: none; }
+      .player-name { font-size: 13px; }
+      .jersey-num, .add-jersey-btn { font-size: 13px; }
+    }
+
+
     /* ── PRESENCE BUTTON ── */
     .presence-btn {
       width: 20px;
