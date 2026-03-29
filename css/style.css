@@ -1068,9 +1068,6 @@
     #liveColSounds .live-soundboard,
     #liveColSounds .live-custom-sounds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 
-    /* Visitors column always pinned to the right */
-    #liveColVisitors { margin-left: auto; }
-
     /* Walkup song cards compact in column */
     #liveColWalkup .live-player-card {
       padding: 8px 10px;
