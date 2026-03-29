@@ -346,14 +346,14 @@
     /* ── ON DECK CARD ── */
     #onDeckCard {
       position: absolute;
-      bottom: 128px;
-      right: 48px;
+      bottom: 148px;
+      left: 48px;
       display: flex;
       align-items: center;
       gap: 0;
       background: rgba(10,5,0,0.72);
       border: 1px solid rgba(255,69,0,0.15);
-      border-right: 3px solid rgba(255,69,0,0.4);
+      border-left: 3px solid rgba(255,69,0,0.4);
       border-radius: 4px;
       overflow: hidden;
       backdrop-filter: blur(6px);
@@ -362,14 +362,32 @@
       transform: translateY(10px);
       transition: opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s;
     }
-    #onDeckCard.visible { opacity: 1; transform: translateY(0); }
+    #onDeckCard.visible { opacity: 0.75; transform: translateY(0); }
+
+    .ondeck-photo-wrap {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      background: rgba(255,69,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-right: 1px solid rgba(255,69,0,0.15);
+    }
+    .ondeck-photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .ondeck-avatar-svg { opacity: 0.35; }
 
     .ondeck-info {
       padding: 7px 14px 7px 12px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      min-width: 160px;
+      min-width: 150px;
     }
     .ondeck-lbl {
       font-size: 8px;
@@ -524,8 +542,16 @@
 
   <!-- ══ ON DECK CARD ══ -->
   <div id="onDeckCard">
+    <div class="ondeck-photo-wrap">
+      <img id="onDeckPhoto" src="" alt="" style="display:none">
+      <svg class="ondeck-avatar-svg" width="28" height="28" viewBox="0 0 40 40" id="onDeckAvatar">
+        <circle cx="20" cy="14" r="9" fill="#555"/>
+        <ellipse cx="20" cy="36" rx="14" ry="9" fill="#333"/>
+        <ellipse cx="20" cy="10" rx="9" ry="5" fill="rgba(255,69,0,0.5)"/>
+      </svg>
+    </div>
     <div class="ondeck-info">
-      <div class="ondeck-lbl">🔜 On Deck</div>
+      <div class="ondeck-lbl">On Deck</div>
       <div class="ondeck-name" id="onDeckName">—</div>
       <div class="ondeck-meta">
         <div class="ondeck-jersey" id="onDeckJersey"></div>
@@ -672,10 +698,15 @@
         document.getElementById('onDeckName').textContent   = onDeck.name || '—';
         document.getElementById('onDeckJersey').textContent = onDeck.jersey ? `#${onDeck.jersey}` : '';
         document.getElementById('onDeckPos').textContent    = onDeck.position || '';
+        setOnDeckPhoto(onDeck);
       } else {
         document.getElementById('onDeckName').textContent   = '—';
         document.getElementById('onDeckJersey').textContent = '';
         document.getElementById('onDeckPos').textContent    = '';
+        const photoEl  = document.getElementById('onDeckPhoto');
+        const avatarEl = document.getElementById('onDeckAvatar');
+        if (photoEl)  { photoEl.style.display  = 'none'; photoEl.src = ''; }
+        if (avatarEl) { avatarEl.style.display  = 'block'; }
       }
 
       // Runners
@@ -731,6 +762,48 @@
         try {
           const res = await fetch(
             `${SUPABASE_URL}/storage/v1/object/sign/photos/${batter.photoPath}`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ expiresIn: 3600 })
+            }
+          );
+          const data = await res.json();
+          if (data.signedURL) {
+            const url = SUPABASE_URL + data.signedURL;
+            photoCache[pid] = url;
+            photoEl.src = url;
+            photoEl.style.display = 'block';
+            avatarEl.style.display = 'none';
+            return;
+          }
+        } catch(e) { /* fallback avatar */ }
+      }
+
+      photoEl.style.display = 'none';
+      avatarEl.style.display = 'block';
+    }
+
+    async function setOnDeckPhoto(player) {
+      const photoEl  = document.getElementById('onDeckPhoto');
+      const avatarEl = document.getElementById('onDeckAvatar');
+      if (!photoEl || !avatarEl) return;
+      const pid = player.id || player.name;
+
+      if (photoCache[pid]) {
+        photoEl.src = photoCache[pid];
+        photoEl.style.display = 'block';
+        avatarEl.style.display = 'none';
+        return;
+      }
+
+      if (player.photoPath && !player.gdprPhoto) {
+        try {
+          const res = await fetch(
+            `${SUPABASE_URL}/storage/v1/object/sign/photos/${player.photoPath}`,
             {
               method: 'POST',
               headers: {

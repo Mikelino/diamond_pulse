@@ -963,6 +963,8 @@ function matchBatterAdj(delta) {
     : [];
   if (!players.length) return;
   matchState.batterIdx = (matchState.batterIdx + delta + players.length) % players.length;
+  matchState.balls = 0;
+  matchState.strikes = 0;
   matchRenderPanel(); matchSave();
 }
 
