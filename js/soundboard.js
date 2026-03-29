@@ -243,6 +243,7 @@ function renderLiveVisitors() {
 
   // Desktop: show/hide column + resizer
   if (window.innerWidth > 700) {
+    if (hasVisitors && !col.style.flex) col.style.flex = '0 0 240px';
     col.style.display = hasVisitors ? '' : 'none';
     const resizer = document.getElementById('liveResizer3');
     if (resizer) resizer.style.display = hasVisitors ? '' : 'none';

@@ -1068,11 +1068,15 @@
     #liveColSounds .live-soundboard,
     #liveColSounds .live-custom-sounds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 
-    /* Walkup song cards compact in column */
-    #liveColWalkup .live-player-card {
+    /* Walkup & Visitors song cards compact in column */
+    #liveColWalkup .live-player-card,
+    #liveColVisitors .live-player-card {
       padding: 8px 10px;
       gap: 8px;
     }
+
+    /* Visitors column — prevent cards from compressing below readable width */
+    #liveColVisitors .live-player-info { min-width: 0; overflow: hidden; }
 
     @media (max-width: 700px) {
       /* Mobile tab bar */
