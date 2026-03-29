@@ -831,7 +831,6 @@ async function loadLicense() {
 }
 
 function applyFeatures() {
-  if (!FEATURES.overlay) return;
   const col     = document.getElementById('liveColBroadcast');
   const resizer = document.getElementById('liveResizer4');
   const tabBtn  = document.getElementById('liveTabBroadcast');
