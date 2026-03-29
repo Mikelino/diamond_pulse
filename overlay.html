@@ -622,7 +622,7 @@
         document.getElementById('teamAway').textContent = teamNames.away.toUpperCase();
 
         // Joueurs — construits depuis team.lineup (même structure que le LineupMode)
-        const allPlayers = app.players || {};
+        const allPlayers = app.allPlayers || {};
         const lineupEntries = (homeTeam?.lineup || []).filter(e => e && e.present !== false);
         players = lineupEntries.map(e => {
           const p = allPlayers[e.pid];
