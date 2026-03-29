@@ -2232,25 +2232,8 @@
     }
 
     @media (max-width: 540px) {
-      /* Grille mobile : ordre-num | avatar | pos | info(nom) | play | présence */
-      .player-card {
-        grid-template-columns: 20px 36px 22px 1fr 36px 22px;
-        gap: 8px;
-        padding: 10px 10px;
-      }
-      /* Cacher les colonnes inutiles sur mobile */
-      .drag-handle { display: none; }
-      .upload-btn  { display: none; }
-      .delete-btn  { display: none; }
-      .song-info   { display: none; }
-      .player-name {
-        font-size: 15px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .player-info { min-width: 0; overflow: hidden; }
-      .jersey-num  { font-size: 13px; }
+      .player-card { padding: 7px 8px; gap: 6px; }
+      .player-name { font-size: 14px; }
     }
     /* ── MAIN BODY LAYOUT (sidebar + panels) ── */
     .main-body {
@@ -2399,17 +2382,20 @@
         padding-bottom: 60px;
       }
 
-      /* Grille player compacte */
+      /* Grille player mobile : n° ordre | badge pos | info | play | présence */
       .player-card {
-        grid-template-columns: 20px 36px 1fr 32px 22px;
+        grid-template-columns: 20px 36px 1fr 36px 22px;
         gap: 8px;
         padding: 8px 10px;
       }
-      .player-card .photo-btn,
-      .player-card .drag-handle { display: none; }
-      .song-info { display: none !important; }
-      /* Masquer l'avatar pour libérer de l'espace au nom */
-      .player-avatar { display: none; }
+      /* Cacher tous les éléments hors grille pour éviter les rangées implicites */
+      .player-card .drag-handle,
+      .player-card .photo-wrap,
+      .player-card .song-info,
+      .player-card .upload-btn,
+      .player-card .delete-btn,
+      .player-card .gdpr-btn,
+      .player-card .annotate-btn { display: none !important; }
       .player-name {
         font-size: 15px;
         white-space: nowrap;
