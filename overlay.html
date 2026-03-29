@@ -33,19 +33,37 @@
       font-family: 'Barlow Condensed', sans-serif;
     }
 
-    /* ── SCOREBOARD — bas gauche ── */
+    /* ── SCOREBOARD — haut gauche ── */
     #scoreboard {
       position: absolute;
-      bottom: 48px;
+      top: 48px;
       left: 48px;
       display: flex;
       flex-direction: column;
       gap: 6px;
       opacity: 0;
-      transform: translateY(16px);
+      transform: translateY(-16px);
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
     #scoreboard.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── BSO + RUNNERS — haut droite ── */
+    #countsPanel {
+      position: absolute;
+      top: 48px;
+      right: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(-16px);
+      transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s;
+    }
+    #countsPanel.visible {
       opacity: 1;
       transform: translateY(0);
     }
@@ -397,16 +415,17 @@
       background: var(--dark-panel);
       border: 1px solid var(--border);
       border-radius: 3px;
-      padding: 6px 10px;
+      padding: 8px 12px;
       backdrop-filter: blur(6px);
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
     .runners-base {
-      transition: fill 0.2s, filter 0.2s;
+      transition: fill 0.2s, stroke 0.2s, filter 0.2s;
     }
     .runners-base.occupied {
       fill: var(--orange) !important;
-      filter: drop-shadow(0 0 5px rgba(255,69,0,0.8));
+      stroke: var(--orange) !important;
+      filter: drop-shadow(0 0 6px rgba(255,69,0,0.9));
     }
 
     /* ── ERROR STATE ── */
@@ -429,10 +448,8 @@
 
   <div id="errorMsg"></div>
 
-  <!-- ══ SCOREBOARD ══ -->
+  <!-- ══ SCOREBOARD — haut gauche ══ -->
   <div id="scoreboard">
-
-    <!-- Score ligne -->
     <div class="score-main">
       <div class="team-block">
         <div class="team-label">Home</div>
@@ -451,8 +468,10 @@
         <div class="inning-lbl">Inn.</div>
       </div>
     </div>
+  </div>
 
-    <!-- BSO + Runners -->
+  <!-- ══ BSO + RUNNERS — haut droite ══ -->
+  <div id="countsPanel">
     <div class="counts-row">
       <div class="count-block">
         <div class="count-label">B</div>
@@ -472,27 +491,34 @@
           <div class="dot"></div><div class="dot"></div>
         </div>
       </div>
-      <!-- Runners diamond -->
-      <div class="runners-block">
-        <svg width="46" height="46" viewBox="0 0 46 46">
-          <!-- base lines -->
-          <line x1="23" y1="4"  x2="42" y2="23" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-          <line x1="42" y1="23" x2="23" y2="42" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-          <line x1="23" y1="42" x2="4"  y2="23" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-          <line x1="4"  y1="23" x2="23" y2="4"  stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-          <!-- home plate -->
-          <polygon points="23,46 19,41 19,38 27,38 27,41" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-          <!-- 2nd base (top) -->
-          <rect id="overlayBase2" class="runners-base" x="17" y="2" width="12" height="12" rx="1.5"
-            transform="rotate(45 23 8)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-          <!-- 1st base (right) -->
-          <rect id="overlayBase1" class="runners-base" x="36" y="17" width="12" height="12" rx="1.5"
-            transform="rotate(45 42 23)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-          <!-- 3rd base (left) -->
-          <rect id="overlayBase3" class="runners-base" x="-2" y="17" width="12" height="12" rx="1.5"
-            transform="rotate(45 4 23)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-        </svg>
-      </div>
+    </div>
+    <!-- Runners diamond — taille 80×80 pour éviter tout clipping -->
+    <div class="runners-block">
+      <svg width="80" height="80" viewBox="0 0 80 80" style="overflow:visible">
+        <!-- base lines -->
+        <line x1="40" y1="6"  x2="74" y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+        <line x1="74" y1="40" x2="40" y2="74" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+        <line x1="40" y1="74" x2="6"  y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+        <line x1="6"  y1="40" x2="40" y2="6"  stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+        <!-- home plate -->
+        <polygon points="40,78 34,70 34,64 46,64 46,70"
+          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <!-- 2nd base (top) — centré sur 40,6 -->
+        <rect id="overlayBase2" class="runners-base"
+          x="30" y="-4" width="20" height="20" rx="2"
+          transform="rotate(45 40 6)"
+          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        <!-- 1st base (right) — centré sur 74,40 -->
+        <rect id="overlayBase1" class="runners-base"
+          x="64" y="30" width="20" height="20" rx="2"
+          transform="rotate(45 74 40)"
+          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        <!-- 3rd base (left) — centré sur 6,40 -->
+        <rect id="overlayBase3" class="runners-base"
+          x="-4" y="30" width="20" height="20" rx="2"
+          transform="rotate(45 6 40)"
+          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+      </svg>
     </div>
   </div>
 
@@ -543,6 +569,7 @@
     async function init() {
       await loadAppData();
       document.getElementById('scoreboard').classList.add('visible');
+      document.getElementById('countsPanel').classList.add('visible');
       document.getElementById('batterCard').classList.add('visible');
       document.getElementById('onDeckCard').classList.add('visible');
       setInterval(poll, 2000);
