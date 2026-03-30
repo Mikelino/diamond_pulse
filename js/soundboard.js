@@ -55,7 +55,7 @@ let liveCustomSounds = []; // sera chargé depuis appSettings.soundboard.customS
 // ── VISITORS LINEUP ──
 // [{name, jersey, pronunciation}] — persisté en localStorage
 let visitorsLineup = JSON.parse(localStorage.getItem('visitorsLineup') || '[]');
-function saveVisitors() { localStorage.setItem('visitorsLineup', JSON.stringify(visitorsLineup)); }
+function saveVisitors() { localStorage.setItem('visitorsLineup', JSON.stringify(visitorsLineup)); matchSave(); }
 
 let currentOpponentId = localStorage.getItem('currentOpponentId') || '';
 function saveCurrentOpponent() { localStorage.setItem('currentOpponentId', currentOpponentId); }
@@ -877,7 +877,7 @@ async function matchSave() {
         'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json', 'Prefer': 'return=minimal'
       },
-      body: JSON.stringify({ value: { ...current, matchState, currentTeamId, opponentName: opp?.name || '', teamLabel } })
+      body: JSON.stringify({ value: { ...current, matchState, currentTeamId, opponentName: opp?.name || '', teamLabel, visitorsLineup } })
     });
   } catch(e) { console.warn('matchSave failed', e); }
 }

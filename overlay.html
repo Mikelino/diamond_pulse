@@ -696,7 +696,8 @@
     // ══ STATE ══
     let prev = {};
     let teamNames = {};
-    let players   = [];
+    let homePlayers   = [];
+    let visitorPlayers = [];
     let photoCache = {};
     let prevLastEvent = null;
 
@@ -741,14 +742,18 @@
         const lineupEntries = (homeTeam?.lineup || []).filter(e => e && e.present !== false);
         console.log('[overlay] lineupEntries:', lineupEntries.length, lineupEntries);
 
-        players = lineupEntries.map(e => {
+        homePlayers = lineupEntries.map(e => {
           const p = allPlayers[e.pid];
           if (!p) { console.warn('[overlay] allPlayers missing pid:', e.pid); return null; }
           return { ...p, id: e.pid, jersey: e.jersey || '', position: e.pos || '' };
         }).filter(Boolean);
-        console.log('[overlay] players built:', players.length, players.map(p => p.name));
+        console.log('[overlay] homePlayers built:', homePlayers.length, homePlayers.map(p => p.name));
 
-        preloadPhotos(players);
+        visitorPlayers = (app.visitorsLineup || []).map((v, i) => ({
+          name: v.name || '', jersey: v.jersey || '', position: '', photo: null, id: `visitor_${i}`
+        }));
+
+        preloadPhotos(homePlayers);
 
         // Render initial
         const ms = app.matchState || {};
@@ -831,10 +836,8 @@
         else            pitcherCard.classList.remove('visible');
       }
 
-      // Batter + On Deck — visibles seulement quand home batte
-      document.getElementById('batterCard').classList.toggle('visible', homeBatting);
-      document.getElementById('onDeckCard').classList.toggle('visible', homeBatting);
-
+      // Batter + On Deck — choisir lineup selon qui batte
+      const players = homeBatting ? homePlayers : visitorPlayers;
       const n = Math.max(players.length, 1);
       const batterIdx = (ms.batterIdx ?? 0) % n;
       const batter  = players[batterIdx];
