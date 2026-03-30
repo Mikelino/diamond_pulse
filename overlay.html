@@ -761,9 +761,17 @@
         const ms = rows?.[0]?.value?.matchState;
         if (!ms) return;
 
+        // Déclencher l'animation WALK/STRIKEOUT dès que possible, avant tout rechargement
+        const lastEvent = ms.lastEvent || null;
+        if (lastEvent && lastEvent !== prevLastEvent) {
+          const sub = lastEvent === 'WALK' ? '4 BALLS' : '3 STRIKES';
+          showOverlayCheer(lastEvent, sub);
+        }
+        prevLastEvent = lastEvent;
+
         // Rechargement complet si batterIdx change (nouvelle photo éventuelle)
         if (ms.batterIdx !== prev.batterIdx) {
-          await loadAppData(false);
+          await loadAppData(true);
           return;
         }
 
@@ -843,13 +851,6 @@
         }
       });
 
-      // Events (WALK / STRIKEOUT)
-      const lastEvent = ms.lastEvent || null;
-      if (lastEvent && lastEvent !== prevLastEvent) {
-        const sub = lastEvent === 'WALK' ? '4 BALLS' : '3 STRIKES';
-        showOverlayCheer(lastEvent, sub);
-      }
-      prevLastEvent = lastEvent;
     }
 
     function setScore(id, val, oldVal, force) {
