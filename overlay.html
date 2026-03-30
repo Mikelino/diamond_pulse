@@ -112,6 +112,17 @@
       white-space: nowrap;
     }
 
+    .team-block.batting {
+      background: rgba(255,69,0,0.08);
+    }
+    .team-block.batting .team-label::before {
+      content: '⚾ ';
+      font-size: 9px;
+    }
+    .team-block.batting .team-name {
+      color: var(--orange);
+    }
+
     .score-divider {
       display: flex;
       flex-direction: column;
@@ -761,10 +772,12 @@
         const ms = rows?.[0]?.value?.matchState;
         if (!ms) return;
 
-        // Déclencher l'animation WALK/STRIKEOUT dès que possible, avant tout rechargement
+        // Déclencher l'animation (WALK / STRIKEOUT / CHANGE FIELD) dès que possible
         const lastEvent = ms.lastEvent || null;
         if (lastEvent && lastEvent !== prevLastEvent) {
-          const sub = lastEvent === 'WALK' ? '4 BALLS' : '3 STRIKES';
+          const sub = lastEvent === 'WALK' ? '4 BALLS'
+                    : lastEvent === 'STRIKEOUT' ? '3 STRIKES'
+                    : 'SIDE OUT';
           showOverlayCheer(lastEvent, sub);
         }
         prevLastEvent = lastEvent;
@@ -787,9 +800,13 @@
       setScore('scoreHome', ms.scoreHome ?? 0, prev.scoreHome, force);
       setScore('scoreAway', ms.scoreAway ?? 0, prev.scoreAway, force);
 
-      // Inning
+      // Inning + équipe en offense
+      const inningTop = ms.inningTop !== false;
       document.getElementById('inningNum').textContent   = ms.inning ?? 1;
-      document.getElementById('inningArrow').textContent = ms.inningTop !== false ? '▲' : '▼';
+      document.getElementById('inningArrow').textContent = inningTop ? '▲' : '▼';
+      // top = visiteurs au bâton, bottom = home au bâton
+      document.getElementById('teamHome')?.closest('.team-block')?.classList.toggle('batting', !inningTop);
+      document.getElementById('teamAway')?.closest('.team-block')?.classList.toggle('batting',  inningTop);
 
       // Dots
       setDots('dotsBalls',   ms.balls   ?? 0, 3, 'balls');

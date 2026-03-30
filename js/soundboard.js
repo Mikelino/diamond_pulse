@@ -960,6 +960,16 @@ function matchInningToggle() {
   matchRenderPanel(); matchSave();
 }
 
+function matchChangeField() {
+  matchState.inningTop = !matchState.inningTop;
+  matchState.balls = 0;
+  matchState.strikes = 0;
+  matchState.outs = 0;
+  matchState.lastEvent = 'CHANGE FIELD';
+  matchRenderPanel(); matchSave();
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
+}
+
 function matchSetCount(type, idx) {
   const isUnchecking = idx + 1 === matchState[type];
   matchState[type] = isUnchecking ? idx : idx + 1;
