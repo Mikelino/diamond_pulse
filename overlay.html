@@ -451,15 +451,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-left: 1px solid var(--border);
+      min-width: 60px;
     }
     .matchup-label {
       font-family: 'Oswald', sans-serif;
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 2px;
-      color: var(--white);
+      color: var(--muted);
       text-transform: uppercase;
       white-space: nowrap;
     }
@@ -646,7 +647,7 @@
 
         document.getElementById('teamHome').textContent   = teamNames.home.toUpperCase();
         document.getElementById('teamAway').textContent   = teamNames.away.toUpperCase();
-        document.getElementById('matchupLabel').textContent = (app.teamLabel || '').toUpperCase();
+        document.getElementById('matchupLabel').textContent = (app.teamLabel || homeTeam?.label || '').toUpperCase();
 
         // Joueurs — construits depuis team.lineup
         const allPlayers = app.allPlayers || {};
