@@ -998,12 +998,11 @@ function matchResetCount() {
 }
 
 function matchBatterAdj(delta) {
-  const team = teams[currentTeamId];
-  const entries = team
-    ? (team.lineup || []).filter(e => e.present !== false)
-    : [];
-  if (!entries.length) return;
-  matchState.batterIdx = (matchState.batterIdx + delta + entries.length) % entries.length;
+  const n = matchState.inningTop
+    ? visitorsLineup.length
+    : ((teams[currentTeamId]?.lineup || []).filter(e => e.present !== false)).length;
+  if (!n) return;
+  matchState.batterIdx = (matchState.batterIdx + delta + n) % n;
   matchState.balls = 0;
   matchState.strikes = 0;
   matchRenderPanel(); matchSave();
@@ -1013,9 +1012,10 @@ function matchWalk() {
   matchState.pitchCount++;
   matchState.balls = 0;
   matchState.strikes = 0;
-  const team = teams[currentTeamId];
-  const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
-  if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  const n = matchState.inningTop
+    ? visitorsLineup.length
+    : ((teams[currentTeamId]?.lineup || []).filter(e => e.present !== false)).length;
+  if (n) matchState.batterIdx = (matchState.batterIdx + 1) % n;
   matchState.lastEvent = 'WALK';
   matchRenderPanel(); matchSave();
   setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
@@ -1026,9 +1026,10 @@ function matchStrikeout() {
   matchState.balls = 0;
   matchState.strikes = 0;
   matchState.outs = Math.min(matchState.outs + 1, 2);
-  const team = teams[currentTeamId];
-  const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
-  if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  const n = matchState.inningTop
+    ? visitorsLineup.length
+    : ((teams[currentTeamId]?.lineup || []).filter(e => e.present !== false)).length;
+  if (n) matchState.batterIdx = (matchState.batterIdx + 1) % n;
   matchState.lastEvent = 'STRIKEOUT';
   matchRenderPanel(); matchSave();
   setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);

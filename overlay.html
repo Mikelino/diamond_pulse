@@ -787,8 +787,8 @@
         }
         prevLastEvent = lastEvent;
 
-        // Rechargement complet si batterIdx change (nouvelle photo éventuelle)
-        if (ms.batterIdx !== prev.batterIdx) {
+        // Rechargement complet si batterIdx ou inningTop change
+        if (ms.batterIdx !== prev.batterIdx || ms.inningTop !== prev.inningTop) {
           await loadAppData(true);
           return;
         }
