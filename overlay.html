@@ -801,12 +801,18 @@
       setScore('scoreAway', ms.scoreAway ?? 0, prev.scoreAway, force);
 
       // Inning + équipe en offense
+      // inningTop=true → visiteurs battent (top of inning)
+      // inningTop=false → home batte (bottom of inning)
       const inningTop = ms.inningTop !== false;
+      const homeBatting = !inningTop;
       document.getElementById('inningNum').textContent   = ms.inning ?? 1;
       document.getElementById('inningArrow').textContent = inningTop ? '▲' : '▼';
-      // top = visiteurs au bâton, bottom = home au bâton
-      document.getElementById('teamHome')?.closest('.team-block')?.classList.toggle('batting', !inningTop);
-      document.getElementById('teamAway')?.closest('.team-block')?.classList.toggle('batting',  inningTop);
+
+      // Highlight équipe en offense dans le score
+      document.getElementById('teamHome')?.closest('.team-block')?.classList.toggle('batting', homeBatting);
+      document.getElementById('teamAway')?.closest('.team-block')?.classList.toggle('batting', !homeBatting);
+      document.getElementById('scoreHome').style.color = homeBatting  ? 'var(--orange)' : 'rgba(255,255,255,0.35)';
+      document.getElementById('scoreAway').style.color = !homeBatting ? 'var(--orange)' : 'rgba(255,255,255,0.35)';
 
       // Dots
       setDots('dotsBalls',   ms.balls   ?? 0, 3, 'balls');
@@ -825,7 +831,10 @@
         else            pitcherCard.classList.remove('visible');
       }
 
-      // Batter + On Deck
+      // Batter + On Deck — visibles seulement quand home batte
+      document.getElementById('batterCard').classList.toggle('visible', homeBatting);
+      document.getElementById('onDeckCard').classList.toggle('visible', homeBatting);
+
       const n = Math.max(players.length, 1);
       const batterIdx = (ms.batterIdx ?? 0) % n;
       const batter  = players[batterIdx];

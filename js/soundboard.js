@@ -967,7 +967,7 @@ function matchChangeField() {
   matchState.outs = 0;
   matchState.lastEvent = 'CHANGE FIELD';
   matchRenderPanel(); matchSave();
-  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
 }
 
 function matchSetCount(type, idx) {
@@ -1006,7 +1006,7 @@ function matchWalk() {
   if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
   matchState.lastEvent = 'WALK';
   matchRenderPanel(); matchSave();
-  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
 }
 
 function matchStrikeout() {
@@ -1019,7 +1019,7 @@ function matchStrikeout() {
   if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
   matchState.lastEvent = 'STRIKEOUT';
   matchRenderPanel(); matchSave();
-  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
 }
 
 function matchResetPitcher() {
