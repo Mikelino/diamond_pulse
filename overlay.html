@@ -446,6 +446,44 @@
       filter: drop-shadow(0 0 6px rgba(255,69,0,0.9));
     }
 
+    /* ── MATCHUP BLOCK (à côté de l'inning) ── */
+    .matchup-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-left: 1px solid var(--border);
+      min-width: 80px;
+    }
+    .matchup-home {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--orange);
+      text-transform: uppercase;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .matchup-sep {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin: 1px 0;
+    }
+    .matchup-away {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--offwhite);
+      text-transform: uppercase;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
     /* ── ERROR STATE ── */
     #errorMsg {
       position: absolute;
@@ -484,6 +522,11 @@
         <div class="inning-arrow" id="inningArrow">▲</div>
         <div class="inning-num" id="inningNum">1</div>
         <div class="inning-lbl">Inn.</div>
+      </div>
+      <div class="matchup-block">
+        <div class="matchup-home" id="matchupHome">HOME</div>
+        <div class="matchup-sep">vs</div>
+        <div class="matchup-away" id="matchupAway">VISITORS</div>
       </div>
     </div>
   </div>
@@ -620,11 +663,13 @@
         const homeTeam = (app.teams || {})[currentTeamId];
         console.log('[overlay] currentTeamId:', currentTeamId, '| homeTeam:', homeTeam);
 
-        teamNames.home = homeTeam?.label || homeTeam?.name || APP_CONFIG.clubName || 'HOME';
-        teamNames.away = app.matchState?.opponentName || app.opponentName || 'VISITORS';
+        teamNames.home = app.clubSettings?.name || APP_CONFIG.clubName || 'HOME';
+        teamNames.away = app.opponentName || 'VISITORS';
 
-        document.getElementById('teamHome').textContent = teamNames.home.toUpperCase();
-        document.getElementById('teamAway').textContent = teamNames.away.toUpperCase();
+        document.getElementById('teamHome').textContent    = teamNames.home.toUpperCase();
+        document.getElementById('teamAway').textContent    = teamNames.away.toUpperCase();
+        document.getElementById('matchupHome').textContent = teamNames.home.toUpperCase();
+        document.getElementById('matchupAway').textContent = teamNames.away.toUpperCase();
 
         // Joueurs — construits depuis team.lineup
         const allPlayers = app.allPlayers || {};

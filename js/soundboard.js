@@ -866,13 +866,14 @@ async function matchSave() {
     });
     const rows = await res.json();
     const current = rows?.[0]?.value || {};
+    const opp = (appSettings.opponents || []).find(o => o.id === currentOpponentId);
     await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app`, {
       method: 'PATCH',
       headers: {
         'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json', 'Prefer': 'return=minimal'
       },
-      body: JSON.stringify({ value: { ...current, matchState, currentTeamId } })
+      body: JSON.stringify({ value: { ...current, matchState, currentTeamId, opponentName: opp?.name || '' } })
     });
   } catch(e) { console.warn('matchSave failed', e); }
 }
