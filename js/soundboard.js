@@ -883,8 +883,11 @@ async function matchSave() {
 }
 
 function matchRenderPanel() {
+  const homeBatting = !matchState.inningTop;
   document.getElementById('matchScoreHome').textContent = matchState.scoreHome;
   document.getElementById('matchScoreAway').textContent = matchState.scoreAway;
+  document.getElementById('matchScoreHome').style.color = homeBatting  ? 'var(--orange)' : 'var(--muted)';
+  document.getElementById('matchScoreAway').style.color = !homeBatting ? 'var(--orange)' : 'var(--muted)';
   document.getElementById('matchInningNum').textContent = matchState.inning;
   document.getElementById('matchInningArrow').textContent = matchState.inningTop ? '▲' : '▼';
 
@@ -899,22 +902,31 @@ function matchRenderPanel() {
       });
   });
 
-  const team = teams[currentTeamId];
-  const entries = team
-    ? (team.lineup || []).filter(e => e.present !== false)
-    : [];
-  const n = entries.length;
-  const batterIdx  = n ? matchState.batterIdx % n : 0;
-  const onDeckIdx  = n ? (batterIdx + 1) % n : 0;
-  const batter  = entries[batterIdx];
-  const onDeck  = entries[onDeckIdx];
-  const fmt = e => {
-    if (!e) return '—';
-    const p = allPlayers[e.pid];
-    return `${e.jersey ? '#' + e.jersey : '—'} ${p?.name || '—'}${e.pos ? ' · ' + e.pos : ''}`;
-  };
-  document.getElementById('matchBatterDisplay').textContent  = fmt(batter);
-  document.getElementById('matchOnDeckDisplay').textContent  = fmt(onDeck);
+  let batterDisplay, onDeckDisplay;
+  if (homeBatting) {
+    const team = teams[currentTeamId];
+    const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
+    const n = entries.length;
+    const bi = n ? matchState.batterIdx % n : 0;
+    const batter = entries[bi];
+    const onDeck = entries[n ? (bi + 1) % n : 0];
+    const fmt = e => {
+      if (!e) return '—';
+      const p = allPlayers[e.pid];
+      return `${e.jersey ? '#' + e.jersey : '—'} ${p?.name || '—'}${e.pos ? ' · ' + e.pos : ''}`;
+    };
+    batterDisplay  = fmt(batter);
+    onDeckDisplay  = fmt(onDeck);
+  } else {
+    const vl = visitorsLineup;
+    const n  = vl.length;
+    const bi = n ? matchState.batterIdx % n : 0;
+    const fmtV = v => v ? `${v.jersey ? '#' + v.jersey : '—'} ${v.name || '—'}` : '—';
+    batterDisplay = fmtV(vl[bi]);
+    onDeckDisplay = fmtV(vl[n ? (bi + 1) % n : 0]);
+  }
+  document.getElementById('matchBatterDisplay').textContent = batterDisplay;
+  document.getElementById('matchOnDeckDisplay').textContent = onDeckDisplay;
 
   // Runners
   const runnerMap = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
