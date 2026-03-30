@@ -335,6 +335,82 @@
       padding: 1px 5px;
     }
 
+    /* ── PITCHER CARD ── */
+    #pitcherCard {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      display: flex;
+      align-items: stretch;
+      background: rgba(10,10,10,0.92);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--orange);
+      border-radius: 4px;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,69,0,0.08);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+    }
+    #pitcherCard.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .pitcher-info {
+      padding: 10px 20px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .pitcher-lbl {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .pitcher-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--white);
+      text-transform: uppercase;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .pitcher-pitches {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .pitcher-count {
+      font-family: 'Oswald', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--orange);
+      line-height: 1;
+    }
+    .pitcher-count-lbl {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ── BATTER UP CHEER ── */
+    @keyframes cheer-in {
+      0%   { transform: scale(0.5) translateY(20px); opacity: 0; }
+      60%  { transform: scale(1.05) translateY(-4px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    @keyframes sub-in {
+      0%   { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
     /* ── ORANGE PULSE on score change ── */
     @keyframes score-pop {
       0%   { transform: scale(1); }
@@ -582,6 +658,24 @@
     </div>
   </div>
 
+  <!-- ══ PITCHER CARD ══ -->
+  <div id="pitcherCard">
+    <div class="pitcher-info">
+      <div class="pitcher-lbl">⚾ Pitcher</div>
+      <div class="pitcher-name" id="pitcherName">—</div>
+      <div class="pitcher-pitches">
+        <span class="pitcher-count" id="pitchCount">0</span>
+        <span class="pitcher-count-lbl">pitches</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BATTER UP CHEER ══ -->
+  <div id="overlayCheer" style="position:fixed;inset:0;pointer-events:none;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s">
+    <div id="overlayCheerText" style="font-family:'Oswald',sans-serif;font-size:120px;font-weight:700;color:#fff;letter-spacing:6px;text-transform:uppercase;line-height:1;opacity:0"></div>
+    <div id="overlayCheerSub" style="font-family:'Barlow Condensed',sans-serif;font-size:24px;color:var(--orange);letter-spacing:6px;text-transform:uppercase;margin-top:8px;opacity:0"></div>
+  </div>
+
   <!-- ══ BATTER CARD ══ -->
   <div id="batterCard">
     <div class="batter-photo-wrap">
@@ -609,9 +703,10 @@
 
     // ══ STATE ══
     let prev = {};
-    let teamNames = {};   // { home: '...', away: '...' }
-    let players  = [];    // liste ordonnée joueurs actifs
-    let photoCache = {};  // pid → url signée
+    let teamNames = {};
+    let players   = [];
+    let photoCache = {};
+    let prevBatterIdx = -1;
 
     // ══ INIT ══
     async function init() {
@@ -712,17 +807,31 @@
       setDots('dotsStrikes', ms.strikes ?? 0, 2, 'strikes');
       setDots('dotsOuts',    ms.outs    ?? 0, 2, 'outs');
 
+      // Pitcher
+      const pitcherCard = document.getElementById('pitcherCard');
+      const hasPitcher  = !!(ms.pitcherName);
+      const elPN = document.getElementById('pitcherName');
+      const elPC = document.getElementById('pitchCount');
+      if (elPN) elPN.textContent = ms.pitcherName || '—';
+      if (elPC) elPC.textContent = ms.pitchCount  ?? 0;
+      if (pitcherCard) {
+        if (hasPitcher) pitcherCard.classList.add('visible');
+        else            pitcherCard.classList.remove('visible');
+      }
+
       // Batter + On Deck
       const n = Math.max(players.length, 1);
       const batterIdx = (ms.batterIdx ?? 0) % n;
       const batter  = players[batterIdx];
       const onDeck  = players[(batterIdx + 1) % n];
       if (batter) {
-        const nameChanged = batter.name !== document.getElementById('batterName').textContent;
-        if (nameChanged && !force) {
+        const idxChanged = batterIdx !== prevBatterIdx;
+        if (idxChanged && !force) {
           document.getElementById('batterCard').classList.add('batter-change');
           setTimeout(() => document.getElementById('batterCard').classList.remove('batter-change'), 450);
+          showOverlayCheer(batter.name.split(' ')[0].toUpperCase(), 'BATTER UP');
         }
+        prevBatterIdx = batterIdx;
         document.getElementById('batterName').textContent   = batter.name || '—';
         document.getElementById('batterJersey').textContent = batter.jersey ? `#${batter.jersey}` : '';
         document.getElementById('batterPos').textContent    = batter.position || '';
@@ -810,6 +919,32 @@
     }
 
     function preloadPhotos(playerList) { /* photos sont des URLs publiques directes — pas de preload nécessaire */ }
+
+    function showOverlayCheer(name, sub) {
+      const ov  = document.getElementById('overlayCheer');
+      const txt = document.getElementById('overlayCheerText');
+      const sb  = document.getElementById('overlayCheerSub');
+      if (!ov || !txt || !sb) return;
+
+      txt.textContent = name;
+      sb.textContent  = sub;
+      ov.style.opacity = '1';
+
+      txt.style.animation = 'none';
+      sb.style.animation  = 'none';
+      void txt.offsetWidth;
+
+      txt.style.animation = 'cheer-in 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      sb.style.animation  = 'sub-in 0.3s 0.3s ease forwards';
+
+      setTimeout(() => {
+        ov.style.opacity    = '0';
+        txt.style.animation = 'none';
+        sb.style.animation  = 'none';
+        txt.style.opacity   = '0';
+        sb.style.opacity    = '0';
+      }, 1400);
+    }
 
     function showError(msg) {
       const el = document.getElementById('errorMsg');

@@ -856,7 +856,9 @@ let matchState = {
   inning: 1, inningTop: true,
   balls: 0, strikes: 0, outs: 0,
   batterIdx: 0,
-  runners: { first: false, second: false, third: false }
+  runners: { first: false, second: false, third: false },
+  pitcherName: '',
+  pitchCount: 0
 };
 
 async function matchSave() {
@@ -933,6 +935,11 @@ function matchRenderPanel() {
     }
   });
 
+  const elPitcherName = document.getElementById('matchPitcherName');
+  if (elPitcherName) elPitcherName.textContent = matchState.pitcherName || '—';
+  const elPitchCount = document.getElementById('matchPitchCount');
+  if (elPitchCount) elPitchCount.textContent = matchState.pitchCount ?? 0;
+
   const overlayUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'overlay.html';
   document.getElementById('matchOverlayUrl').textContent = overlayUrl;
 }
@@ -972,6 +979,32 @@ function matchBatterAdj(delta) {
   matchState.batterIdx = (matchState.batterIdx + delta + entries.length) % entries.length;
   matchState.balls = 0;
   matchState.strikes = 0;
+  matchRenderPanel(); matchSave();
+}
+
+function matchWalk() {
+  matchState.pitchCount++;
+  matchState.balls = 0;
+  matchState.strikes = 0;
+  const team = teams[currentTeamId];
+  const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
+  if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  matchRenderPanel(); matchSave();
+}
+
+function matchStrikeout() {
+  matchState.pitchCount++;
+  matchState.balls = 0;
+  matchState.strikes = 0;
+  matchState.outs = Math.min(matchState.outs + 1, 2);
+  const team = teams[currentTeamId];
+  const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
+  if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  matchRenderPanel(); matchSave();
+}
+
+function matchResetPitcher() {
+  matchState.pitchCount = 0;
   matchRenderPanel(); matchSave();
 }
 
