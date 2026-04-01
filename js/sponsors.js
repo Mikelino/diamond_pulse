@@ -131,7 +131,7 @@ async function uploadSponsorLogo(clubId, file) {
 
 async function getActiveSponsorsByTier(clubId, tier) {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/sponsors?club_id=eq.${encodeURIComponent(clubId)}&tier=eq.${tier}&active=eq.true&order=display_order`,
+    `${SUPABASE_URL}/rest/v1/sponsors?club_id=eq.${encodeURIComponent(clubId)}&tier=eq.${tier}&active=eq.true&order=display_order.asc`,
     { headers: _adsHeaders() }
   );
   if (!res.ok) return [];
@@ -209,15 +209,16 @@ function adsRenderList(tier) {
 
   if (!sponsors.length) {
     list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0">No sponsors yet.</div>';
+    if (tier === 'gold') _adsAppendGoldNote(list);
     return;
   }
 
-  sponsors.forEach(s => {
+  sponsors.forEach((s, idx) => {
     const item = document.createElement('div');
     item.className = 'ads-sponsor-item';
     item.dataset.id = s.id;
-    const encodedSponsor = encodeURIComponent(JSON.stringify(s));
     item.innerHTML = `
+      ${tier === 'gold' ? `<span class="ads-position-badge">#${idx + 1}</span>` : ''}
       <span class="ads-drag-handle" title="Drag to reorder">⠿</span>
       ${s.logo_url
         ? `<img src="${s.logo_url}" alt="${s.name}" class="ads-logo-thumb" crossorigin="anonymous">`
@@ -237,6 +238,8 @@ function adsRenderList(tier) {
     list.appendChild(item);
   });
 
+  if (tier === 'gold') _adsAppendGoldNote(list);
+
   if (typeof Sortable !== 'undefined') {
     Sortable.create(list, {
       handle:    '.ads-drag-handle',
@@ -244,11 +247,24 @@ function adsRenderList(tier) {
       onEnd: async () => {
         const ids = [...list.querySelectorAll('.ads-sponsor-item')].map(el => el.dataset.id);
         _adsSponsors[tier] = ids.map(id => _adsSponsors[tier].find(s => s.id === id)).filter(Boolean);
+        // Refresh position badges after reorder (gold only)
+        if (tier === 'gold') {
+          list.querySelectorAll('.ads-position-badge').forEach((badge, i) => {
+            badge.textContent = `#${i + 1}`;
+          });
+        }
         try { await updateSponsorOrder(ids); }
         catch (e) { console.error('[ADS] updateOrder:', e); }
       },
     });
   }
+}
+
+function _adsAppendGoldNote(list) {
+  const note = document.createElement('div');
+  note.className = 'ads-gold-note';
+  note.textContent = '⚠️ L\'ordre est fixe — le sponsor #1 apparaît toujours en premier dans l\'overlay.';
+  list.parentElement.appendChild(note);
 }
 
 function adsOpenFormById(id, tier) {

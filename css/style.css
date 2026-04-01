@@ -2812,6 +2812,25 @@
       border-left-color: var(--orange);
     }
 
+    .ads-position-badge {
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 1px;
+      min-width: 28px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .ads-gold-note {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: rgba(255, 69, 0, 0.6);
+      padding: 8px 0 4px;
+    }
+
     .ads-drag-handle {
       cursor: grab;
       color: var(--muted);
