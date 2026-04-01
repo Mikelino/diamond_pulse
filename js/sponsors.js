@@ -417,15 +417,23 @@ async function adsToggleActive(id, tier, active) {
 // ── BROADCAST COLUMN — SPONSOR CONTROLS ──
 
 let _bcSilverActive = false;
+let _bcChannel      = null;
+
+function _getBcChannel() {
+  if (!_bcChannel) {
+    const clubId = APP_CONFIG.clubId || 'default';
+    _bcChannel = window.supabase.channel(`overlay:${clubId}`);
+    _bcChannel.subscribe();
+  }
+  return _bcChannel;
+}
 
 async function broadcastSilverBlock() {
-  const clubId = APP_CONFIG.clubId || 'default';
   _bcSilverActive = !_bcSilverActive;
 
   const btn = document.getElementById('bcSilverBtn');
   try {
-    await window.supabase.channel(`overlay:${clubId}`)
-      .send({ type: 'broadcast', event: 'silver_block', payload: { active: _bcSilverActive } });
+    await _getBcChannel().send({ type: 'broadcast', event: 'silver_block', payload: { active: _bcSilverActive } });
     _bcSetBtnState(btn, _bcSilverActive, '▶ Bloc Silver', '⏹ Arrêter bloc Silver');
   } catch (e) {
     console.error('[BC] silver_block:', e);
