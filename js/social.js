@@ -315,9 +315,10 @@ async function exportStory() {
   const rowH = Math.min(98, (H - startY - 120) / Math.max(entries.length, 1));
   const maxRows = Math.floor((H - startY - 120) / rowH);
 
-  const drawPlayers = entries.slice(0, maxRows).map(async (entry, idx) => {
+  for (let idx = 0; idx < Math.min(entries.length, maxRows); idx++) {
+    const entry = entries[idx];
     const player = allPlayers[entry.pid];
-    if (!player) return;
+    if (!player) continue;
 
     const y = startY + idx * rowH;
     const mid = y + rowH / 2;
@@ -411,9 +412,7 @@ async function exportStory() {
     ctx.beginPath();
     ctx.moveTo(80, y + rowH); ctx.lineTo(W - 80, y + rowH);
     ctx.stroke();
-  });
-
-  await Promise.all(drawPlayers);
+  }
 
   // ── LIGNE ORANGE EN BAS ──
   ctx.fillStyle = accent;
