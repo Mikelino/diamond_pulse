@@ -97,17 +97,19 @@ async function deleteSponsor(id) {
   if (!res.ok) throw new Error(`deleteSponsor: ${res.status}`);
 }
 
-async function uploadSponsorLogo(clubId, file) {
-  // Resize to 400×200 PNG, centered, transparent background
+async function uploadSponsorLogo(clubId, file, tier) {
+  // Resize to cadre dimensions (2× for quality): gold → 280×140, others → 400×200
+  const W = (tier === 'gold') ? 280 : 400;
+  const H = (tier === 'gold') ? 140 : 200;
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
-  canvas.width  = 400;
-  canvas.height = 200;
+  canvas.width  = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const scale = Math.min(400 / bitmap.width, 200 / bitmap.height);
+  const scale = Math.min(W / bitmap.width, H / bitmap.height);
   const w = bitmap.width  * scale;
   const h = bitmap.height * scale;
-  ctx.drawImage(bitmap, (400 - w) / 2, (200 - h) / 2, w, h);
+  ctx.drawImage(bitmap, (W - w) / 2, (H - h) / 2, w, h);
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   const uuid  = crypto.randomUUID();
@@ -304,6 +306,9 @@ function adsOpenForm(sponsor, tier) {
     img.src = '';
   }
 
+  const goldHint = document.getElementById('adsGoldLogoHint');
+  if (goldHint) goldHint.style.display = (_adsCurrentTier === 'gold') ? 'block' : 'none';
+
   const form = document.getElementById('adsSponsorForm');
   form.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -325,6 +330,10 @@ function adsHandleLogoPreview(input) {
   const img     = document.getElementById('adsLogoImg');
   img.src = URL.createObjectURL(file);
   preview.style.display = 'flex';
+  const hint = document.getElementById('adsLogoResizeHint');
+  if (hint) hint.textContent = (_adsCurrentTier === 'gold')
+    ? 'Aperçu — sera redimensionné à 280×140 px (cadre Gold)'
+    : 'Aperçu — sera redimensionné à 400×200 px';
 }
 
 async function adsSaveSponsor() {
@@ -347,7 +356,7 @@ async function adsSaveSponsor() {
 
   if (_adsLogoFile) {
     try {
-      logoUrl = await uploadSponsorLogo(clubId, _adsLogoFile);
+      logoUrl = await uploadSponsorLogo(clubId, _adsLogoFile, tier);
     } catch (e) {
       console.error('[ADS] logo upload:', e);
       alert('Logo upload failed. Sponsor will be saved without logo.');
