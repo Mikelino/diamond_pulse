@@ -311,6 +311,9 @@ async function exportStory() {
   }
 
   // ── JOUEURS ──
+  console.log('[story] entries:', entries.length, entries.map(e => e.pid));
+  console.log('[story] allPlayers keys:', Object.keys(allPlayers).slice(0, 5));
+
   const startY = 680;
   const rowH = Math.min(98, (H - startY - 120) / Math.max(entries.length, 1));
   const maxRows = Math.floor((H - startY - 120) / rowH);
@@ -318,6 +321,7 @@ async function exportStory() {
   for (let idx = 0; idx < Math.min(entries.length, maxRows); idx++) {
     const entry = entries[idx];
     const player = allPlayers[entry.pid];
+    console.log(`[story] idx=${idx} pid=${entry.pid} (type:${typeof entry.pid}) player=`, player);
     if (!player) continue;
 
     const y = startY + idx * rowH;
