@@ -474,11 +474,11 @@ function _bcSetBtnState(btn, active, labelOff, labelOn) {
     btn.style.animation    = 'adsPausePulse 1.4s ease-in-out infinite';
     btn.style.color        = '#fff';
   } else {
-    btn.style.background   = '';
-    btn.style.borderColor  = '';
+    btn.style.background   = 'var(--gray)';
+    btn.style.borderColor  = 'var(--border)';
     btn.style.boxShadow    = '';
     btn.style.animation    = '';
-    btn.style.color        = '';
+    btn.style.color        = 'var(--white)';
   }
 }
 
