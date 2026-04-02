@@ -652,6 +652,93 @@
       white-space: nowrap;
     }
 
+    /* ── BALL GAME — Séquence sponsors fin de match ── */
+    #ballgame-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    #ballgame-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #bg-tier-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: #FF4500;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      margin-bottom: 36px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #bg-sponsor-logo {
+      max-width: 480px;
+      max-height: 240px;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #bg-sponsor-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 42px;
+      font-weight: 600;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 28px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #bg-bronze-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 48px 60px;
+      max-width: 1600px;
+      padding: 20px 80px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .bg-bronze-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .bg-bronze-item img {
+      max-width: 200px;
+      max-height: 100px;
+      object-fit: contain;
+    }
+    .bg-bronze-item span {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    body.ballgame-active #scoreboard,
+    body.ballgame-active #countsPanel,
+    body.ballgame-active #batterCard,
+    body.ballgame-active #onDeckCard,
+    body.ballgame-active .gold-sponsor,
+    body.ballgame-active #silver-block {
+      opacity: 0 !important;
+      transition: opacity 0.5s ease !important;
+      pointer-events: none;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -778,6 +865,14 @@
     <div class="silver-block-inner">
       <div id="silver-block-track" class="silver-block-track"></div>
     </div>
+  </div>
+
+  <!-- ══ BALL GAME — Séquence sponsors fin de match ══ -->
+  <div id="ballgame-overlay">
+    <div id="bg-tier-label"></div>
+    <img id="bg-sponsor-logo" crossorigin="anonymous" alt="" />
+    <div id="bg-sponsor-name"></div>
+    <div id="bg-bronze-grid"></div>
   </div>
 
   <!-- ══ CHEER OVERLAY ══ -->
@@ -1257,6 +1352,94 @@
       if (silverSponsors.length) scheduleAutoSilver();
     }
 
+    // ── BALL GAME ──
+    let _bgSponsors = { gold: [], silver: [], bronze: [] };
+
+    async function initBallGame() {
+      _bgSponsors.gold   = await _fetchSponsorsByTier('gold');
+      _bgSponsors.silver = await _fetchSponsorsByTier('silver');
+      _bgSponsors.bronze = await _fetchSponsorsByTier('bronze');
+    }
+
+    function _bgWait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function _bgShow(el) { el.style.opacity = '1'; await _bgWait(700); }
+    async function _bgHide(el) { el.style.opacity = '0'; await _bgWait(700); }
+
+    async function startBallGameSequence() {
+      // 1. Animation cheer
+      showOverlayCheer('BALL GAME!', 'GAME OVER');
+      await _bgWait(2500);
+
+      // 2. Masquer les éléments du scoreboard
+      document.body.classList.add('ballgame-active');
+      hideSilverBlock();
+
+      const overlay  = document.getElementById('ballgame-overlay');
+      const tierEl   = document.getElementById('bg-tier-label');
+      const logoEl   = document.getElementById('bg-sponsor-logo');
+      const nameEl   = document.getElementById('bg-sponsor-name');
+      const bronzeEl = document.getElementById('bg-bronze-grid');
+
+      overlay.classList.add('visible');
+      await _bgWait(900);
+
+      // Helper : affiche un sponsor individuel
+      async function showOneSponsor(s, tierLabel, holdMs) {
+        tierEl.textContent = tierLabel;
+        await _bgShow(tierEl);
+
+        if (s.logo_url) {
+          await new Promise(r => {
+            logoEl.onload = r; logoEl.onerror = r;
+            logoEl.src = s.logo_url;
+          });
+          await _bgShow(logoEl);
+        }
+        nameEl.textContent = s.name;
+        await _bgShow(nameEl);
+
+        await _bgWait(holdMs);
+
+        await _bgHide(nameEl);
+        await _bgHide(logoEl);
+        await _bgHide(tierEl);
+        logoEl.src = '';
+      }
+
+      // 3. Gold — un par un
+      for (const s of _bgSponsors.gold) {
+        await showOneSponsor(s, '★  Gold Sponsor  ★', 3500);
+      }
+
+      // 4. Silver — un par un
+      for (const s of _bgSponsors.silver) {
+        await showOneSponsor(s, '✦  Silver Sponsor  ✦', 2500);
+      }
+
+      // 5. Bronze — tous ensemble
+      if (_bgSponsors.bronze.length) {
+        tierEl.textContent = '✦  Bronze Sponsors  ✦';
+        await _bgShow(tierEl);
+        bronzeEl.innerHTML = _bgSponsors.bronze.map(s => `
+          <div class="bg-bronze-item">
+            ${s.logo_url ? `<img src="${s.logo_url}" crossorigin="anonymous" alt="${s.name}" />` : ''}
+            <span>${s.name}</span>
+          </div>
+        `).join('');
+        await _bgShow(bronzeEl);
+        await _bgWait(6000);
+        await _bgHide(bronzeEl);
+        await _bgHide(tierEl);
+        bronzeEl.innerHTML = '';
+      }
+
+      // 6. Fermer l'overlay
+      overlay.classList.remove('visible');
+      await _bgWait(900);
+      document.body.classList.remove('ballgame-active');
+    }
+
     // ── Realtime ──
     try {
       window.supabase
@@ -1271,6 +1454,9 @@
             hideSilverBlock();
             scheduleAutoSilver();
           }
+        })
+        .on('broadcast', { event: 'ball_game' }, () => {
+          startBallGameSequence();
         })
         .subscribe();
 
@@ -1289,6 +1475,7 @@
     window.addEventListener('load', async () => {
       await initGoldSponsor();
       await initSilverBlock();
+      await initBallGame();
     });
 
     window.addEventListener('load', init);

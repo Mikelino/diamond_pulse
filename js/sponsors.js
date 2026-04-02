@@ -482,6 +482,27 @@ function _bcSetBtnState(btn, active, labelOff, labelOn) {
   }
 }
 
+async function broadcastBallGame() {
+  const btn = document.getElementById('bcBallGameBtn');
+  try {
+    await _bcChannel.send({ type: 'broadcast', event: 'ball_game', payload: {} });
+    if (btn) {
+      btn.style.background  = '#FF4500';
+      btn.style.borderColor = '#FF4500';
+      btn.style.color       = '#fff';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.style.background  = 'var(--gray)';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color       = 'var(--white)';
+        btn.disabled = false;
+      }, 3000);
+    }
+  } catch (e) {
+    console.error('[BC] ball_game:', e);
+  }
+}
+
 // ── SILVER CONFIG SAVE ──
 
 async function adsSaveSilverConfig() {
