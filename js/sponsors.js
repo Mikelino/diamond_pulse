@@ -199,6 +199,20 @@ async function adsRenderPanel() {
     document.getElementById('goldIntervalInput').value = data?.value?.seconds ?? 45;
   } catch (e) { /* keep default */ }
 
+  // Load silver config
+  try {
+    const { data } = await window.supabase
+      .from('config')
+      .select('value')
+      .eq('key', 'sponsor_silver_config')
+      .single();
+    if (data?.value) {
+      document.getElementById('silverEveryInput').value = data.value.every_seconds ?? 180;
+      document.getElementById('silverDurInput').value   = data.value.dur_seconds   ?? 25;
+      document.getElementById('silverSpeedInput').value = data.value.speed_px      ?? 80;
+    }
+  } catch (e) { /* keep default */ }
+
   ['gold', 'silver', 'bronze'].forEach(tier => adsRenderList(tier));
 }
 
@@ -465,6 +479,26 @@ function _bcSetBtnState(btn, active, labelOff, labelOn) {
     btn.style.boxShadow    = '';
     btn.style.animation    = '';
     btn.style.color        = '';
+  }
+}
+
+// ── SILVER CONFIG SAVE ──
+
+async function adsSaveSilverConfig() {
+  const every_seconds = parseInt(document.getElementById('silverEveryInput').value, 10);
+  const dur_seconds   = parseInt(document.getElementById('silverDurInput').value, 10);
+  const speed_px      = parseInt(document.getElementById('silverSpeedInput').value, 10);
+  if (!every_seconds || every_seconds < 30 || every_seconds > 600) { alert('Intervalle invalide (30–600 s).'); return; }
+  if (!dur_seconds   || dur_seconds   < 5  || dur_seconds   > 120) { alert('Durée invalide (5–120 s).'); return; }
+  if (!speed_px      || speed_px      < 20 || speed_px      > 300) { alert('Vitesse invalide (20–300 px/s).'); return; }
+  try {
+    await window.supabase
+      .from('config')
+      .upsert({ key: 'sponsor_silver_config', value: { every_seconds, dur_seconds, speed_px }, updated_at: new Date().toISOString() });
+    showSaveIndicator();
+  } catch (e) {
+    console.error('[ADS] saveSilverConfig:', e);
+    alert('Erreur lors de la sauvegarde.');
   }
 }
 

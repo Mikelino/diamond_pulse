@@ -1520,6 +1520,31 @@
             </div>
           </div>
 
+          <!-- OBS Overlay — Silver -->
+          <div class="config-section">
+            <div class="config-section-label">📺 OBS Overlay — Silver</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="align-items:flex-end;gap:12px;flex-wrap:wrap">
+                <div class="form-group" style="max-width:150px">
+                  <label class="form-label">Intervalle (s)</label>
+                  <input class="form-input" id="silverEveryInput" type="number" min="30" max="600" value="180" />
+                </div>
+                <div class="form-group" style="max-width:150px">
+                  <label class="form-label">Durée d'affichage (s)</label>
+                  <input class="form-input" id="silverDurInput" type="number" min="5" max="120" value="25" />
+                </div>
+                <div class="form-group" style="max-width:150px">
+                  <label class="form-label">Vitesse défilement (px/s)</label>
+                  <input class="form-input" id="silverSpeedInput" type="number" min="20" max="300" value="80" />
+                </div>
+                <button class="add-btn" style="padding:9px 20px" onclick="adsSaveSilverConfig()">Sauvegarder</button>
+              </div>
+              <div style="margin-top:8px;font-size:12px;color:var(--muted)">
+                Intervalle entre chaque apparition de la barre Silver, durée d'affichage et vitesse de défilement.
+              </div>
+            </div>
+          </div>
+
           <!-- Settings: max per tier -->
           <div class="config-section">
             <div class="config-section-label">⚙️ Limits by tier</div>

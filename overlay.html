@@ -1152,9 +1152,9 @@
     }
 
     // ── Composant 2 : Bloc Silver ──
-    const SILVER_SPEED      = 80;  // px/s
-    const SILVER_AUTO_EVERY = 180; // secondes entre apparitions auto
-    const SILVER_AUTO_DUR   = 25;  // secondes d'affichage auto
+    let SILVER_SPEED      = 80;  // px/s
+    let SILVER_AUTO_EVERY = 180; // secondes entre apparitions auto
+    let SILVER_AUTO_DUR   = 25;  // secondes d'affichage auto
 
     let silverSponsors  = [];
     let silverAnim      = null;
@@ -1230,6 +1230,18 @@
     }
 
     async function initSilverBlock() {
+      try {
+        const { data } = await window.supabase
+          .from('config')
+          .select('value')
+          .eq('key', 'sponsor_silver_config')
+          .single();
+        if (data?.value) {
+          SILVER_AUTO_EVERY = data.value.every_seconds ?? 180;
+          SILVER_AUTO_DUR   = data.value.dur_seconds   ?? 25;
+          SILVER_SPEED      = data.value.speed_px      ?? 80;
+        }
+      } catch (e) { /* keep defaults */ }
       silverSponsors = await _fetchSponsorsByTier('silver');
       if (silverSponsors.length) scheduleAutoSilver();
     }
