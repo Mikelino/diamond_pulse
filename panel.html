@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Diamond Pulse · Panel</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0d14;
+    --bg2:       #13131f;
+    --bg3:       #1a1a28;
+    --border:    rgba(255,255,255,0.09);
+    --text:      rgba(255,255,255,0.75);
+    --muted:     rgba(255,255,255,0.35);
+    --hint:      rgba(255,255,255,0.18);
+    --live:      #E24B4A;
+    --lineup:    #378ADD;
+    --social:    #1D9E75;
+    --broadcast: #EF9F27;
+    --danger:    #E24B4A;
+    --success:   #1D9E75;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+  }
+
+  /* ── Connexion screen ────────────────────────────────────── */
+  #screen-connect {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 24px;
+    padding: 32px;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .code-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .code-input {
+    display: flex;
+    gap: 10px;
+  }
+
+  .code-digit {
+    width: 52px;
+    height: 64px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 500;
+    text-align: center;
+    caret-color: var(--live);
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s;
+  }
+  .code-digit:focus { border-color: rgba(255,255,255,0.35); }
+
+  .connect-btn {
+    width: 100%;
+    max-width: 220px;
+    padding: 14px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .connect-btn:active { transform: scale(0.97); background: #22223a; }
+
+  .conn-status {
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 18px;
+    text-align: center;
+  }
+  .conn-status.error { color: var(--danger); }
+  .conn-status.ok    { color: var(--success); }
+
+  /* ── Panel screen ────────────────────────────────────────── */
+  #screen-panel {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px;
+    gap: 8px;
+  }
+  #screen-panel.active { display: flex; }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--bg2);
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .status-left { display: flex; align-items: center; gap: 8px; }
+  .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+  .conn-dot.warn { background: #EF9F27; }
+  .status-text { font-size: 11px; color: var(--muted); }
+  .clock { font-size: 13px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* Mode selector */
+  .mode-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .mode-btn {
+    padding: 8px 4px;
+    border-radius: 7px;
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+  }
+  .mode-btn:active { transform: scale(0.95); }
+  .mode-btn.active { border-color: transparent; color: var(--bg); font-weight: 500; }
+  .mode-btn.active[data-mode="live"]      { background: var(--live); }
+  .mode-btn.active[data-mode="lineup"]    { background: var(--lineup); }
+  .mode-btn.active[data-mode="social"]    { background: var(--social); }
+  .mode-btn.active[data-mode="broadcast"] { background: var(--broadcast); }
+
+  /* Section label */
+  .section-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--hint);
+    text-transform: uppercase;
+    padding: 0 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ctx-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .ctx-badge[data-mode="live"]      { background: rgba(226,75,74,0.2);  color: var(--live); }
+  .ctx-badge[data-mode="lineup"]    { background: rgba(55,138,221,0.2); color: var(--lineup); }
+  .ctx-badge[data-mode="social"]    { background: rgba(29,158,117,0.2); color: var(--social); }
+  .ctx-badge[data-mode="broadcast"] { background: rgba(239,159,39,0.2); color: var(--broadcast); }
+
+  /* Tiles grid */
+  .tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .tile {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    border: 0.5px solid var(--border);
+    padding: 12px 6px 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.12s;
+    min-height: 72px;
+    justify-content: center;
+    user-select: none;
+    position: relative;
+  }
+  .tile:active { transform: scale(0.94); background: rgba(255,255,255,0.1); }
+  .tile.on {
+    background: rgba(226,75,74,0.15);
+    border-color: rgba(226,75,74,0.4);
+  }
+  .tile.on .tile-icon { color: var(--live); }
+
+  .tile-icon {
+    font-size: 18px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1;
+  }
+  .tile-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .tile-val {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+  }
+
+  /* Score widget */
+  .score-widget {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 6px;
+    align-items: center;
+    background: var(--bg2);
+    border-radius: 10px;
+    border: 0.5px solid var(--border);
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+  .score-team { text-align: center; }
+  .score-team-name { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .score-controls { display: flex; align-items: center; gap: 8px; }
+  .score-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    user-select: none;
+  }
+  .score-btn:active { transform: scale(0.9); }
+  .score-num { font-size: 26px; font-weight: 500; min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+  .score-sep { font-size: 18px; color: var(--hint); padding: 0 4px; }
+
+  /* Fixed zone */
+  .fixed-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .fixed-tile {
+    background: rgba(255,255,255,0.03);
+    border-radius: 9px;
+    border: 0.5px solid rgba(255,255,255,0.07);
+    padding: 10px 6px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.12s;
+    user-select: none;
+  }
+  .fixed-tile:active { transform: scale(0.94); }
+  .fixed-tile .tile-icon { font-size: 16px; color: rgba(255,255,255,0.4); }
+  .fixed-tile .tile-label { font-size: 9px; color: rgba(255,255,255,0.3); }
+  .fixed-tile.on { background: rgba(226,75,74,0.15); border-color: rgba(226,75,74,0.35); }
+  .fixed-tile.on .tile-icon { color: var(--danger); }
+
+  .divider { height: 0.5px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+  .spacer { flex: 1; }
+
+  .footer {
+    font-size: 9px;
+    color: var(--hint);
+    text-align: center;
+    padding: 2px 0 0;
+    flex-shrink: 0;
+  }
+
+  /* Context sections */
+  .ctx-section { display: none; }
+  .ctx-section.active { display: contents; }
+
+  /* Inning / count bar */
+  .info-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .info-cell {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 8px;
+    text-align: center;
+  }
+  .info-cell-label { font-size: 9px; color: var(--muted); margin-bottom: 3px; letter-spacing: 0.05em; }
+  .info-cell-val { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<!-- ── Écran de connexion ──────────────────────────────────── -->
+<div id="screen-connect">
+  <div class="logo">◆ Diamond Pulse</div>
+  <p class="code-label">Code affiché dans Diamond Pulse sur le PC</p>
+  <div class="code-input">
+    <input class="code-digit" id="d1" type="number" min="0" max="9" maxlength="1" inputmode="numeric" placeholder="·">
+    <input class="code-digit" id="d2" type="number" min="0" max="9" maxlength="1" inputmode="numeric" placeholder="·">
+    <input class="code-digit" id="d3" type="number" min="0" max="9" maxlength="1" inputmode="numeric" placeholder="·">
+    <input class="code-digit" id="d4" type="number" min="0" max="9" maxlength="1" inputmode="numeric" placeholder="·">
+  </div>
+  <button class="connect-btn" onclick="connectToPeer()">Connecter</button>
+  <div class="conn-status" id="conn-status">En attente du code…</div>
+</div>
+
+<!-- ── Panneau principal ───────────────────────────────────── -->
+<div id="screen-panel">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-left">
+      <div class="conn-dot" id="panel-dot"></div>
+      <span class="status-text" id="panel-status">Diamond Pulse</span>
+    </div>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="mode-selector">
+    <div class="mode-btn active" data-mode="live"      onclick="sendCmd('set_mode', {mode:'live'});      setMode('live')">Live</div>
+    <div class="mode-btn"        data-mode="lineup"    onclick="sendCmd('set_mode', {mode:'lineup'});    setMode('lineup')">Lineup</div>
+    <div class="mode-btn"        data-mode="social"    onclick="sendCmd('set_mode', {mode:'social'});    setMode('social')">Social</div>
+    <div class="mode-btn"        data-mode="broadcast" onclick="sendCmd('set_mode', {mode:'broadcast'}); setMode('broadcast')">Broadcast</div>
+  </div>
+
+  <!-- Score widget (toujours visible) -->
+  <div class="score-widget">
+    <div class="score-team">
+      <div class="score-team-name">Domicile</div>
+      <div class="score-controls">
+        <div class="score-btn" onclick="sendCmd('score_home_dec')">−</div>
+        <div class="score-num" id="score-home">0</div>
+        <div class="score-btn" onclick="sendCmd('score_home_inc')">+</div>
+      </div>
+    </div>
+    <div class="score-sep">–</div>
+    <div class="score-team">
+      <div class="score-team-name">Visiteurs</div>
+      <div class="score-controls">
+        <div class="score-btn" onclick="sendCmd('score_away_dec')">−</div>
+        <div class="score-num" id="score-away">0</div>
+        <div class="score-btn" onclick="sendCmd('score_away_inc')">+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section label -->
+  <div class="section-label">
+    Contexte &nbsp;<span class="ctx-badge" id="ctx-badge" data-mode="live">Live</span>
+  </div>
+
+  <!-- ── CTX : Live ──────────────────────────────────────────── -->
+  <div class="ctx-section active" id="ctx-live">
+
+    <!-- Inning / Count bar -->
+    <div class="info-bar">
+      <div class="info-cell">
+        <div class="info-cell-label">Manche</div>
+        <div class="info-cell-val" id="inning-display">▲ 1</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Count</div>
+        <div class="info-cell-val" id="count-display">0-0</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-label">Retraits</div>
+        <div class="info-cell-val" id="outs-display">0</div>
+      </div>
+    </div>
+
+    <div class="tiles-grid">
+      <div class="tile" onclick="sendCmd('inning_prev')">
+        <div class="tile-icon">◀</div>
+        <div class="tile-label">Manche −</div>
+      </div>
+      <div class="tile" onclick="sendCmd('toggle_half')">
+        <div class="tile-icon">⇅</div>
+        <div class="tile-label">½ manche</div>
+      </div>
+      <div class="tile" onclick="sendCmd('inning_next')">
+        <div class="tile-icon">▶</div>
+        <div class="tile-label">Manche +</div>
+      </div>
+      <div class="tile" onclick="sendCmd('batter_prev')">
+        <div class="tile-icon">◀</div>
+        <div class="tile-label">Frappeur −</div>
+      </div>
+      <div class="tile">
+        <div class="tile-icon">⚾</div>
+        <div class="tile-label" id="at-bat-label">At bat</div>
+      </div>
+      <div class="tile" onclick="sendCmd('batter_next')">
+        <div class="tile-icon">▶</div>
+        <div class="tile-label">Frappeur +</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_first')">
+        <div class="tile-icon">1B</div>
+        <div class="tile-label">1re base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_second')">
+        <div class="tile-icon">2B</div>
+        <div class="tile-label">2e base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_third')">
+        <div class="tile-icon">3B</div>
+        <div class="tile-label">3e base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runners_clear')" style="grid-column: span 2;">
+        <div class="tile-icon">✕</div>
+        <div class="tile-label">Effacer coureurs</div>
+      </div>
+      <div class="tile" onclick="sendCmd('count_reset')">
+        <div class="tile-icon">↺</div>
+        <div class="tile-label">Reset count</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CTX : Lineup ───────────────────────────────────────── -->
+  <div class="ctx-section" id="ctx-lineup">
+    <div class="tiles-grid">
+      <div class="tile" onclick="sendCmd('batter_prev')">
+        <div class="tile-icon">↑</div>
+        <div class="tile-label">Joueur précédent</div>
+      </div>
+      <div class="tile" onclick="sendCmd('batter_next')">
+        <div class="tile-icon">↓</div>
+        <div class="tile-label">Joueur suivant</div>
+      </div>
+      <div class="tile" onclick="sendCmd('lineup_next')">
+        <div class="tile-icon">▶</div>
+        <div class="tile-label">Lineup suivant</div>
+      </div>
+      <div class="tile" style="grid-column: span 3;">
+        <div class="tile-icon">🎙</div>
+        <div class="tile-label" id="on-deck-label">On deck : —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CTX : Social ───────────────────────────────────────── -->
+  <div class="ctx-section" id="ctx-social">
+    <div class="tiles-grid">
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'homerun'})">
+        <div class="tile-icon">💥</div>
+        <div class="tile-label">Home run!</div>
+      </div>
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'strikeout'})">
+        <div class="tile-icon">⚡</div>
+        <div class="tile-label">Strike out</div>
+      </div>
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'walkoff'})">
+        <div class="tile-icon">🏆</div>
+        <div class="tile-label">Walk off</div>
+      </div>
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'applause'})">
+        <div class="tile-icon">👏</div>
+        <div class="tile-label">Applause</div>
+      </div>
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'charge'})">
+        <div class="tile-icon">🥁</div>
+        <div class="tile-label">Charge!</div>
+      </div>
+      <div class="tile" onclick="sendCmd('play_sound', {soundId:'airhorn'})">
+        <div class="tile-icon">📯</div>
+        <div class="tile-label">Air horn</div>
+      </div>
+      <div class="tile" onclick="sendCmd('stop_all')" style="grid-column: span 3;">
+        <div class="tile-icon">⏹</div>
+        <div class="tile-label">Stop tous les sons</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CTX : Broadcast ────────────────────────────────────── -->
+  <div class="ctx-section" id="ctx-broadcast">
+    <div class="tiles-grid">
+      <div class="tile" onclick="sendCmd('inning_prev')">
+        <div class="tile-icon">◀</div>
+        <div class="tile-label">Manche −</div>
+      </div>
+      <div class="tile" onclick="sendCmd('toggle_half')">
+        <div class="tile-icon">⇅</div>
+        <div class="tile-label">½ manche</div>
+      </div>
+      <div class="tile" onclick="sendCmd('inning_next')">
+        <div class="tile-icon">▶</div>
+        <div class="tile-label">Manche +</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_first')">
+        <div class="tile-icon">1B</div>
+        <div class="tile-label">1re base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_second')">
+        <div class="tile-icon">2B</div>
+        <div class="tile-label">2e base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('runner_third')">
+        <div class="tile-icon">3B</div>
+        <div class="tile-label">3e base</div>
+      </div>
+      <div class="tile" onclick="sendCmd('copy_obs_url')" style="grid-column: span 3;">
+        <div class="tile-icon">📺</div>
+        <div class="tile-label">Copier URL OBS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="divider"></div>
+
+  <!-- Zone fixe -->
+  <div class="section-label">Zone fixe</div>
+  <div class="fixed-grid">
+    <div class="fixed-tile" id="ft-mute" onclick="toggleFixed('ft-mute', 'mute_mic')">
+      <div class="tile-icon">🎙</div>
+      <div class="tile-label">Micro</div>
+    </div>
+    <div class="fixed-tile" id="ft-cam" onclick="toggleFixed('ft-cam', 'mute_cam')">
+      <div class="tile-icon">◉</div>
+      <div class="tile-label">Caméra</div>
+    </div>
+    <div class="fixed-tile" id="ft-brb" onclick="toggleFixed('ft-brb', 'brb')">
+      <div class="tile-icon">⊡</div>
+      <div class="tile-label">BRB</div>
+    </div>
+    <div class="fixed-tile" id="ft-panic" onclick="panic()" style="border-color: rgba(226,75,74,0.25);">
+      <div class="tile-icon" style="color: var(--danger);">⚠</div>
+      <div class="tile-label" style="color: rgba(226,75,74,0.6);">Panic</div>
+    </div>
+  </div>
+
+  <div class="footer">Diamond Pulse · Surface Panel · <span id="code-footer"></span></div>
+
+</div>
+
+<script>
+  let peer = null;
+  let conn = null;
+  let sessionCode = '';
+
+  // ── Horloge ───────────────────────────────────────────────
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('clock').textContent =
+      pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── Saisie du code : focus auto ───────────────────────────
+  ['d1','d2','d3','d4'].forEach((id, i, arr) => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      const v = el.value.replace(/\D/g,'');
+      el.value = v ? v[v.length-1] : '';
+      if (el.value && i < arr.length - 1)
+        document.getElementById(arr[i+1]).focus();
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !el.value && i > 0)
+        document.getElementById(arr[i-1]).focus();
+      if (e.key === 'Enter') connectToPeer();
+    });
+  });
+
+  function getCode() {
+    return ['d1','d2','d3','d4'].map(id => document.getElementById(id).value).join('');
+  }
+
+  // ── Connexion PeerJS ──────────────────────────────────────
+  function connectToPeer() {
+    const code = getCode();
+    if (code.length !== 4) {
+      setStatus('Code à 4 chiffres requis', 'error'); return;
+    }
+    setStatus('Connexion en cours…', '');
+
+    peer = new Peer({
+      host: '0.peerjs.com', port: 443, path: '/', secure: true
+    });
+
+    peer.on('open', () => {
+      conn = peer.connect('dp-' + code, { reliable: true });
+
+      conn.on('open', () => {
+        sessionCode = code;
+        document.getElementById('code-footer').textContent = code;
+        setStatus('', '');
+        showPanel();
+      });
+
+      conn.on('data', data => {
+        if (data.type === 'state') applyState(data.payload);
+      });
+
+      conn.on('close', () => {
+        document.getElementById('panel-status').textContent = 'Déconnecté';
+        document.getElementById('panel-dot').className = 'conn-dot warn';
+      });
+
+      conn.on('error', err => {
+        setStatus('Erreur de connexion', 'error');
+        console.error(err);
+      });
+    });
+
+    peer.on('error', err => {
+      setStatus('Code incorrect ou PC hors ligne', 'error');
+    });
+  }
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('conn-status');
+    el.textContent = msg;
+    el.className = 'conn-status' + (type ? ' ' + type : '');
+  }
+
+  function showPanel() {
+    document.getElementById('screen-connect').style.display = 'none';
+    document.getElementById('screen-panel').classList.add('active');
+  }
+
+  // ── Envoi de commande vers Diamond Pulse ──────────────────
+  function sendCmd(action, extra) {
+    if (!conn || !conn.open) return;
+    conn.send({ type: 'command', payload: { action, ...extra } });
+    feedbackPulse();
+  }
+
+  function feedbackPulse() {
+    if (!navigator.vibrate) return;
+    navigator.vibrate(18);
+  }
+
+  // ── Réception de l'état depuis Diamond Pulse ──────────────
+  function applyState(state) {
+    if (!state) return;
+
+    // Mode
+    if (state.mode) setMode(state.mode);
+
+    // Score
+    if (state.score) {
+      document.getElementById('score-home').textContent = state.score.home ?? 0;
+      document.getElementById('score-away').textContent = state.score.away ?? 0;
+    }
+
+    // Inning
+    if (state.inning) {
+      const half = state.inning.half === 'bottom' ? '▼' : '▲';
+      document.getElementById('inning-display').textContent = half + ' ' + (state.inning.number ?? 1);
+    }
+
+    // Count
+    if (state.count) {
+      document.getElementById('count-display').textContent =
+        (state.count.balls ?? 0) + '-' + (state.count.strikes ?? 0);
+      document.getElementById('outs-display').textContent = state.count.outs ?? 0;
+    }
+
+    // Batter
+    if (state.atBat) {
+      document.getElementById('at-bat-label').textContent = state.atBat;
+    }
+    if (state.onDeck) {
+      document.getElementById('on-deck-label').textContent = 'On deck : ' + state.onDeck;
+    }
+  }
+
+  // ── Gestion des modes ────────────────────────────────────
+  function setMode(mode) {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    document.querySelectorAll('.ctx-section').forEach(sec => {
+      sec.classList.toggle('active', sec.id === 'ctx-' + mode);
+    });
+    const badge = document.getElementById('ctx-badge');
+    badge.dataset.mode = mode;
+    const labels = { live:'Live', lineup:'Lineup', social:'Social', broadcast:'Broadcast' };
+    badge.textContent = labels[mode] || mode;
+  }
+
+  // ── Tuiles fixes (toggle) ────────────────────────────────
+  function toggleFixed(tileId, action) {
+    const el = document.getElementById(tileId);
+    el.classList.toggle('on');
+    sendCmd(action);
+  }
+
+  // ── Panic ─────────────────────────────────────────────────
+  function panic() {
+    const el = document.getElementById('ft-panic');
+    el.classList.toggle('on');
+    sendCmd('panic');
+    if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+  }
+</script>
+</body>
+</html>
