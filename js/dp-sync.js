@@ -4,29 +4,17 @@
  *
  * INTÉGRATION dans Diamond Pulse :
  *   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
- *   <script src="dp-sync.js"></script>
- *
- * Un badge "◉ SYNC · XXXX" apparaît en bas de l'écran.
- * La Surface Go ouvre panel.html et tape le code à 4 chiffres.
+ *   <script src="js/dp-sync.js"></script>
  */
 
 (function () {
   'use strict';
 
-  // ─── Config ────────────────────────────────────────────────────────────────
-
-  const PEER_HOST  = '0.peerjs.com';   // serveur de signaling public PeerJS
-  const PEER_PORT  = 443;
-  const PEER_PATH  = '/';
-  const PEER_SECURE = true;
-
-  // ─── Génère un code session 4 chiffres ─────────────────────────────────────
-
   function genCode() {
     return String(Math.floor(1000 + Math.random() * 9000));
   }
 
-  // ─── Badge UI ───────────────────────────────────────────────────────────────
+  // ─── Badge UI (coin inférieur GAUCHE) ──────────────────────────────────────
 
   function createBadge(code) {
     const badge = document.createElement('div');
@@ -34,11 +22,11 @@
     Object.assign(badge.style, {
       position:     'fixed',
       bottom:       '14px',
-      right:        '14px',
+      left:         '14px',
       zIndex:       '99999',
       background:   '#0d0d14',
       color:        'rgba(255,255,255,0.55)',
-      border:       '0.5px solid rgba(255,255,255,0.12)',
+      border:       '0.5px solid rgba(255,255,255,0.15)',
       borderRadius: '10px',
       padding:      '8px 14px',
       fontFamily:   'monospace',
@@ -48,7 +36,6 @@
       display:      'flex',
       alignItems:   'center',
       gap:          '8px',
-      transition:   'all 0.3s',
     });
 
     const dot = document.createElement('span');
@@ -58,7 +45,7 @@
 
     const label = document.createElement('span');
     label.id = 'dp-sync-label';
-    label.textContent = `SYNC · ${code}`;
+    label.textContent = 'SYNC · ' + code;
 
     badge.appendChild(dot);
     badge.appendChild(label);
@@ -69,274 +56,219 @@
   function setBadgeState(dot, label, state, code) {
     if (state === 'waiting') {
       dot.style.color = '#888780';
-      label.textContent = `SYNC · ${code}`;
+      label.textContent = 'SYNC · ' + code;
     } else if (state === 'connected') {
       dot.style.color = '#1D9E75';
       label.textContent = 'Surface · connectée';
     } else if (state === 'error') {
       dot.style.color = '#E24B4A';
-      label.textContent = 'SYNC · erreur';
+      label.textContent = 'SYNC · erreur réseau';
     }
   }
 
   // ─── Lecture de l'état courant de Diamond Pulse ────────────────────────────
 
   function getCurrentState() {
-    const state = {
+    return {
       mode:    detectMode(),
-      score:   { home: 0, away: 0 },
-      inning:  { number: 1, half: 'top' },
-      count:   { balls: 0, strikes: 0, outs: 0 },
-      runners: { first: false, second: false, third: false },
-      atBat:   '',
-      onDeck:  '',
+      score:   readScore(),
+      inning:  readInning(),
+      count:   readCount(),
+      runners: readRunners(),
+      atBat:   readText('#at-bat-name, .at-bat-player, [data-at-bat]'),
+      onDeck:  readText('#on-deck-name, .on-deck-player, [data-on-deck]'),
     };
-
-    // Score
-    const scoreNums = document.querySelectorAll('.score-value, [data-score], .score-number');
-    if (scoreNums.length >= 2) {
-      state.score.home = parseInt(scoreNums[0].textContent) || 0;
-      state.score.away = parseInt(scoreNums[1].textContent) || 0;
-    }
-
-    // Batter at bat
-    const atBatEl = document.querySelector('#at-bat-name, .at-bat-player, [data-at-bat]');
-    if (atBatEl) state.atBat = atBatEl.textContent.trim();
-
-    // On deck
-    const onDeckEl = document.querySelector('#on-deck-name, .on-deck-player, [data-on-deck]');
-    if (onDeckEl) state.onDeck = onDeckEl.textContent.trim();
-
-    return state;
   }
 
   function detectMode() {
-    // Cherche l'onglet/bouton actif parmi les 4 modes
-    const activeTab = document.querySelector(
-      '.tab-active, [aria-selected="true"], .mode-btn.active, .nav-link.active'
+    const active = document.querySelector(
+      '.tab-active, [aria-selected="true"], .mode-btn.active, .nav-link.active, [data-mode].active'
     );
-    if (!activeTab) return 'live';
-    const text = activeTab.textContent.toLowerCase();
-    if (text.includes('lineup'))    return 'lineup';
-    if (text.includes('social'))    return 'social';
-    if (text.includes('broadcast')) return 'broadcast';
+    if (!active) return 'live';
+    const t = active.textContent.toLowerCase();
+    if (t.includes('lineup'))    return 'lineup';
+    if (t.includes('social'))    return 'social';
+    if (t.includes('broadcast')) return 'broadcast';
     return 'live';
+  }
+
+  function readScore() {
+    const nums = document.querySelectorAll('.score-value, [data-score], .score-number');
+    return {
+      home: nums[0] ? (parseInt(nums[0].textContent) || 0) : 0,
+      away: nums[1] ? (parseInt(nums[1].textContent) || 0) : 0,
+    };
+  }
+
+  function readInning() {
+    const numEl  = document.querySelector('[data-inning], .inning-number, #inning-num');
+    const halfEl = document.querySelector('[data-inning-half], .inning-half, #inning-half');
+    return {
+      number: numEl  ? (parseInt(numEl.textContent)  || 1) : 1,
+      half:   halfEl ? (halfEl.textContent.includes('▼') ? 'bottom' : 'top') : 'top',
+    };
+  }
+
+  function readCount() {
+    const balls   = document.querySelector('[data-balls], .balls-count, #balls');
+    const strikes = document.querySelector('[data-strikes], .strikes-count, #strikes');
+    const outs    = document.querySelector('[data-outs], .outs-count, #outs');
+    return {
+      balls:   balls   ? (parseInt(balls.textContent)   || 0) : 0,
+      strikes: strikes ? (parseInt(strikes.textContent) || 0) : 0,
+      outs:    outs    ? (parseInt(outs.textContent)    || 0) : 0,
+    };
+  }
+
+  function readRunners() {
+    return {
+      first:  !!document.querySelector('[data-runner="1"].active, .runner-first.on'),
+      second: !!document.querySelector('[data-runner="2"].active, .runner-second.on'),
+      third:  !!document.querySelector('[data-runner="3"].active, .runner-third.on'),
+    };
+  }
+
+  function readText(selector) {
+    const el = document.querySelector(selector);
+    return el ? el.textContent.trim() : '';
   }
 
   // ─── Actions reçues depuis la Surface ──────────────────────────────────────
 
   function handleCommand(cmd) {
-    console.log('[dp-sync] commande reçue:', cmd);
-
-    switch (cmd.action) {
-
-      // Navigation entre modes
-      case 'set_mode':
-        activateMode(cmd.mode);
-        break;
-
-      // Batter suivant / précédent
-      case 'batter_next':
-        clickButton('[data-batter-next], .batter-next, button.next-batter');
-        break;
-      case 'batter_prev':
-        clickButton('[data-batter-prev], .batter-prev, button.prev-batter');
-        break;
-
-      // Score +1 / -1
-      case 'score_home_inc':
-        clickButton('[data-score-home-inc], .home-score-up, button[data-team="home"][data-action="inc"]');
-        break;
-      case 'score_home_dec':
-        clickButton('[data-score-home-dec], .home-score-down, button[data-team="home"][data-action="dec"]');
-        break;
-      case 'score_away_inc':
-        clickButton('[data-score-away-inc], .away-score-up, button[data-team="away"][data-action="inc"]');
-        break;
-      case 'score_away_dec':
-        clickButton('[data-score-away-dec], .away-score-down, button[data-team="away"][data-action="dec"]');
-        break;
-
-      // Count
-      case 'count_reset':
-        clickButton('[data-count-reset], .reset-count, button.count-reset');
-        break;
-      case 'inning_next':
-        clickButton('[data-inning-inc], .inning-up, button[data-action="inning-inc"]');
-        break;
-      case 'inning_prev':
-        clickButton('[data-inning-dec], .inning-down, button[data-action="inning-dec"]');
-        break;
-      case 'toggle_half':
-        clickButton('[data-toggle-half], .toggle-half, button.inning-half');
-        break;
-
-      // Coureurs
-      case 'runner_first':
-        clickButton('[data-runner="1"], .runner-first, button[data-base="1"]');
-        break;
-      case 'runner_second':
-        clickButton('[data-runner="2"], .runner-second, button[data-base="2"]');
-        break;
-      case 'runner_third':
-        clickButton('[data-runner="3"], .runner-third, button[data-base="3"]');
-        break;
-      case 'runners_clear':
-        clickButton('[data-runners-clear], .clear-runners, button.runners-clear');
-        break;
-
-      // Sons
-      case 'play_sound':
-        playSound(cmd.soundId);
-        break;
-      case 'stop_all':
-        clickButton('[data-stop-all], .stop-all, button.stop-sounds');
-        break;
-
-      // OBS
-      case 'copy_obs_url':
-        clickButton('[data-copy-obs], .copy-obs, button.obs-copy');
-        break;
-
-      // Lineup
-      case 'lineup_next':
-        clickButton('[data-lineup-next], .lineup-next');
-        break;
-      case 'lineup_prev':
-        clickButton('[data-lineup-prev], .lineup-prev');
-        break;
-    }
+    console.log('[dp-sync] commande:', cmd);
+    const map = {
+      set_mode:       () => activateMode(cmd.mode),
+      batter_next:    () => click('[data-batter-next], .batter-next, button.next-batter'),
+      batter_prev:    () => click('[data-batter-prev], .batter-prev, button.prev-batter'),
+      score_home_inc: () => click('[data-score-home-inc], button[data-team="home"][data-action="inc"]'),
+      score_home_dec: () => click('[data-score-home-dec], button[data-team="home"][data-action="dec"]'),
+      score_away_inc: () => click('[data-score-away-inc], button[data-team="away"][data-action="inc"]'),
+      score_away_dec: () => click('[data-score-away-dec], button[data-team="away"][data-action="dec"]'),
+      count_reset:    () => click('[data-count-reset], .reset-count, button.count-reset'),
+      inning_next:    () => click('[data-inning-inc], .inning-up'),
+      inning_prev:    () => click('[data-inning-dec], .inning-down'),
+      toggle_half:    () => click('[data-toggle-half], .toggle-half, button.inning-half'),
+      runner_first:   () => click('[data-runner="1"], .runner-first'),
+      runner_second:  () => click('[data-runner="2"], .runner-second'),
+      runner_third:   () => click('[data-runner="3"], .runner-third'),
+      runners_clear:  () => click('[data-runners-clear], .clear-runners'),
+      stop_all:       () => click('[data-stop-all], .stop-all'),
+      copy_obs_url:   () => click('[data-copy-obs], .copy-obs'),
+      lineup_next:    () => click('[data-lineup-next], .lineup-next'),
+      lineup_prev:    () => click('[data-lineup-prev], .lineup-prev'),
+      play_sound:     () => playSound(cmd.soundId),
+    };
+    if (map[cmd.action]) map[cmd.action]();
   }
 
-  function clickButton(selector) {
-    const btn = document.querySelector(selector);
-    if (btn) {
-      btn.click();
-    } else {
-      console.warn('[dp-sync] élément non trouvé:', selector);
-    }
+  function click(selector) {
+    const el = document.querySelector(selector);
+    if (el) { el.click(); }
+    else { console.warn('[dp-sync] non trouvé:', selector); }
   }
 
   function activateMode(mode) {
-    // Cherche les onglets de navigation et clique sur le bon
-    const tabs = document.querySelectorAll('.tab-btn, .mode-tab, nav button, .nav-link, [role="tab"]');
-    tabs.forEach(tab => {
-      const text = tab.textContent.toLowerCase();
-      if (text.includes(mode)) tab.click();
+    document.querySelectorAll('[role="tab"], .tab-btn, .mode-tab, nav button, .nav-link').forEach(tab => {
+      if (tab.textContent.toLowerCase().includes(mode)) tab.click();
     });
   }
 
   function playSound(soundId) {
-    // Cherche le bouton play du son par son ID ou label
     const btn = document.querySelector(
       `[data-sound-id="${soundId}"] .play-btn, [data-sound="${soundId}"] button.play`
     );
     if (btn) btn.click();
   }
 
-  // ─── Observation des changements dans Diamond Pulse ────────────────────────
+  // ─── Observation des changements ───────────────────────────────────────────
 
   function watchState(onStateChange) {
-    let lastState = JSON.stringify(getCurrentState());
+    let last = JSON.stringify(getCurrentState());
+    let timer = null;
 
-    // MutationObserver sur le body entier (léger car on throttle)
     const observer = new MutationObserver(() => {
-      const newState = JSON.stringify(getCurrentState());
-      if (newState !== lastState) {
-        lastState = newState;
-        onStateChange(JSON.parse(newState));
-      }
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const next = JSON.stringify(getCurrentState());
+        if (next !== last) { last = next; onStateChange(JSON.parse(next)); }
+      }, 80);
     });
 
     observer.observe(document.body, {
-      childList:  true,
-      subtree:    true,
-      attributes: true,
-      characterData: true,
+      childList: true, subtree: true, attributes: true, characterData: true,
     });
-
     return observer;
   }
 
-  // ─── Initialisation PeerJS ─────────────────────────────────────────────────
+  // ─── Init PeerJS Cloud officiel ────────────────────────────────────────────
 
   function init() {
     if (typeof Peer === 'undefined') {
-      console.error('[dp-sync] PeerJS non chargé. Ajoute le script avant dp-sync.js');
+      console.error('[dp-sync] PeerJS non chargé. Vérifie que le script PeerJS est inclus avant dp-sync.js');
       return;
     }
 
     const code = genCode();
-    const { badge, dot, label } = createBadge(code);
+    const { dot, label } = createBadge(code);
 
-    // L'ID PeerJS = "dp-" + code pour éviter les collisions
-    const peer = new Peer('dp-' + code, {
-      host:   PEER_HOST,
-      port:   PEER_PORT,
-      path:   PEER_PATH,
-      secure: PEER_SECURE,
+    // Sans paramètres = PeerJS Cloud officiel (peerjs.com) — fiable et gratuit
+    const peer = new Peer('dp-' + code);
+
+    let conn     = null;
+    let observer = null;
+
+    peer.on('open', (id) => {
+      console.log('[dp-sync] prêt · code:', code, '· peer id:', id);
     });
 
-    let conn = null;
-    let stateObserver = null;
-
-    peer.on('open', () => {
-      console.log('[dp-sync] en attente sur le code:', code);
+    peer.on('error', (err) => {
+      console.error('[dp-sync] erreur PeerJS:', err.type, err.message);
+      // Si l'ID est déjà pris (redémarrage rapide), on ne change pas le badge
+      if (err.type !== 'unavailable-id') {
+        setBadgeState(dot, label, 'error', code);
+      }
     });
 
     peer.on('connection', (connection) => {
       conn = connection;
-      setBadgeState(dot, label, 'connected', code);
-      console.log('[dp-sync] Surface Go connectée');
 
-      // Envoie l'état initial dès la connexion
       conn.on('open', () => {
+        setBadgeState(dot, label, 'connected', code);
+        // Envoie l'état complet dès la connexion
         conn.send({ type: 'state', payload: getCurrentState() });
+
+        // Surveille les changements dans Diamond Pulse
+        observer = watchState((state) => {
+          if (conn && conn.open) conn.send({ type: 'state', payload: state });
+        });
       });
 
-      // Écoute les commandes de la Surface
       conn.on('data', (data) => {
         if (data.type === 'command') {
           handleCommand(data.payload);
-          // Renvoie l'état mis à jour après un court délai
           setTimeout(() => {
-            if (conn && conn.open) {
-              conn.send({ type: 'state', payload: getCurrentState() });
-            }
-          }, 150);
-        }
-      });
-
-      // Surveille les changements dans Diamond Pulse et les pousse vers la Surface
-      stateObserver = watchState((state) => {
-        if (conn && conn.open) {
-          conn.send({ type: 'state', payload: state });
+            if (conn && conn.open) conn.send({ type: 'state', payload: getCurrentState() });
+          }, 200);
         }
       });
 
       conn.on('close', () => {
         setBadgeState(dot, label, 'waiting', code);
-        if (stateObserver) { stateObserver.disconnect(); stateObserver = null; }
+        if (observer) { observer.disconnect(); observer = null; }
         conn = null;
-        console.log('[dp-sync] Surface Go déconnectée');
+        console.log('[dp-sync] Surface déconnectée');
       });
     });
 
-    peer.on('error', (err) => {
-      console.error('[dp-sync] erreur PeerJS:', err);
-      setBadgeState(dot, label, 'error', code);
-    });
-
-    // Expose l'API globale pour Diamond Pulse
+    // API publique pour debug depuis la console
     window.dpSync = {
       getCode:  () => code,
       getState: getCurrentState,
-      send:     (msg) => { if (conn && conn.open) conn.send(msg); },
       peer,
     };
   }
 
-  // Lance au chargement du DOM
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
