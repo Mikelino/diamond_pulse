@@ -1,17 +1,15 @@
 /**
  * dp-sync.js — Diamond Pulse Surface Panel Sync
- * Relay WebSocket public — zéro installation, zéro compte
+ * Utilise Supabase Realtime Broadcast — déjà chargé dans Diamond Pulse
  *
- * INTÉGRATION dans index.html avant </body> :
+ * INTÉGRATION dans index.html (après js/config.js) :
  *   <script src="js/dp-sync.js"></script>
  *
- * Script classique — pas de type="module" requis
+ * Supabase est déjà disponible via window.supabase (chargé dans config.js)
  */
 
 (function () {
   'use strict';
-
-  const RELAY = 'wss://socketsbay.com/wss/v2/1/demo/';
 
   function genCode() {
     return String(Math.floor(1000 + Math.random() * 9000));
@@ -46,8 +44,8 @@
     const s = {
       waiting:   { c: '#888780', t: 'SYNC · ' + code },
       connected: { c: '#1D9E75', t: 'Surface · connectée' },
-      error:     { c: '#E24B4A', t: 'SYNC · erreur relay' },
-    }[state];
+      error:     { c: '#E24B4A', t: 'SYNC · erreur' },
+    }[state] || { c: '#888780', t: 'SYNC · ' + code };
     dot.style.color = s.c;
     lbl.textContent = s.t;
   }
@@ -57,54 +55,58 @@
   function getState() {
     return {
       mode:   detectMode(),
-      score:  { home: readInt('.score-home,[data-score-home]'), away: readInt('.score-away,[data-score-away]') },
-      inning: { number: readInt('[data-inning],.inning-number'), half: readHalf() },
-      count:  { balls: readInt('[data-balls]'), strikes: readInt('[data-strikes]'), outs: readInt('[data-outs]') },
-      atBat:  readText('[data-at-bat],.at-bat-name,#at-bat-name'),
-      onDeck: readText('[data-on-deck],.on-deck-name,#on-deck-name'),
+      score:  { home: readInt('#matchScoreHome'), away: readInt('#matchScoreAway') },
+      inning: { number: readInt('#matchInningNum'), half: readHalf() },
+      count:  {
+        balls:   countActive('#matchBalls .match-dot'),
+        strikes: countActive('#matchStrikes .match-dot'),
+        outs:    countActive('#matchOuts .match-dot'),
+      },
+      atBat:  readText('#matchBatterDisplay'),
+      onDeck: readText('#matchOnDeckDisplay'),
     };
   }
 
   function detectMode() {
-    const el = document.querySelector('.tab-active,[aria-selected="true"],.mode-btn.active,.nav-link.active');
-    if (!el) return 'live';
-    const t = el.textContent.toLowerCase();
-    if (t.includes('lineup'))    return 'lineup';
-    if (t.includes('social'))    return 'social';
-    if (t.includes('broadcast')) return 'broadcast';
+    const btn = document.querySelector('#mainNavLive.active, #mainNavBatting.active, #mainNavSocial.active');
+    if (!btn) return 'live';
+    if (btn.id === 'mainNavBatting') return 'lineup';
+    if (btn.id === 'mainNavSocial')  return 'social';
     return 'live';
   }
 
-  function readInt(sel)  { const e = document.querySelector(sel); return e ? (parseInt(e.textContent) || 0) : 0; }
-  function readText(sel) { const e = document.querySelector(sel); return e ? e.textContent.trim() : ''; }
-  function readHalf()    { const e = document.querySelector('[data-inning-half],.inning-half'); return e && e.textContent.includes('▼') ? 'bottom' : 'top'; }
+  function readInt(sel)    { const e = document.querySelector(sel); return e ? (parseInt(e.textContent) || 0) : 0; }
+  function readText(sel)   { const e = document.querySelector(sel); return e ? e.textContent.trim() : ''; }
+  function readHalf()      { const e = document.querySelector('#matchInningArrow'); return e && e.textContent.includes('▼') ? 'bottom' : 'top'; }
+  function countActive(sel){ return document.querySelectorAll(sel + '[style*="background: rgb"]').length ||
+                                    document.querySelectorAll(sel + '.active').length; }
 
   // ─── Commandes reçues depuis la Surface ────────────────────────────────────
 
   function handleCmd(cmd) {
     console.log('[dp-sync] commande:', cmd.action);
-    ({
+    const map = {
       set_mode:       () => activateMode(cmd.mode),
-      batter_next:    () => tap('[data-batter-next],.batter-next'),
-      batter_prev:    () => tap('[data-batter-prev],.batter-prev'),
-      score_home_inc: () => tap('button[data-team="home"][data-action="inc"],[data-score-home-inc]'),
-      score_home_dec: () => tap('button[data-team="home"][data-action="dec"],[data-score-home-dec]'),
-      score_away_inc: () => tap('button[data-team="away"][data-action="inc"],[data-score-away-inc]'),
-      score_away_dec: () => tap('button[data-team="away"][data-action="dec"],[data-score-away-dec]'),
-      count_reset:    () => tap('[data-count-reset],.reset-count'),
-      inning_next:    () => tap('[data-inning-inc],.inning-up'),
-      inning_prev:    () => tap('[data-inning-dec],.inning-down'),
-      toggle_half:    () => tap('[data-toggle-half],.toggle-half'),
-      runner_first:   () => tap('[data-runner="1"],.runner-first'),
-      runner_second:  () => tap('[data-runner="2"],.runner-second'),
-      runner_third:   () => tap('[data-runner="3"],.runner-third'),
-      runners_clear:  () => tap('[data-runners-clear],.clear-runners'),
-      stop_all:       () => tap('[data-stop-all],.stop-all'),
-      copy_obs_url:   () => tap('[data-copy-obs],.copy-obs'),
-      lineup_next:    () => tap('[data-lineup-next],.lineup-next'),
-      lineup_prev:    () => tap('[data-lineup-prev],.lineup-prev'),
-      play_sound:     () => tapSound(cmd.soundId),
-    }[cmd.action] || (() => {}))();
+      batter_next:    () => tap('[onclick="matchBatterAdj(1)"]'),
+      batter_prev:    () => tap('[onclick="matchBatterAdj(-1)"]'),
+      score_home_inc: () => tap('[onclick="matchScoreAdj(\'home\',1)"]'),
+      score_home_dec: () => tap('[onclick="matchScoreAdj(\'home\',-1)"]'),
+      score_away_inc: () => tap('[onclick="matchScoreAdj(\'away\',1)"]'),
+      score_away_dec: () => tap('[onclick="matchScoreAdj(\'away\',-1)"]'),
+      count_reset:    () => tap('[onclick="matchResetCount()"]'),
+      inning_next:    () => tap('[onclick="matchInningAdj(1)"]'),
+      inning_prev:    () => tap('[onclick="matchInningAdj(-1)"]'),
+      toggle_half:    () => tap('[onclick="matchInningToggle()"]'),
+      runner_first:   () => tap('[onclick="matchToggleRunner(\'first\')"]'),
+      runner_second:  () => tap('[onclick="matchToggleRunner(\'second\')"]'),
+      runner_third:   () => tap('[onclick="matchToggleRunner(\'third\')"]'),
+      runners_clear:  () => tap('[onclick="matchClearRunners()"]'),
+      stop_all:       () => { if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); },
+      copy_obs_url:   () => tap('[onclick="matchCopyOverlayUrl()"]'),
+      play_sound:     () => { if (typeof liveSoundPlay === 'function') liveSoundPlay(cmd.soundId); },
+    };
+    if (map[cmd.action]) map[cmd.action]();
+    else console.warn('[dp-sync] commande inconnue:', cmd.action);
   }
 
   function tap(sel) {
@@ -113,15 +115,10 @@
     else console.warn('[dp-sync] non trouvé:', sel);
   }
 
-  function tapSound(id) {
-    const el = document.querySelector(`[data-sound-id="${id}"] .play-btn,[data-sound="${id}"] .play`);
-    if (el) el.click();
-  }
-
   function activateMode(mode) {
-    document.querySelectorAll('[role="tab"],.tab-btn,nav button,.nav-link,.mode-tab').forEach(t => {
-      if (t.textContent.toLowerCase().includes(mode)) t.click();
-    });
+    const map = { live: 'mainNavLive', lineup: 'mainNavBatting', social: 'mainNavSocial' };
+    const btn = document.getElementById(map[mode]);
+    if (btn) btn.click();
   }
 
   // ─── Observation des changements ───────────────────────────────────────────
@@ -133,87 +130,67 @@
       timer = setTimeout(() => {
         const next = JSON.stringify(getState());
         if (next !== last) { last = next; onChange(JSON.parse(next)); }
-      }, 80);
+      }, 100);
     });
     obs.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
     return obs;
   }
 
-  // ─── WebSocket relay ───────────────────────────────────────────────────────
+  // ─── Init Supabase Realtime ────────────────────────────────────────────────
 
-  const code = genCode();
-  const CHANNEL = 'dp-' + code; // canal unique basé sur le code
-  let ws = null;
-  let observer = null;
-  let connected = false;
-  let { dot, lbl } = { dot: null, lbl: null };
-
-  function send(type, payload) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ channel: CHANNEL, type, payload }));
+  function init() {
+    if (!window.supabase) {
+      console.error('[dp-sync] window.supabase non disponible. Vérifie que config.js est chargé avant dp-sync.js');
+      return;
     }
-  }
 
-  function connect() {
-    ws = new WebSocket(RELAY);
+    const code = genCode();
+    const { dot, lbl } = createBadge(code);
+    const channelName = 'dp-panel-' + code;
 
-    ws.onopen = () => {
-      console.log('[dp-sync] relay connecté · code:', code);
-      // Rejoint le canal
-      ws.send(JSON.stringify({ channel: CHANNEL, type: 'host', payload: { ready: true } }));
-    };
+    console.log('[dp-sync] démarrage · code:', code);
 
-    ws.onmessage = (evt) => {
-      let msg;
-      try { msg = JSON.parse(evt.data); } catch { return; }
+    let observer = null;
+    let surfacePresent = false;
 
-      // Filtre les messages du bon canal
-      if (msg.channel !== CHANNEL) return;
+    const channel = window.supabase.channel(channelName, {
+      config: { broadcast: { self: false } }
+    });
 
-      if (msg.type === 'join') {
-        // La Surface vient de rejoindre
-        connected = true;
+    channel
+      .on('broadcast', { event: 'join' }, () => {
+        surfacePresent = true;
         setBadge(dot, lbl, 'connected', code);
         console.log('[dp-sync] Surface connectée');
-        send('state', getState());
+        // Envoie l'état immédiatement
+        channel.send({ type: 'broadcast', event: 'state', payload: getState() });
+        // Surveille les changements
         if (!observer) {
-          observer = watchState(state => send('state', state));
+          observer = watchState(state => {
+            channel.send({ type: 'broadcast', event: 'state', payload: state });
+          });
         }
-      }
-
-      if (msg.type === 'leave') {
-        connected = false;
+      })
+      .on('broadcast', { event: 'leave' }, () => {
+        surfacePresent = false;
         setBadge(dot, lbl, 'waiting', code);
         if (observer) { observer.disconnect(); observer = null; }
         console.log('[dp-sync] Surface déconnectée');
-      }
+      })
+      .on('broadcast', { event: 'cmd' }, ({ payload }) => {
+        handleCmd(payload);
+        setTimeout(() => {
+          channel.send({ type: 'broadcast', event: 'state', payload: getState() });
+        }, 200);
+      })
+      .subscribe((status) => {
+        console.log('[dp-sync] Supabase Realtime:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[dp-sync] prêt · code:', code);
+        }
+      });
 
-      if (msg.type === 'cmd') {
-        handleCmd(msg.payload);
-        setTimeout(() => send('state', getState()), 200);
-      }
-    };
-
-    ws.onerror = () => {
-      console.error('[dp-sync] erreur WebSocket');
-      setBadge(dot, lbl, 'error', code);
-    };
-
-    ws.onclose = () => {
-      console.warn('[dp-sync] relay déconnecté — reconnexion dans 3s');
-      connected = false;
-      setBadge(dot, lbl, 'waiting', code);
-      setTimeout(connect, 3000);
-    };
-  }
-
-  // ─── Init ──────────────────────────────────────────────────────────────────
-
-  function init() {
-    const b = createBadge(code);
-    dot = b.dot; lbl = b.lbl;
-    connect();
-    window.dpSync = { getCode: () => code, getState };
+    window.dpSync = { getCode: () => code, getState, channel };
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
