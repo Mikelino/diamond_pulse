@@ -129,13 +129,13 @@ html, body {
 .count-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
 .count-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .count-lbl { font-size: 9px; color: var(--mut); letter-spacing: .08em; text-transform: uppercase; }
-.dots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+.dots { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .mdot {
-  width: 22px; height: 22px; border-radius: 50%;
+  width: 40px; height: 40px; border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,.2); background: transparent;
   cursor: pointer; user-select: none; transition: all .12s;
 }
-.mdot.sq { border-radius: 4px; transform: rotate(45deg); }
+.mdot.sq { border-radius: 6px; transform: rotate(45deg); }
 .mdot.on { background: var(--or); border-color: var(--or); }
 
 /* Pitch count display */
