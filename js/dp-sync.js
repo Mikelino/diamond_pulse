@@ -48,116 +48,148 @@
 
   function getState() {
     return {
-      score:   { home: readInt('#matchScoreHome'), away: readInt('#matchScoreAway') },
-      inning:  { number: readInt('#matchInningNum'), half: readHalf() },
+      score:   {
+        home: readInt('#matchScoreHome'),
+        away: readInt('#matchScoreAway'),
+      },
+      inning:  {
+        number: readInt('#matchInningNum'),
+        half:   readHalf(),
+      },
       count:   {
-        balls:   countActive('#matchBalls .match-dot'),
-        strikes: countActive('#matchStrikes .match-dot'),
-        outs:    countActive('#matchOuts .match-dot'),
+        balls:   countDots('#matchBalls .match-dot'),
+        strikes: countDots('#matchStrikes .match-dot'),
+        outs:    countDots('#matchOuts .match-dot'),
       },
       runners: {
-        first:  isRunnerOn('first'),
-        second: isRunnerOn('second'),
-        third:  isRunnerOn('third'),
+        first:  isBaseOn('matchBase1'),
+        second: isBaseOn('matchBase2'),
+        third:  isBaseOn('matchBase3'),
       },
       atBat:  readText('#matchBatterDisplay'),
       onDeck: readText('#matchOnDeckDisplay'),
     };
   }
 
-  function readInt(sel)    { const e = document.querySelector(sel); return e ? (parseInt(e.textContent) || 0) : 0; }
-  function readText(sel)   { const e = document.querySelector(sel); return e ? e.textContent.trim() : ''; }
-  function readHalf()      { const e = document.querySelector('#matchInningArrow'); return e && e.textContent.includes('▼') ? 'bottom' : 'top'; }
+  function readInt(sel) {
+    const e = document.querySelector(sel);
+    return e ? (parseInt(e.textContent) || 0) : 0;
+  }
+  function readText(sel) {
+    const e = document.querySelector(sel);
+    return e ? e.textContent.trim() : '';
+  }
+  function readHalf() {
+    const e = document.getElementById('matchInningArrow');
+    return e && e.textContent.trim() === '▼' ? 'bottom' : 'top';
+  }
 
-  function countActive(sel) {
+  // Compte les dots actifs (fill non transparent)
+  function countDots(sel) {
     let n = 0;
     document.querySelectorAll(sel).forEach(el => {
-      const bg = el.style.background || el.style.backgroundColor || '';
-      if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') n++;
+      const bg = window.getComputedStyle(el).backgroundColor;
+      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') n++;
     });
     return n;
   }
 
-  function isRunnerOn(base) {
-    const base2id = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
-    const el = document.getElementById(base2id[base]);
+  // Vérifie si une base a un coureur (fill non transparent sur le rect SVG)
+  function isBaseOn(id) {
+    const el = document.getElementById(id);
     if (!el) return false;
-    const fill = el.getAttribute('fill') || '';
-    return fill !== 'transparent' && fill !== '' && fill !== 'rgba(0,0,0,0)';
+    const fill = el.getAttribute('fill') || 'transparent';
+    return fill !== 'transparent' && fill !== '' && fill !== 'none';
   }
 
   // ─── Commandes reçues depuis la Surface ────────────────────────────────────
 
-  function handleCmd(cmd) {
-    console.log('[dp-sync] commande:', cmd.action);
-    const map = {
+  function handleCmd(payload) {
+    const { action } = payload;
+    console.log('[dp-sync] commande:', action);
+
+    switch (action) {
       // Score
-      score_home_inc:    () => tap('[onclick="matchScoreAdj(\'home\',1)"]'),
-      score_home_dec:    () => tap('[onclick="matchScoreAdj(\'home\',-1)"]'),
-      score_away_inc:    () => tap('[onclick="matchScoreAdj(\'away\',1)"]'),
-      score_away_dec:    () => tap('[onclick="matchScoreAdj(\'away\',-1)"]'),
+      case 'score_home_inc': tap("button[onclick=\"matchScoreAdj('home',1)\"]");    break;
+      case 'score_home_dec': tap("button[onclick=\"matchScoreAdj('home',-1)\"]");   break;
+      case 'score_away_inc': tap("button[onclick=\"matchScoreAdj('away',1)\"]");    break;
+      case 'score_away_dec': tap("button[onclick=\"matchScoreAdj('away',-1)\"]");   break;
+
       // Inning
-      inning_next:       () => tap('[onclick="matchInningAdj(1)"]'),
-      inning_prev:       () => tap('[onclick="matchInningAdj(-1)"]'),
-      toggle_half:       () => tap('[onclick="matchInningToggle()"]'),
-      change_field:      () => tap('[onclick="matchChangeField()"]'),
-      // Count — set direct via matchSetCount
-      set_count:         () => setCountDP(cmd.type, cmd.value),
-      count_reset:       () => tap('[onclick="matchResetCount()"]'),
-      // Walk & Strikeout
-      walk:              () => tap('[onclick="matchWalk()"]'),
-      strikeout:         () => tap('[onclick="matchStrikeout()"]'),
-      // Runners
-      toggle_runner_first:  () => tap('[onclick="matchToggleRunner(\'first\')"]'),
-      toggle_runner_second: () => tap('[onclick="matchToggleRunner(\'second\')"]'),
-      toggle_runner_third:  () => tap('[onclick="matchToggleRunner(\'third\')"]'),
-      runners_clear:        () => tap('[onclick="matchClearRunners()"]'),
+      case 'inning_next':   tap("button[onclick='matchInningAdj(1)']");    break;
+      case 'inning_prev':   tap("button[onclick='matchInningAdj(-1)']");   break;
+      case 'toggle_half':   tap("button#matchInningArrow, [onclick='matchInningToggle()']"); break;
+      case 'change_field':  callFn('matchChangeField');                    break;
+
+      // Count — set_count avec type + value
+      case 'set_count':     setCount(payload.type, payload.value);        break;
+      case 'count_reset':   callFn('matchResetCount');                     break;
+      case 'walk':          callFn('matchWalk');                           break;
+      case 'strikeout':     callFn('matchStrikeout');                      break;
+
+      // Runners — matchToggleRunner(base)
+      case 'toggle_runner_first':  callFn('matchToggleRunner', 'first');  break;
+      case 'toggle_runner_second': callFn('matchToggleRunner', 'second'); break;
+      case 'toggle_runner_third':  callFn('matchToggleRunner', 'third');  break;
+      case 'runners_clear':        callFn('matchClearRunners');            break;
+
       // Batter
-      batter_next:       () => tap('[onclick="matchBatterAdj(1)"]'),
-      batter_prev:       () => tap('[onclick="matchBatterAdj(-1)"]'),
+      case 'batter_next': tap("button[onclick='matchBatterAdj(1)']");  break;
+      case 'batter_prev': tap("button[onclick='matchBatterAdj(-1)']"); break;
+
       // Sponsors
-      broadcast_silver:  () => tap('[onclick="broadcastSilverBlock()"]'),
-      broadcast_ballgame:() => tap('[onclick="broadcastBallGame()"]'),
+      case 'broadcast_silver':   callFn('broadcastSilverBlock'); break;
+      case 'broadcast_ballgame': callFn('broadcastBallGame');    break;
+
       // Sons
-      stop_all:          () => { if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); },
-      play_sound:        () => { if (typeof liveSoundPlay === 'function') liveSoundPlay(cmd.soundId); },
+      case 'stop_all':   if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); break;
+      case 'play_sound': if (typeof liveSoundPlay === 'function') liveSoundPlay(payload.soundId); break;
+
       // OBS
-      copy_obs_url:      () => tap('[onclick="matchCopyOverlayUrl()"]'),
-    };
-    if (map[cmd.action]) map[cmd.action]();
-    else console.warn('[dp-sync] commande inconnue:', cmd.action);
+      case 'copy_obs_url': callFn('matchCopyOverlayUrl'); break;
+
+      default: console.warn('[dp-sync] commande inconnue:', action);
+    }
   }
 
+  // Clique sur le premier élément trouvé par sélecteur
   function tap(sel) {
     const el = document.querySelector(sel);
-    if (el) el.click();
-    else console.warn('[dp-sync] élément non trouvé:', sel);
+    if (el) { el.click(); }
+    else { console.warn('[dp-sync] élément non trouvé:', sel); }
   }
 
-  // Appelle matchSetCount(type, value) directement si disponible
-  function setCountDP(type, value) {
-    if (typeof matchSetCount === 'function') {
-      // matchSetCount attend l'index 0-based du dernier dot cliqué
-      // On simule : on clique sur le dot correspondant
-      const dotMap = {
-        balls:   ['b0','b1','b2'],
-        strikes: ['s0','s1'],
-        outs:    ['o0','o1'],
-      };
-      // Appel direct via la fonction globale si disponible
+  // Appelle une fonction globale avec arguments optionnels
+  function callFn(name, ...args) {
+    if (typeof window[name] === 'function') {
+      window[name](...args);
+    } else {
+      console.warn('[dp-sync] fonction non trouvée:', name);
+    }
+  }
+
+  // Set count via matchState direct ou via dots
+  function setCount(type, value) {
+    // Méthode 1 : état direct si matchState disponible
+    if (typeof matchState !== 'undefined' &&
+        typeof matchRenderPanel === 'function' &&
+        typeof matchSave === 'function') {
       try {
-        // matchState est l'objet d'état global dans Diamond Pulse
-        if (typeof matchState !== 'undefined' && typeof matchRenderPanel === 'function' && typeof matchSave === 'function') {
-          matchState[type] = value;
-          matchRenderPanel();
-          matchSave();
-          return;
-        }
-      } catch(e) {}
-      // Fallback : clique sur le bon dot
-      const sel = { balls: '#matchBalls', strikes: '#matchStrikes', outs: '#matchOuts' }[type];
-      const dots = document.querySelectorAll(sel + ' .match-dot');
-      if (dots[value > 0 ? value - 1 : 0]) dots[value > 0 ? value - 1 : 0].click();
+        matchState[type] = value;
+        matchRenderPanel();
+        matchSave();
+        return;
+      } catch(e) { /* fallback */ }
+    }
+    // Méthode 2 : clic sur le dot correspondant
+    const sel = { balls: '#matchBalls', strikes: '#matchStrikes', outs: '#matchOuts' }[type];
+    if (!sel) return;
+    const dots = document.querySelectorAll(sel + ' .match-dot');
+    if (value === 0) {
+      // Reset : clique sur le premier dot actif pour tout désactiver
+      if (dots[0]) dots[0].click();
+    } else if (dots[value - 1]) {
+      dots[value - 1].click();
     }
   }
 
@@ -172,7 +204,9 @@
         if (next !== last) { last = next; onChange(JSON.parse(next)); }
       }, 100);
     });
-    obs.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+    obs.observe(document.body, {
+      childList: true, subtree: true, attributes: true, characterData: true,
+    });
     return obs;
   }
 
@@ -180,7 +214,7 @@
 
   function init() {
     if (!window.supabase) {
-      console.error('[dp-sync] window.supabase non disponible. config.js chargé avant dp-sync.js ?');
+      console.error('[dp-sync] window.supabase non disponible. Vérifie que config.js est chargé avant dp-sync.js.');
       return;
     }
 
@@ -192,14 +226,16 @@
     let observer = null;
 
     const channel = window.supabase.channel(channelName, {
-      config: { broadcast: { self: false } }
+      config: { broadcast: { self: false } },
     });
 
     channel
       .on('broadcast', { event: 'join' }, () => {
         setBadge(dot, lbl, 'connected', code);
         console.log('[dp-sync] Surface connectée');
+        // Envoie l'état complet immédiatement
         channel.send({ type: 'broadcast', event: 'state', payload: getState() });
+        // Surveille les changements
         if (!observer) {
           observer = watchState(state => {
             channel.send({ type: 'broadcast', event: 'state', payload: state });
@@ -213,19 +249,25 @@
       })
       .on('broadcast', { event: 'cmd' }, ({ payload }) => {
         handleCmd(payload);
+        // Renvoie l'état mis à jour après l'action
         setTimeout(() => {
           channel.send({ type: 'broadcast', event: 'state', payload: getState() });
-        }, 200);
+        }, 250);
       })
       .subscribe(status => {
-        console.log('[dp-sync] Supabase Realtime:', status);
-        if (status === 'SUBSCRIBED') console.log('[dp-sync] prêt · code:', code);
+        console.log('[dp-sync] Supabase:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[dp-sync] prêt · code:', code);
+        }
       });
 
     window.dpSync = { getCode: () => code, getState, channel };
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
 })();
