@@ -52,14 +52,15 @@
         home: readInt('#matchScoreHome'),
         away: readInt('#matchScoreAway'),
       },
-      inning:  {
+      inning: {
         number: readInt('#matchInningNum'),
         half:   readHalf(),
       },
-      count:   {
+      count: {
         balls:   countDots('#matchBalls .match-dot'),
         strikes: countDots('#matchStrikes .match-dot'),
         outs:    countDots('#matchOuts .match-dot'),
+        pitches: readInt('#matchPitchCount'),
       },
       runners: {
         first:  isBaseOn('matchBase1'),
@@ -75,31 +76,40 @@
     const e = document.querySelector(sel);
     return e ? (parseInt(e.textContent) || 0) : 0;
   }
+
   function readText(sel) {
     const e = document.querySelector(sel);
     return e ? e.textContent.trim() : '';
   }
+
   function readHalf() {
     const e = document.getElementById('matchInningArrow');
     return e && e.textContent.trim() === '▼' ? 'bottom' : 'top';
   }
 
-  // Compte les dots actifs (fill non transparent)
   function countDots(sel) {
     let n = 0;
     document.querySelectorAll(sel).forEach(el => {
-      const bg = window.getComputedStyle(el).backgroundColor;
-      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') n++;
+      const inlineBg = el.style.background || el.style.backgroundColor || '';
+      const computed  = window.getComputedStyle(el).backgroundColor;
+      if (
+        el.classList.contains('active') ||
+        el.classList.contains('on') ||
+        (inlineBg && inlineBg !== 'transparent') ||
+        (computed && computed !== 'rgba(0, 0, 0, 0)' && computed !== 'transparent')
+      ) n++;
     });
     return n;
   }
 
-  // Vérifie si une base a un coureur (fill non transparent sur le rect SVG)
   function isBaseOn(id) {
     const el = document.getElementById(id);
     if (!el) return false;
-    const fill = el.getAttribute('fill') || 'transparent';
-    return fill !== 'transparent' && fill !== '' && fill !== 'none';
+    if (el.style.fill && el.style.fill !== 'transparent' && el.style.fill !== 'none') return true;
+    const attr = el.getAttribute('fill') || 'transparent';
+    if (attr !== 'transparent' && attr !== 'none' && attr !== '') return true;
+    if (el.classList.contains('active') || el.classList.contains('on')) return true;
+    return false;
   }
 
   // ─── Commandes reçues depuis la Surface ────────────────────────────────────
@@ -110,32 +120,33 @@
 
     switch (action) {
       // Score
-      case 'score_home_inc': tap("button[onclick=\"matchScoreAdj('home',1)\"]");    break;
-      case 'score_home_dec': tap("button[onclick=\"matchScoreAdj('home',-1)\"]");   break;
-      case 'score_away_inc': tap("button[onclick=\"matchScoreAdj('away',1)\"]");    break;
-      case 'score_away_dec': tap("button[onclick=\"matchScoreAdj('away',-1)\"]");   break;
+      case 'score_home_inc': callFn('matchScoreAdj', 'home',  1); break;
+      case 'score_home_dec': callFn('matchScoreAdj', 'home', -1); break;
+      case 'score_away_inc': callFn('matchScoreAdj', 'away',  1); break;
+      case 'score_away_dec': callFn('matchScoreAdj', 'away', -1); break;
 
       // Inning
-      case 'inning_next':   tap("button[onclick='matchInningAdj(1)']");    break;
-      case 'inning_prev':   tap("button[onclick='matchInningAdj(-1)']");   break;
-      case 'toggle_half':   tap("button#matchInningArrow, [onclick='matchInningToggle()']"); break;
-      case 'change_field':  callFn('matchChangeField');                    break;
+      case 'inning_next':  callFn('matchInningAdj',  1); break;
+      case 'inning_prev':  callFn('matchInningAdj', -1); break;
+      case 'toggle_half':  callFn('matchInningToggle');  break;
+      case 'change_field': callFn('matchChangeField');   break;
 
-      // Count — set_count avec type + value
-      case 'set_count':     setCount(payload.type, payload.value);        break;
-      case 'count_reset':   callFn('matchResetCount');                     break;
-      case 'walk':          callFn('matchWalk');                           break;
-      case 'strikeout':     callFn('matchStrikeout');                      break;
+      // Count — toujours via clic DOM pour déclencher matchSetCount
+      // et ainsi incrémenter le pitch count correctement
+      case 'set_count':   setCountViaDom(payload.type, payload.value); break;
+      case 'count_reset': callFn('matchResetCount'); break;
+      case 'walk':        callFn('matchWalk');        break;
+      case 'strikeout':   callFn('matchStrikeout');   break;
 
-      // Runners — matchToggleRunner(base)
+      // Runners
       case 'toggle_runner_first':  callFn('matchToggleRunner', 'first');  break;
       case 'toggle_runner_second': callFn('matchToggleRunner', 'second'); break;
       case 'toggle_runner_third':  callFn('matchToggleRunner', 'third');  break;
       case 'runners_clear':        callFn('matchClearRunners');            break;
 
       // Batter
-      case 'batter_next': tap("button[onclick='matchBatterAdj(1)']");  break;
-      case 'batter_prev': tap("button[onclick='matchBatterAdj(-1)']"); break;
+      case 'batter_next': callFn('matchBatterAdj',  1); break;
+      case 'batter_prev': callFn('matchBatterAdj', -1); break;
 
       // Sponsors
       case 'broadcast_silver':   callFn('broadcastSilverBlock'); break;
@@ -143,23 +154,13 @@
 
       // Sons
       case 'stop_all':   if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); break;
-      case 'play_sound': if (typeof liveSoundPlay === 'function') liveSoundPlay(payload.soundId); break;
-
-      // OBS
+      case 'play_sound': if (typeof liveSoundPlay    === 'function') liveSoundPlay(payload.soundId); break;
       case 'copy_obs_url': callFn('matchCopyOverlayUrl'); break;
 
       default: console.warn('[dp-sync] commande inconnue:', action);
     }
   }
 
-  // Clique sur le premier élément trouvé par sélecteur
-  function tap(sel) {
-    const el = document.querySelector(sel);
-    if (el) { el.click(); }
-    else { console.warn('[dp-sync] élément non trouvé:', sel); }
-  }
-
-  // Appelle une fonction globale avec arguments optionnels
   function callFn(name, ...args) {
     if (typeof window[name] === 'function') {
       window[name](...args);
@@ -168,28 +169,36 @@
     }
   }
 
-  // Set count via matchState direct ou via dots
-  function setCount(type, value) {
-    // Méthode 1 : état direct si matchState disponible
-    if (typeof matchState !== 'undefined' &&
-        typeof matchRenderPanel === 'function' &&
-        typeof matchSave === 'function') {
-      try {
-        matchState[type] = value;
-        matchRenderPanel();
-        matchSave();
-        return;
-      } catch(e) { /* fallback */ }
+  /**
+   * Simule le clic sur le dot correspondant dans le DOM de Diamond Pulse.
+   * C'est la seule façon correcte — matchSetCount incrémente aussi le pitch count
+   * pour balls et strikes, et cette logique ne doit pas être dupliquée ici.
+   *
+   * Le sélecteur onclick="matchSetCount('balls',N)" correspond exactement
+   * aux dots dans #matchBalls / #matchStrikes / #matchOuts du HTML.
+   */
+  function setCountViaDom(type, value) {
+    const containerSel = {
+      balls:   '#matchBalls',
+      strikes: '#matchStrikes',
+      outs:    '#matchOuts',
+    }[type];
+    if (!containerSel) return;
+
+    const dots = document.querySelectorAll(containerSel + ' .match-dot');
+    if (!dots.length) {
+      console.warn('[dp-sync] dots non trouvés pour:', type);
+      return;
     }
-    // Méthode 2 : clic sur le dot correspondant
-    const sel = { balls: '#matchBalls', strikes: '#matchStrikes', outs: '#matchOuts' }[type];
-    if (!sel) return;
-    const dots = document.querySelectorAll(sel + ' .match-dot');
+
     if (value === 0) {
-      // Reset : clique sur le premier dot actif pour tout désactiver
+      // Reset : on clique sur le premier dot actif pour revenir à 0
+      // matchSetCount(type, 0) clique le dot index 0
       if (dots[0]) dots[0].click();
-    } else if (dots[value - 1]) {
-      dots[value - 1].click();
+    } else {
+      // value = 1, 2 ou 3 → on clique le dot à l'index value-1
+      const targetDot = dots[value - 1];
+      if (targetDot) targetDot.click();
     }
   }
 
@@ -205,16 +214,19 @@
       }, 100);
     });
     obs.observe(document.body, {
-      childList: true, subtree: true, attributes: true, characterData: true,
+      childList: true, subtree: true,
+      attributes: true,
+      attributeFilter: ['fill', 'stroke', 'style', 'class'],
+      characterData: true,
     });
     return obs;
   }
 
-  // ─── Init Supabase Realtime ────────────────────────────────────────────────
+  // ─── Init ──────────────────────────────────────────────────────────────────
 
   function init() {
     if (!window.supabase) {
-      console.error('[dp-sync] window.supabase non disponible. Vérifie que config.js est chargé avant dp-sync.js.');
+      console.error('[dp-sync] window.supabase non disponible.');
       return;
     }
 
@@ -233,9 +245,7 @@
       .on('broadcast', { event: 'join' }, () => {
         setBadge(dot, lbl, 'connected', code);
         console.log('[dp-sync] Surface connectée');
-        // Envoie l'état complet immédiatement
         channel.send({ type: 'broadcast', event: 'state', payload: getState() });
-        // Surveille les changements
         if (!observer) {
           observer = watchState(state => {
             channel.send({ type: 'broadcast', event: 'state', payload: state });
@@ -249,16 +259,13 @@
       })
       .on('broadcast', { event: 'cmd' }, ({ payload }) => {
         handleCmd(payload);
-        // Renvoie l'état mis à jour après l'action
         setTimeout(() => {
           channel.send({ type: 'broadcast', event: 'state', payload: getState() });
-        }, 250);
+        }, 300);
       })
       .subscribe(status => {
         console.log('[dp-sync] Supabase:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('[dp-sync] prêt · code:', code);
-        }
+        if (status === 'SUBSCRIBED') console.log('[dp-sync] prêt · code:', code);
       });
 
     window.dpSync = { getCode: () => code, getState, channel };
