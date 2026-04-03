@@ -1384,11 +1384,14 @@
       overlay.classList.add('visible');
       await _bgWait(900);
 
-      // Helper : affiche un sponsor individuel
-      async function showOneSponsor(s, tierLabel, holdMs) {
-        tierEl.textContent = tierLabel;
-        await _bgShow(tierEl);
+      // Message d'intro
+      tierEl.textContent = 'Thank you to all our sponsors';
+      await _bgShow(tierEl);
+      await _bgWait(2000);
+      await _bgHide(tierEl);
 
+      // Helper : affiche un sponsor individuel
+      async function showOneSponsor(s, holdMs) {
         if (s.logo_url) {
           await new Promise(r => {
             logoEl.onload = r; logoEl.onerror = r;
@@ -1403,24 +1406,21 @@
 
         await _bgHide(nameEl);
         await _bgHide(logoEl);
-        await _bgHide(tierEl);
         logoEl.src = '';
       }
 
       // 3. Gold — un par un
       for (const s of _bgSponsors.gold) {
-        await showOneSponsor(s, '★  Gold Sponsor  ★', 3500);
+        await showOneSponsor(s, 3500);
       }
 
       // 4. Silver — un par un
       for (const s of _bgSponsors.silver) {
-        await showOneSponsor(s, '✦  Silver Sponsor  ✦', 2500);
+        await showOneSponsor(s, 2500);
       }
 
       // 5. Bronze — tous ensemble
       if (_bgSponsors.bronze.length) {
-        tierEl.textContent = '✦  Bronze Sponsors  ✦';
-        await _bgShow(tierEl);
         bronzeEl.innerHTML = _bgSponsors.bronze.map(s => `
           <div class="bg-bronze-item">
             ${s.logo_url ? `<img src="${s.logo_url}" crossorigin="anonymous" alt="${s.name}" />` : ''}
@@ -1430,7 +1430,6 @@
         await _bgShow(bronzeEl);
         await _bgWait(6000);
         await _bgHide(bronzeEl);
-        await _bgHide(tierEl);
         bronzeEl.innerHTML = '';
       }
 
