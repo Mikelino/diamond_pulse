@@ -1,11 +1,9 @@
 /**
  * dp-sync.js — Diamond Pulse Surface Panel Sync
- * Utilise Supabase Realtime Broadcast — déjà chargé dans Diamond Pulse
+ * Supabase Realtime Broadcast — zéro installation
  *
  * INTÉGRATION dans index.html (après js/config.js) :
  *   <script src="js/dp-sync.js"></script>
- *
- * Supabase est déjà disponible via window.supabase (chargé dans config.js)
  */
 
 (function () {
@@ -28,14 +26,10 @@
       userSelect: 'none', display: 'flex', alignItems: 'center', gap: '8px',
     });
     const dot = document.createElement('span');
-    dot.id = 'dp-sync-dot';
-    dot.textContent = '◉';
-    dot.style.color = '#888780';
+    dot.id = 'dp-sync-dot'; dot.textContent = '◉'; dot.style.color = '#888780';
     const lbl = document.createElement('span');
-    lbl.id = 'dp-sync-label';
-    lbl.textContent = 'SYNC · ' + code;
-    badge.appendChild(dot);
-    badge.appendChild(lbl);
+    lbl.id = 'dp-sync-label'; lbl.textContent = 'SYNC · ' + code;
+    badge.appendChild(dot); badge.appendChild(lbl);
     document.body.appendChild(badge);
     return { dot, lbl };
   }
@@ -54,56 +48,81 @@
 
   function getState() {
     return {
-      mode:   detectMode(),
-      score:  { home: readInt('#matchScoreHome'), away: readInt('#matchScoreAway') },
-      inning: { number: readInt('#matchInningNum'), half: readHalf() },
-      count:  {
+      score:   { home: readInt('#matchScoreHome'), away: readInt('#matchScoreAway') },
+      inning:  { number: readInt('#matchInningNum'), half: readHalf() },
+      count:   {
         balls:   countActive('#matchBalls .match-dot'),
         strikes: countActive('#matchStrikes .match-dot'),
         outs:    countActive('#matchOuts .match-dot'),
+      },
+      runners: {
+        first:  isRunnerOn('first'),
+        second: isRunnerOn('second'),
+        third:  isRunnerOn('third'),
       },
       atBat:  readText('#matchBatterDisplay'),
       onDeck: readText('#matchOnDeckDisplay'),
     };
   }
 
-  function detectMode() {
-    const btn = document.querySelector('#mainNavLive.active, #mainNavBatting.active, #mainNavSocial.active');
-    if (!btn) return 'live';
-    if (btn.id === 'mainNavBatting') return 'lineup';
-    if (btn.id === 'mainNavSocial')  return 'social';
-    return 'live';
-  }
-
   function readInt(sel)    { const e = document.querySelector(sel); return e ? (parseInt(e.textContent) || 0) : 0; }
   function readText(sel)   { const e = document.querySelector(sel); return e ? e.textContent.trim() : ''; }
   function readHalf()      { const e = document.querySelector('#matchInningArrow'); return e && e.textContent.includes('▼') ? 'bottom' : 'top'; }
-  function countActive(sel){ return document.querySelectorAll(sel + '[style*="background: rgb"]').length ||
-                                    document.querySelectorAll(sel + '.active').length; }
+
+  function countActive(sel) {
+    let n = 0;
+    document.querySelectorAll(sel).forEach(el => {
+      const bg = el.style.background || el.style.backgroundColor || '';
+      if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') n++;
+    });
+    return n;
+  }
+
+  function isRunnerOn(base) {
+    const base2id = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
+    const el = document.getElementById(base2id[base]);
+    if (!el) return false;
+    const fill = el.getAttribute('fill') || '';
+    return fill !== 'transparent' && fill !== '' && fill !== 'rgba(0,0,0,0)';
+  }
 
   // ─── Commandes reçues depuis la Surface ────────────────────────────────────
 
   function handleCmd(cmd) {
     console.log('[dp-sync] commande:', cmd.action);
     const map = {
-      set_mode:       () => activateMode(cmd.mode),
-      batter_next:    () => tap('[onclick="matchBatterAdj(1)"]'),
-      batter_prev:    () => tap('[onclick="matchBatterAdj(-1)"]'),
-      score_home_inc: () => tap('[onclick="matchScoreAdj(\'home\',1)"]'),
-      score_home_dec: () => tap('[onclick="matchScoreAdj(\'home\',-1)"]'),
-      score_away_inc: () => tap('[onclick="matchScoreAdj(\'away\',1)"]'),
-      score_away_dec: () => tap('[onclick="matchScoreAdj(\'away\',-1)"]'),
-      count_reset:    () => tap('[onclick="matchResetCount()"]'),
-      inning_next:    () => tap('[onclick="matchInningAdj(1)"]'),
-      inning_prev:    () => tap('[onclick="matchInningAdj(-1)"]'),
-      toggle_half:    () => tap('[onclick="matchInningToggle()"]'),
-      runner_first:   () => tap('[onclick="matchToggleRunner(\'first\')"]'),
-      runner_second:  () => tap('[onclick="matchToggleRunner(\'second\')"]'),
-      runner_third:   () => tap('[onclick="matchToggleRunner(\'third\')"]'),
-      runners_clear:  () => tap('[onclick="matchClearRunners()"]'),
-      stop_all:       () => { if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); },
-      copy_obs_url:   () => tap('[onclick="matchCopyOverlayUrl()"]'),
-      play_sound:     () => { if (typeof liveSoundPlay === 'function') liveSoundPlay(cmd.soundId); },
+      // Score
+      score_home_inc:    () => tap('[onclick="matchScoreAdj(\'home\',1)"]'),
+      score_home_dec:    () => tap('[onclick="matchScoreAdj(\'home\',-1)"]'),
+      score_away_inc:    () => tap('[onclick="matchScoreAdj(\'away\',1)"]'),
+      score_away_dec:    () => tap('[onclick="matchScoreAdj(\'away\',-1)"]'),
+      // Inning
+      inning_next:       () => tap('[onclick="matchInningAdj(1)"]'),
+      inning_prev:       () => tap('[onclick="matchInningAdj(-1)"]'),
+      toggle_half:       () => tap('[onclick="matchInningToggle()"]'),
+      change_field:      () => tap('[onclick="matchChangeField()"]'),
+      // Count — set direct via matchSetCount
+      set_count:         () => setCountDP(cmd.type, cmd.value),
+      count_reset:       () => tap('[onclick="matchResetCount()"]'),
+      // Walk & Strikeout
+      walk:              () => tap('[onclick="matchWalk()"]'),
+      strikeout:         () => tap('[onclick="matchStrikeout()"]'),
+      // Runners
+      toggle_runner_first:  () => tap('[onclick="matchToggleRunner(\'first\')"]'),
+      toggle_runner_second: () => tap('[onclick="matchToggleRunner(\'second\')"]'),
+      toggle_runner_third:  () => tap('[onclick="matchToggleRunner(\'third\')"]'),
+      runners_clear:        () => tap('[onclick="matchClearRunners()"]'),
+      // Batter
+      batter_next:       () => tap('[onclick="matchBatterAdj(1)"]'),
+      batter_prev:       () => tap('[onclick="matchBatterAdj(-1)"]'),
+      // Sponsors
+      broadcast_silver:  () => tap('[onclick="broadcastSilverBlock()"]'),
+      broadcast_ballgame:() => tap('[onclick="broadcastBallGame()"]'),
+      // Sons
+      stop_all:          () => { if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); },
+      play_sound:        () => { if (typeof liveSoundPlay === 'function') liveSoundPlay(cmd.soundId); },
+      // OBS
+      copy_obs_url:      () => tap('[onclick="matchCopyOverlayUrl()"]'),
     };
     if (map[cmd.action]) map[cmd.action]();
     else console.warn('[dp-sync] commande inconnue:', cmd.action);
@@ -112,13 +131,34 @@
   function tap(sel) {
     const el = document.querySelector(sel);
     if (el) el.click();
-    else console.warn('[dp-sync] non trouvé:', sel);
+    else console.warn('[dp-sync] élément non trouvé:', sel);
   }
 
-  function activateMode(mode) {
-    const map = { live: 'mainNavLive', lineup: 'mainNavBatting', social: 'mainNavSocial' };
-    const btn = document.getElementById(map[mode]);
-    if (btn) btn.click();
+  // Appelle matchSetCount(type, value) directement si disponible
+  function setCountDP(type, value) {
+    if (typeof matchSetCount === 'function') {
+      // matchSetCount attend l'index 0-based du dernier dot cliqué
+      // On simule : on clique sur le dot correspondant
+      const dotMap = {
+        balls:   ['b0','b1','b2'],
+        strikes: ['s0','s1'],
+        outs:    ['o0','o1'],
+      };
+      // Appel direct via la fonction globale si disponible
+      try {
+        // matchState est l'objet d'état global dans Diamond Pulse
+        if (typeof matchState !== 'undefined' && typeof matchRenderPanel === 'function' && typeof matchSave === 'function') {
+          matchState[type] = value;
+          matchRenderPanel();
+          matchSave();
+          return;
+        }
+      } catch(e) {}
+      // Fallback : clique sur le bon dot
+      const sel = { balls: '#matchBalls', strikes: '#matchStrikes', outs: '#matchOuts' }[type];
+      const dots = document.querySelectorAll(sel + ' .match-dot');
+      if (dots[value > 0 ? value - 1 : 0]) dots[value > 0 ? value - 1 : 0].click();
+    }
   }
 
   // ─── Observation des changements ───────────────────────────────────────────
@@ -140,18 +180,16 @@
 
   function init() {
     if (!window.supabase) {
-      console.error('[dp-sync] window.supabase non disponible. Vérifie que config.js est chargé avant dp-sync.js');
+      console.error('[dp-sync] window.supabase non disponible. config.js chargé avant dp-sync.js ?');
       return;
     }
 
     const code = genCode();
     const { dot, lbl } = createBadge(code);
     const channelName = 'dp-panel-' + code;
-
     console.log('[dp-sync] démarrage · code:', code);
 
     let observer = null;
-    let surfacePresent = false;
 
     const channel = window.supabase.channel(channelName, {
       config: { broadcast: { self: false } }
@@ -159,12 +197,9 @@
 
     channel
       .on('broadcast', { event: 'join' }, () => {
-        surfacePresent = true;
         setBadge(dot, lbl, 'connected', code);
         console.log('[dp-sync] Surface connectée');
-        // Envoie l'état immédiatement
         channel.send({ type: 'broadcast', event: 'state', payload: getState() });
-        // Surveille les changements
         if (!observer) {
           observer = watchState(state => {
             channel.send({ type: 'broadcast', event: 'state', payload: state });
@@ -172,7 +207,6 @@
         }
       })
       .on('broadcast', { event: 'leave' }, () => {
-        surfacePresent = false;
         setBadge(dot, lbl, 'waiting', code);
         if (observer) { observer.disconnect(); observer = null; }
         console.log('[dp-sync] Surface déconnectée');
@@ -183,11 +217,9 @@
           channel.send({ type: 'broadcast', event: 'state', payload: getState() });
         }, 200);
       })
-      .subscribe((status) => {
+      .subscribe(status => {
         console.log('[dp-sync] Supabase Realtime:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('[dp-sync] prêt · code:', code);
-        }
+        if (status === 'SUBSCRIBED') console.log('[dp-sync] prêt · code:', code);
       });
 
     window.dpSync = { getCode: () => code, getState, channel };
