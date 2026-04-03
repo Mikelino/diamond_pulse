@@ -188,6 +188,80 @@ html, body {
 }
 .bdisp.ondeck { border-left-color: rgba(255,255,255,.15); color: var(--mut); font-weight: 400; }
 
+/* ── SPOTLIGHT OVERLAY ────────────────────────────── */
+#spotlight-overlay {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.96); flex-direction: column;
+}
+#spotlight-overlay.on { display: flex; }
+
+.spo-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: 0.5px solid var(--bd);
+  color: var(--txt); font-size: 18px; line-height: 36px; text-align: center;
+  cursor: pointer; user-select: none; z-index: 10;
+}
+.spo-close:active { opacity: .7; }
+
+.spo-body {
+  flex: 1; display: flex; align-items: stretch; gap: 0; min-height: 0;
+}
+
+.spo-info {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 24px 18px 32px 22px; gap: 4px; flex-shrink: 0; width: 44%;
+}
+.spo-number {
+  font-size: 64px; font-weight: 700; color: var(--or);
+  line-height: 1; font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 40px rgba(255,69,0,.5);
+}
+.spo-name {
+  font-size: 20px; font-weight: 600; color: #fff;
+  line-height: 1.2; word-break: break-word;
+}
+.spo-pos {
+  font-size: 11px; color: var(--mut); text-transform: uppercase;
+  letter-spacing: .1em; margin-top: 4px;
+}
+
+.spo-photo-wrap {
+  flex: 1; position: relative; display: flex; align-items: flex-end; justify-content: center;
+  overflow: hidden;
+}
+.spo-photo {
+  width: 100%; height: 100%; object-fit: cover; object-position: top center;
+  display: block;
+}
+.spo-photo-placeholder {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 96px; opacity: .15; user-select: none;
+}
+
+.spo-footer {
+  padding: 14px 18px; display: flex; gap: 8px; flex-shrink: 0;
+  border-top: 0.5px solid var(--bd);
+}
+.spo-send {
+  flex: 1; padding: 13px; border-radius: 9px;
+  background: var(--or); border: none; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer; user-select: none;
+  transition: opacity .15s;
+}
+.spo-send:active { opacity: .8; }
+.spo-send.active { background: var(--live); }
+
+/* Spotlight button in batter section */
+.spo-trigger {
+  width: 100%; margin-top: 6px; padding: 8px;
+  border-radius: 7px; border: 0.5px solid rgba(255,69,0,.35);
+  background: rgba(255,69,0,.08); color: var(--or);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  text-align: center; user-select: none;
+}
+.spo-trigger:active { background: rgba(255,69,0,.20); }
+
 /* ── SPONSORS ─────────────────────────────────────── */
 .sp-btn {
   width: 100%; padding: 9px 12px; border-radius: 8px; border: 0.5px solid var(--bd);
@@ -383,12 +457,36 @@ html, body {
           <div class="bdisp ondeck" id="deck-disp">—</div>
           <div style="width:30px;flex-shrink:0"></div>
         </div>
+        <div class="spo-trigger" onclick="openSpotlight()">★ Spotlight joueur</div>
       </div>
 
     </div>
   </div>
 
   <div class="foot">Diamond Pulse · <span id="codef"></span></div>
+</div>
+
+<!-- ── SPOTLIGHT OVERLAY ─────────────────────────── -->
+<div id="spotlight-overlay">
+  <div class="spo-close" onclick="closeSpotlight()">✕</div>
+
+  <div class="spo-body">
+    <!-- Info gauche -->
+    <div class="spo-info">
+      <div class="spo-number" id="spo-num">#</div>
+      <div class="spo-name"  id="spo-name">—</div>
+      <div class="spo-pos"   id="spo-pos"></div>
+    </div>
+    <!-- Photo droite -->
+    <div class="spo-photo-wrap" id="spo-photo-wrap">
+      <div class="spo-photo-placeholder" id="spo-placeholder">🧢</div>
+      <img class="spo-photo" id="spo-photo" src="" alt="" style="display:none">
+    </div>
+  </div>
+
+  <div class="spo-footer">
+    <button class="spo-send" id="spo-send-btn" onclick="sendSpotlight()">▶ Diffuser sur écran</button>
+  </div>
 </div>
 
 <script>
@@ -518,8 +616,11 @@ function mergeState(s) {
     state.runners.second = !!s.runners.second;
     state.runners.third  = !!s.runners.third;
   }
+  const prevBat = state.atBat;
   if (s.atBat  !== undefined) state.atBat  = s.atBat  || '—';
   if (s.onDeck !== undefined) state.onDeck = s.onDeck || '—';
+  if (s.playerPhotoUrl !== undefined) state.playerPhotoUrl = s.playerPhotoUrl || null;
+  checkSpotlightReset(prevBat);
 }
 
 // ── Render complet ────────────────────────────────
@@ -566,6 +667,72 @@ function renderRunners() {
     rect.setAttribute('fill',   on ? 'rgba(255,69,0,0.75)' : 'transparent');
     rect.setAttribute('stroke', on ? '#FF4500' : 'rgba(255,255,255,.22)');
   });
+}
+
+// ── Spotlight ─────────────────────────────────────
+let spotlightActive = false;
+
+function parsePlayer(raw) {
+  if (!raw || raw === '—') return { number: '', name: '—', photo: null };
+  // Formats attendus : "#7 John Smith", "7 - John Smith", "John Smith"
+  const m = raw.match(/^#?(\d+)\s*[-–]?\s*(.+)/);
+  if (m) return { number: '#' + m[1], name: m[2].trim(), photo: null };
+  return { number: '', name: raw.trim(), photo: null };
+}
+
+function openSpotlight() {
+  const p = parsePlayer(state.atBat);
+  document.getElementById('spo-num').textContent  = p.number;
+  document.getElementById('spo-name').textContent = p.name;
+  document.getElementById('spo-pos').textContent  = '';
+
+  // Photo
+  const img = document.getElementById('spo-photo');
+  const ph  = document.getElementById('spo-placeholder');
+  const photoUrl = state.playerPhotoUrl || null;
+  if (photoUrl) {
+    img.src = photoUrl; img.style.display = 'block'; ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; ph.style.display = 'flex';
+  }
+
+  // Bouton état
+  const btn = document.getElementById('spo-send-btn');
+  btn.textContent = spotlightActive ? '◼ Masquer sur écran' : '▶ Diffuser sur écran';
+  btn.classList.toggle('active', spotlightActive);
+
+  document.getElementById('spotlight-overlay').classList.add('on');
+}
+
+function closeSpotlight() {
+  document.getElementById('spotlight-overlay').classList.remove('on');
+}
+
+function sendSpotlight() {
+  spotlightActive = !spotlightActive;
+  const p = parsePlayer(state.atBat);
+  if (spotlightActive) {
+    cmd('player_spotlight', {
+      name:   p.name,
+      number: p.number,
+      photo:  state.playerPhotoUrl || null,
+    });
+  } else {
+    cmd('player_spotlight_hide');
+  }
+  const btn = document.getElementById('spo-send-btn');
+  btn.textContent = spotlightActive ? '◼ Masquer sur écran' : '▶ Diffuser sur écran';
+  btn.classList.toggle('active', spotlightActive);
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// Réinitialise le spotlight actif si le batter change
+function checkSpotlightReset(prevBat) {
+  if (spotlightActive && prevBat !== state.atBat) {
+    spotlightActive = false;
+    const btn = document.getElementById('spo-send-btn');
+    if (btn) { btn.textContent = '▶ Diffuser sur écran'; btn.classList.remove('active'); }
+  }
 }
 
 window.addEventListener('beforeunload', () => {
