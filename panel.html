@@ -245,23 +245,23 @@ html, body {
       <div class="count-col">
         <div class="count-lbl">Balls</div>
         <div class="dots">
-          <div class="mdot" id="b0" onclick="tapCount('balls',0)"></div>
-          <div class="mdot" id="b1" onclick="tapCount('balls',1)"></div>
-          <div class="mdot" id="b2" onclick="tapCount('balls',2)"></div>
+          <div class="mdot" id="b0" onclick="tapCount('balls')"></div>
+          <div class="mdot" id="b1" onclick="tapCount('balls')"></div>
+          <div class="mdot" id="b2" onclick="tapCount('balls')"></div>
         </div>
       </div>
       <div class="count-col">
         <div class="count-lbl">Strikes</div>
         <div class="dots">
-          <div class="mdot" id="s0" onclick="tapCount('strikes',0)"></div>
-          <div class="mdot" id="s1" onclick="tapCount('strikes',1)"></div>
+          <div class="mdot" id="s0" onclick="tapCount('strikes')"></div>
+          <div class="mdot" id="s1" onclick="tapCount('strikes')"></div>
         </div>
       </div>
       <div class="count-col">
         <div class="count-lbl">Outs</div>
         <div class="dots">
-          <div class="mdot sq" id="o0" onclick="tapCount('outs',0)"></div>
-          <div class="mdot sq" id="o1" onclick="tapCount('outs',1)"></div>
+          <div class="mdot sq" id="o0" onclick="tapCount('outs')"></div>
+          <div class="mdot sq" id="o1" onclick="tapCount('outs')"></div>
         </div>
       </div>
     </div>
@@ -432,12 +432,13 @@ function cmd(action, extra={}) {
 }
 
 // ── Count : update optimiste + envoi commande ──────
-function tapCount(type, idx) {
-  const current = state.count[type];
-  const newVal = (current === idx + 1) ? 0 : idx + 1;
-  state.count[type] = newVal;
+function tapCount(type) {
+  const maxes = { balls: 3, strikes: 2, outs: 2 };
+  const max = maxes[type] || 3;
+  state.count[type] = state.count[type] < max ? state.count[type] + 1 : 0;
+
   renderCount();
-  cmd('set_count', { type, value: newVal });
+  cmd('count_inc', { type });
 }
 
 // ── Runners : update optimiste + envoi commande ────
