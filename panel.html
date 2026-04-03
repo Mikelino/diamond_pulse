@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Diamond Pulse · Panel</title>
+
+<!-- Supabase JS — même version que Diamond Pulse -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -18,25 +22,25 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
 
-  #screen-connect { display:flex; flex-direction:column; align-items:center;
-    justify-content:center; height:100%; gap:20px; padding:32px; }
+  /* Connect */
+  #sc { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; padding:32px; }
   .logo { font-size:13px; font-weight:500; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; }
-  .code-hint { font-size:12px; color:var(--mut); text-align:center; line-height:1.6; }
-  .code-input { display:flex; gap:10px; }
-  .code-digit { width:56px; height:68px; background:var(--bg2); border:0.5px solid var(--bd);
+  .hint { font-size:12px; color:var(--mut); text-align:center; line-height:1.6; }
+  .ci { display:flex; gap:10px; }
+  .cd { width:56px; height:68px; background:var(--bg2); border:0.5px solid var(--bd);
     border-radius:10px; color:var(--txt); font-size:30px; font-weight:500; text-align:center;
     outline:none; -webkit-appearance:none; transition:border-color .15s; caret-color:var(--live); }
-  .code-digit:focus { border-color:rgba(255,255,255,.4); }
-  .connect-btn { width:100%; max-width:240px; padding:15px; background:var(--bg3);
+  .cd:focus { border-color:rgba(255,255,255,.4); }
+  .cbtn { width:100%; max-width:240px; padding:15px; background:var(--bg3);
     border:0.5px solid var(--bd); border-radius:10px; color:var(--txt);
     font-size:14px; font-weight:500; cursor:pointer; transition:background .15s, transform .1s; }
-  .connect-btn:active { transform:scale(.97); }
-  .connect-btn:disabled { opacity:.5; }
+  .cbtn:active { transform:scale(.97); } .cbtn:disabled { opacity:.5; }
   .cst { font-size:12px; color:var(--mut); min-height:18px; text-align:center; }
   .cst.err { color:var(--live); } .cst.ok { color:var(--social); }
 
-  #screen-panel { display:none; flex-direction:column; height:100%; padding:10px; gap:8px; }
-  #screen-panel.on { display:flex; }
+  /* Panel */
+  #sp { display:none; flex-direction:column; height:100%; padding:10px; gap:8px; }
+  #sp.on { display:flex; }
 
   .sbar { display:flex; align-items:center; justify-content:space-between;
     padding:6px 10px; background:var(--bg2); border-radius:8px; border:0.5px solid var(--bd); flex-shrink:0; }
@@ -83,8 +87,6 @@
     align-items:center; gap:5px; min-height:72px; justify-content:center;
     user-select:none; transition:all .1s; }
   .tile:active { transform:scale(.92); background:rgba(255,255,255,.1); }
-  .tile.on { background:rgba(226,75,74,.15); border-color:rgba(226,75,74,.4); }
-  .tile.on .ti { color:var(--live); }
   .ti { font-size:18px; color:rgba(255,255,255,.55); line-height:1; }
   .tl { font-size:10px; color:var(--mut); text-align:center; line-height:1.2; }
 
@@ -107,27 +109,29 @@
   .ftile.danger .tl { color:rgba(226,75,74,.5); }
 
   .divl { height:0.5px; background:var(--bd); margin:0 2px; flex-shrink:0; }
-  .sp { flex:1; }
+  .spacer { flex:1; }
   .foot { font-size:9px; color:var(--hnt); text-align:center; padding:2px 0 0; flex-shrink:0; }
   .ctx { display:none; } .ctx.on { display:contents; }
 </style>
 </head>
 <body>
 
-<div id="screen-connect">
+<!-- Connexion -->
+<div id="sc">
   <div class="logo">◆ Diamond Pulse</div>
-  <p class="code-hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
-  <div class="code-input">
-    <input class="code-digit" id="d1" type="tel" maxlength="1" placeholder="·">
-    <input class="code-digit" id="d2" type="tel" maxlength="1" placeholder="·">
-    <input class="code-digit" id="d3" type="tel" maxlength="1" placeholder="·">
-    <input class="code-digit" id="d4" type="tel" maxlength="1" placeholder="·">
+  <p class="hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
+  <div class="ci">
+    <input class="cd" id="d1" type="tel" maxlength="1" placeholder="·">
+    <input class="cd" id="d2" type="tel" maxlength="1" placeholder="·">
+    <input class="cd" id="d3" type="tel" maxlength="1" placeholder="·">
+    <input class="cd" id="d4" type="tel" maxlength="1" placeholder="·">
   </div>
-  <button class="connect-btn" id="cbtn" onclick="doConnect()">Connecter</button>
+  <button class="cbtn" id="cbtn" onclick="doConnect()">Connecter</button>
   <div class="cst" id="cst">En attente du code…</div>
 </div>
 
-<div id="screen-panel">
+<!-- Panel -->
+<div id="sp">
   <div class="sbar">
     <div class="sleft"><div class="dot" id="pdot"></div><span class="stxt">Diamond Pulse</span></div>
     <span class="clk" id="clk">--:--:--</span>
@@ -189,8 +193,7 @@
     <div class="tgrid">
       <div class="tile" onclick="cmd('batter_prev')"><div class="ti">↑</div><div class="tl">Précédent</div></div>
       <div class="tile" onclick="cmd('batter_next')"><div class="ti">↓</div><div class="tl">Suivant</div></div>
-      <div class="tile" onclick="cmd('lineup_next')"><div class="ti">▶</div><div class="tl">Lineup +</div></div>
-      <div class="tile" style="grid-column:span 3"><div class="ti" style="font-size:14px">⚾</div><div class="tl" id="ondeck">On deck : —</div></div>
+      <div class="tile"><div class="ti">⚾</div><div class="tl" id="ondeck">On deck : —</div></div>
     </div>
   </div>
 
@@ -220,7 +223,7 @@
     </div>
   </div>
 
-  <div class="sp"></div>
+  <div class="spacer"></div>
   <div class="divl"></div>
   <div class="slabel">Zone fixe</div>
 
@@ -234,8 +237,10 @@
 </div>
 
 <script>
-const RELAY = 'wss://socketsbay.com/wss/v2/1/demo/';
-let ws = null, channel = null;
+const SUPA_URL = 'https://hrsxgdxuzxcareszgmdt.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhyc3hnZHh1enhjYXJlc3pnbWR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1ODQxMjcsImV4cCI6MjA4OTE2MDEyN30.fie59NGbhwCqCxCqtV14T8g-lXj2cbh9IvIyW6Ac7LY';
+
+let sb = null, channel = null;
 
 // Horloge
 setInterval(() => {
@@ -270,52 +275,44 @@ function doConnect() {
   const code = getCode();
   if (code.length !== 4) { setSt('Code à 4 chiffres requis','err'); return; }
 
-  channel = 'dp-' + code;
   document.getElementById('cbtn').disabled = true;
-  setSt('Connexion au relay…','');
+  setSt('Connexion à Supabase…','');
 
-  ws = new WebSocket(RELAY);
+  sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const channelName = 'dp-panel-' + code;
 
   const timeout = setTimeout(() => {
     setSt('Aucun PC trouvé — vérifie le code','err');
     document.getElementById('cbtn').disabled = false;
-    ws.close();
-  }, 12000);
+    if (channel) sb.removeChannel(channel);
+  }, 15000);
 
-  ws.onopen = () => {
-    // Annonce la Surface sur le canal
-    ws.send(JSON.stringify({ channel, type: 'join', payload: {} }));
-    setSt('En attente du PC…','');
-  };
+  channel = sb.channel(channelName, { config: { broadcast: { self: false } } });
 
-  ws.onmessage = (evt) => {
-    let msg;
-    try { msg = JSON.parse(evt.data); } catch { return; }
-    if (msg.channel !== channel) return;
-
-    if (msg.type === 'host') {
-      // PC trouvé
+  channel
+    .on('broadcast', { event: 'state' }, ({ payload }) => {
       clearTimeout(timeout);
-      document.getElementById('codef').textContent = code;
-      document.getElementById('screen-connect').style.display = 'none';
-      document.getElementById('screen-panel').classList.add('on');
-    }
-
-    if (msg.type === 'state') {
-      applyState(msg.payload);
-    }
-  };
-
-  ws.onerror = () => setSt('Erreur de connexion','err');
-
-  ws.onclose = () => {
-    document.getElementById('pdot').className = 'dot warn';
-  };
+      // Première réception = connexion établie
+      if (document.getElementById('sc').style.display !== 'none') {
+        document.getElementById('codef').textContent = code;
+        document.getElementById('sc').style.display = 'none';
+        document.getElementById('sp').classList.add('on');
+      }
+      applyState(payload);
+    })
+    .subscribe((status) => {
+      console.log('[panel] Supabase:', status);
+      if (status === 'SUBSCRIBED') {
+        // Annonce la présence de la Surface
+        channel.send({ type: 'broadcast', event: 'join', payload: {} });
+        setSt('En attente du PC…','');
+      }
+    });
 }
 
 function cmd(action, extra={}) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(JSON.stringify({ channel, type: 'cmd', payload: { action, ...extra } }));
+  if (!channel) return;
+  channel.send({ type: 'broadcast', event: 'cmd', payload: { action, ...extra } });
   if (navigator.vibrate) navigator.vibrate(16);
 }
 
@@ -356,6 +353,11 @@ function doPanic() {
   cmd('panic');
   if (navigator.vibrate) navigator.vibrate([30,15,30]);
 }
+
+// Envoi du leave quand la Surface ferme la page
+window.addEventListener('beforeunload', () => {
+  if (channel) channel.send({ type: 'broadcast', event: 'leave', payload: {} });
+});
 </script>
 </body>
 </html>
