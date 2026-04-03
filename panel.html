@@ -18,11 +18,10 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
 
-  /* ── Connect ── */
   #screen-connect { display:flex; flex-direction:column; align-items:center;
     justify-content:center; height:100%; gap:20px; padding:32px; }
   .logo { font-size:13px; font-weight:500; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; }
-  .code-hint { font-size:12px; color:var(--mut); text-align:center; line-height:1.5; }
+  .code-hint { font-size:12px; color:var(--mut); text-align:center; line-height:1.6; }
   .code-input { display:flex; gap:10px; }
   .code-digit { width:56px; height:68px; background:var(--bg2); border:0.5px solid var(--bd);
     border-radius:10px; color:var(--txt); font-size:30px; font-weight:500; text-align:center;
@@ -31,15 +30,14 @@
   .connect-btn { width:100%; max-width:240px; padding:15px; background:var(--bg3);
     border:0.5px solid var(--bd); border-radius:10px; color:var(--txt);
     font-size:14px; font-weight:500; cursor:pointer; transition:background .15s, transform .1s; }
-  .connect-btn:active { transform:scale(.97); background:#22223a; }
+  .connect-btn:active { transform:scale(.97); }
+  .connect-btn:disabled { opacity:.5; }
   .cst { font-size:12px; color:var(--mut); min-height:18px; text-align:center; }
   .cst.err { color:var(--live); } .cst.ok { color:var(--social); }
 
-  /* ── Panel ── */
   #screen-panel { display:none; flex-direction:column; height:100%; padding:10px; gap:8px; }
   #screen-panel.on { display:flex; }
 
-  /* Status bar */
   .sbar { display:flex; align-items:center; justify-content:space-between;
     padding:6px 10px; background:var(--bg2); border-radius:8px; border:0.5px solid var(--bd); flex-shrink:0; }
   .sleft { display:flex; align-items:center; gap:8px; }
@@ -48,7 +46,6 @@
   .stxt { font-size:11px; color:var(--mut); }
   .clk { font-size:13px; font-weight:500; color:var(--txt); font-variant-numeric:tabular-nums; }
 
-  /* Mode selector */
   .msel { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; flex-shrink:0; }
   .mbtn { padding:8px 4px; border-radius:7px; border:0.5px solid var(--bd); background:var(--bg2);
     color:var(--mut); font-size:11px; font-weight:500; text-align:center; cursor:pointer;
@@ -60,7 +57,6 @@
   .mbtn.on[data-m="social"]    { background:var(--social); }
   .mbtn.on[data-m="broadcast"] { background:var(--bc); }
 
-  /* Labels */
   .slabel { font-size:9px; font-weight:500; letter-spacing:.08em; color:var(--hnt);
     text-transform:uppercase; padding:0 2px; flex-shrink:0; display:flex; align-items:center; gap:6px; }
   .cbadge { font-size:9px; padding:2px 7px; border-radius:4px; font-weight:500; }
@@ -69,7 +65,6 @@
   .cbadge[data-m="social"]    { background:rgba(29,158,117,.2); color:var(--social); }
   .cbadge[data-m="broadcast"] { background:rgba(239,159,39,.2); color:var(--bc); }
 
-  /* Score */
   .score-w { display:grid; grid-template-columns:1fr auto 1fr; gap:6px; align-items:center;
     background:var(--bg2); border-radius:10px; border:0.5px solid var(--bd); padding:10px 12px; flex-shrink:0; }
   .steam { text-align:center; }
@@ -82,7 +77,6 @@
   .snum { font-size:28px; font-weight:500; min-width:34px; text-align:center; font-variant-numeric:tabular-nums; }
   .ssep { font-size:20px; color:var(--hnt); padding:0 4px; }
 
-  /* Tiles */
   .tgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex-shrink:0; }
   .tile { background:rgba(255,255,255,.05); border-radius:10px; border:0.5px solid var(--bd);
     padding:12px 6px 10px; cursor:pointer; display:flex; flex-direction:column;
@@ -93,15 +87,12 @@
   .tile.on .ti { color:var(--live); }
   .ti { font-size:18px; color:rgba(255,255,255,.55); line-height:1; }
   .tl { font-size:10px; color:var(--mut); text-align:center; line-height:1.2; }
-  .tv { font-size:11px; font-weight:500; color:var(--txt); }
 
-  /* Info bar */
   .ibar { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex-shrink:0; }
   .icell { background:var(--bg2); border:0.5px solid var(--bd); border-radius:8px; padding:7px 8px; text-align:center; }
   .icl { font-size:9px; color:var(--mut); margin-bottom:3px; }
   .icv { font-size:15px; font-weight:500; font-variant-numeric:tabular-nums; }
 
-  /* Fixed tiles */
   .fgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex-shrink:0; }
   .ftile { background:rgba(255,255,255,.03); border-radius:9px; border:0.5px solid rgba(255,255,255,.07);
     padding:10px 6px 8px; cursor:pointer; display:flex; flex-direction:column;
@@ -118,13 +109,11 @@
   .divl { height:0.5px; background:var(--bd); margin:0 2px; flex-shrink:0; }
   .sp { flex:1; }
   .foot { font-size:9px; color:var(--hnt); text-align:center; padding:2px 0 0; flex-shrink:0; }
-  .ctx { display:none; }
-  .ctx.on { display:contents; }
+  .ctx { display:none; } .ctx.on { display:contents; }
 </style>
 </head>
 <body>
 
-<!-- ── Connexion ── -->
 <div id="screen-connect">
   <div class="logo">◆ Diamond Pulse</div>
   <p class="code-hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
@@ -134,17 +123,13 @@
     <input class="code-digit" id="d3" type="tel" maxlength="1" placeholder="·">
     <input class="code-digit" id="d4" type="tel" maxlength="1" placeholder="·">
   </div>
-  <button class="connect-btn" id="conn-btn" onclick="doConnect()">Connecter</button>
+  <button class="connect-btn" id="cbtn" onclick="doConnect()">Connecter</button>
   <div class="cst" id="cst">En attente du code…</div>
 </div>
 
-<!-- ── Panel ── -->
 <div id="screen-panel">
   <div class="sbar">
-    <div class="sleft">
-      <div class="dot" id="pdot"></div>
-      <span class="stxt">Diamond Pulse</span>
-    </div>
+    <div class="sleft"><div class="dot" id="pdot"></div><span class="stxt">Diamond Pulse</span></div>
     <span class="clk" id="clk">--:--:--</span>
   </div>
 
@@ -245,15 +230,12 @@
     <div class="ftile" id="ft-brb" onclick="tog('ft-brb','brb')"><div class="ti">⊡</div><div class="tl">BRB</div></div>
     <div class="ftile danger" id="ft-panic" onclick="doPanic()"><div class="ti">⚠</div><div class="tl">Panic</div></div>
   </div>
-
   <div class="foot">Diamond Pulse · Surface Panel · <span id="codef"></span></div>
 </div>
 
-<script type="module">
-import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.21.0/torrent';
-
-const APP_ID = 'diamond-pulse-sync-v1';
-let room, sendCmd;
+<script>
+const RELAY = 'wss://socketsbay.com/wss/v2/1/demo/';
+let ws = null, channel = null;
 
 // Horloge
 setInterval(() => {
@@ -261,7 +243,7 @@ setInterval(() => {
   document.getElementById('clk').textContent = p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
 }, 1000);
 
-// Saisie code — focus auto
+// Focus auto entre les chiffres
 ['d1','d2','d3','d4'].forEach((id,i,a) => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => {
@@ -284,47 +266,59 @@ function setSt(msg, cls) {
   el.className = 'cst' + (cls ? ' '+cls : '');
 }
 
-window.doConnect = function() {
+function doConnect() {
   const code = getCode();
   if (code.length !== 4) { setSt('Code à 4 chiffres requis','err'); return; }
 
-  document.getElementById('conn-btn').disabled = true;
-  setSt('Connexion via réseau DHT…','');
+  channel = 'dp-' + code;
+  document.getElementById('cbtn').disabled = true;
+  setSt('Connexion au relay…','');
 
-  room = joinRoom({ appId: APP_ID }, 'room-' + code);
-  const [send,] = room.makeAction('cmd');
-  sendCmd = send;
-  const [, getState] = room.makeAction('state');
+  ws = new WebSocket(RELAY);
 
-  // Timeout si pas de PC trouvé en 15s
   const timeout = setTimeout(() => {
     setSt('Aucun PC trouvé — vérifie le code','err');
-    document.getElementById('conn-btn').disabled = false;
-  }, 15000);
+    document.getElementById('cbtn').disabled = false;
+    ws.close();
+  }, 12000);
 
-  room.onPeerJoin(() => {
-    clearTimeout(timeout);
-    document.getElementById('codef').textContent = code;
-    setSt('','ok');
-    document.getElementById('screen-connect').style.display = 'none';
-    document.getElementById('screen-panel').classList.add('on');
-  });
+  ws.onopen = () => {
+    // Annonce la Surface sur le canal
+    ws.send(JSON.stringify({ channel, type: 'join', payload: {} }));
+    setSt('En attente du PC…','');
+  };
 
-  room.onPeerLeave(() => {
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+    if (msg.channel !== channel) return;
+
+    if (msg.type === 'host') {
+      // PC trouvé
+      clearTimeout(timeout);
+      document.getElementById('codef').textContent = code;
+      document.getElementById('screen-connect').style.display = 'none';
+      document.getElementById('screen-panel').classList.add('on');
+    }
+
+    if (msg.type === 'state') {
+      applyState(msg.payload);
+    }
+  };
+
+  ws.onerror = () => setSt('Erreur de connexion','err');
+
+  ws.onclose = () => {
     document.getElementById('pdot').className = 'dot warn';
-  });
+  };
+}
 
-  getState(state => applyState(state));
-};
-
-// Envoie une commande vers Diamond Pulse
-window.cmd = function(action, extra={}) {
-  if (!sendCmd) return;
-  sendCmd({ action, ...extra });
+function cmd(action, extra={}) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ channel, type: 'cmd', payload: { action, ...extra } }));
   if (navigator.vibrate) navigator.vibrate(16);
-};
+}
 
-// Applique l'état reçu
 function applyState(s) {
   if (!s) return;
   if (s.mode) doMode(s.mode, true);
@@ -333,8 +327,7 @@ function applyState(s) {
     document.getElementById('sa').textContent = s.score.away ?? 0;
   }
   if (s.inning) {
-    document.getElementById('inn').textContent =
-      (s.inning.half==='bottom'?'▼':'▲') + ' ' + (s.inning.number ?? 1);
+    document.getElementById('inn').textContent = (s.inning.half==='bottom'?'▼':'▲')+' '+(s.inning.number??1);
   }
   if (s.count) {
     document.getElementById('cnt').textContent = (s.count.balls??0)+'-'+(s.count.strikes??0);
@@ -344,28 +337,25 @@ function applyState(s) {
   if (s.onDeck) document.getElementById('ondeck').textContent = 'On deck : '+s.onDeck;
 }
 
-// Change de mode
-window.doMode = function(mode, fromState=false) {
+function doMode(mode, fromState=false) {
   document.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('on', b.dataset.m===mode));
   document.querySelectorAll('.ctx').forEach(c => c.classList.toggle('on', c.id==='ctx-'+mode));
   const badge = document.getElementById('cbadge');
   badge.dataset.m = mode;
   badge.textContent = {live:'Live',lineup:'Lineup',social:'Social',broadcast:'Broadcast'}[mode]||mode;
-  if (!fromState) window.cmd('set_mode', { mode });
-};
+  if (!fromState) cmd('set_mode', { mode });
+}
 
-// Toggle tuile fixe
-window.tog = function(id, action) {
+function tog(id, action) {
   document.getElementById(id).classList.toggle('on');
-  window.cmd(action);
-};
+  cmd(action);
+}
 
-// Panic
-window.doPanic = function() {
+function doPanic() {
   document.getElementById('ft-panic').classList.toggle('on');
-  window.cmd('panic');
+  cmd('panic');
   if (navigator.vibrate) navigator.vibrate([30,15,30]);
-};
+}
 </script>
 </body>
 </html>
