@@ -12,21 +12,35 @@
     html, body {
       width: 1920px;
       height: 1080px;
-      background: transparent;
+      background: #000;
       overflow: hidden;
     }
 
-    /* ── Full-screen container ── */
+    /* ── Full-screen container — two columns ── */
     #spo-card {
       position: absolute;
       inset: 0;
+      display: flex;
       pointer-events: none;
     }
 
-    /* ── Photo layer — fades in first ── */
+    /* ── Left half — text ── */
+    #spo-info-layer {
+      width: 960px;
+      flex-shrink: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 80px 100px;
+      opacity: 0;
+    }
+
+    /* ── Right half — photo ── */
     #spo-photo-layer {
-      position: absolute;
-      inset: 0;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
       opacity: 0;
     }
 
@@ -54,16 +68,6 @@
       display: block;
     }
 
-    /* Dark gradient over the photo so text is readable */
-    #spo-photo-layer::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.40) 55%, rgba(0,0,0,0.10) 100%),
-        linear-gradient(to top,   rgba(0,0,0,0.60) 0%, transparent 50%);
-    }
-
     /* Placeholder when no photo */
     #spo-placeholder {
       position: absolute;
@@ -71,23 +75,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.92);
+      background: #111;
     }
     #spo-placeholder svg {
       opacity: 0.08;
       width: 320px;
       height: 320px;
-    }
-
-    /* ── Info layer — fades in after the photo ── */
-    #spo-info-layer {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 80px 120px;
-      opacity: 0;
     }
 
     #spo-info-layer.fade-in {
@@ -160,25 +153,24 @@
 
   <div id="spo-card">
 
-    <!-- Photo (fades in first) -->
-    <div id="spo-photo-layer">
-      <div id="spo-placeholder">
-        <!-- generic silhouette -->
-        <svg viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="30" r="18"/>
-          <path d="M15 85 Q15 58 50 58 Q85 58 85 85 Z"/>
-        </svg>
-      </div>
-      <img id="spo-photo" src="" alt="" style="display:none">
-    </div>
-
-    <!-- Text info (fades in after photo) -->
+    <!-- Left: text info (fades in after photo) -->
     <div id="spo-info-layer">
       <div class="spo-accent"></div>
       <div class="spo-label">Player Spotlight</div>
       <div class="spo-number" id="spo-num"></div>
       <div class="spo-name"   id="spo-name"></div>
       <div class="spo-pos"    id="spo-pos"></div>
+    </div>
+
+    <!-- Right: photo (fades in first) -->
+    <div id="spo-photo-layer">
+      <div id="spo-placeholder">
+        <svg viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="30" r="18"/>
+          <path d="M15 85 Q15 58 50 58 Q85 58 85 85 Z"/>
+        </svg>
+      </div>
+      <img id="spo-photo" src="" alt="" style="display:none">
     </div>
 
   </div>
