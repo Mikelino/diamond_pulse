@@ -332,7 +332,13 @@
 
           <!-- ── COLUMN 5: BROADCAST ── -->
           <div class="live-col" id="liveColBroadcast" style="display:none">
-            <div class="live-col-header">📺 Broadcast</div>
+            <div class="live-col-header" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>📺 Broadcast</span>
+              <button onclick="window.location.href='panel.html'" title="Open Broadcast Panel" style="display:flex;align-items:center;gap:5px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:background 0.15s" onmouseover="this.style.background='#e64000'" onmouseout="this.style.background='var(--orange)'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                Panel
+              </button>
+            </div>
             <div class="live-col-body">
 
               <!-- Score -->
