@@ -411,7 +411,7 @@ html, body {
 
         <!-- Actions -->
         <div class="count-actions">
-          <div class="ca-btn" onclick="cmd('count_reset')">↺ Reset Count</div>
+          <div class="ca-btn" onclick="state.count.balls=0;state.count.strikes=0;state.count.outs=0;renderCount();cmd('count_reset')">↺ Reset Count</div>
           <div class="ca-btn" onclick="pitchResetLocal()">
             ↺ Reset Pitches<br>
             <span style="font-size:18px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
