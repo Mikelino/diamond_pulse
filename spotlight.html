@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Diamond Pulse — Player Spotlight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="js/config.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,91 +14,39 @@
       height: 1080px;
       background: transparent;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    /* ── Card — bottom left, same proportions as panel overlay ── */
+    /* ── Full-screen container ── */
     #spo-card {
       position: absolute;
-      bottom: 64px;
-      left: 64px;
-
-      /* Same size as a mobile viewport ~390×480px but upscaled for broadcast */
-      width: 520px;
-      height: 320px;
-
-      display: flex;
-      flex-direction: column;
-      background: rgba(0,0,0,0.96);
-      border: 1px solid rgba(255,255,255,0.09);
-
-      /* Hidden by default */
-      opacity: 0;
-      transform: translateX(-24px);
+      inset: 0;
       pointer-events: none;
-      transition: opacity 0.45s cubic-bezier(0.22,1,0.36,1),
-                  transform 0.45s cubic-bezier(0.22,1,0.36,1);
-    }
-    #spo-card.visible {
-      opacity: 1;
-      transform: translateX(0);
     }
 
-    /* Body — left info + right photo, same as .spo-body in panel */
-    .spo-body {
-      flex: 1;
-      display: flex;
-      align-items: stretch;
-      min-height: 0;
+    /* ── Photo layer — fades in first ── */
+    #spo-photo-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
     }
 
-    /* Left 44% — number, name, position bottom-aligned, same as .spo-info */
-    .spo-info {
-      width: 44%;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 24px 18px 32px 22px;
-      gap: 4px;
+    #spo-photo-layer.fade-in {
+      animation: fadein-photo 1.2s ease forwards;
+    }
+    #spo-photo-layer.fade-out {
+      animation: fadeout 0.6s ease forwards;
     }
 
-    .spo-number {
-      font-size: 64px;
-      font-weight: 700;
-      color: #FF4500;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 40px rgba(255,69,0,0.5);
+    @keyframes fadein-photo {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes fadeout {
+      from { opacity: 1; }
+      to   { opacity: 0; }
     }
 
-    .spo-name {
-      font-size: 20px;
-      font-weight: 600;
-      color: #fff;
-      line-height: 1.2;
-      word-break: break-word;
-    }
-
-    .spo-pos {
-      font-size: 11px;
-      color: rgba(255,255,255,0.38);
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      margin-top: 4px;
-    }
-
-    /* Right 56% — photo or placeholder, same as .spo-photo-wrap */
-    .spo-photo-wrap {
-      flex: 1;
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .spo-photo {
+    #spo-photo {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -104,32 +54,133 @@
       display: block;
     }
 
-    .spo-photo-placeholder {
-      width: 100%;
-      height: 100%;
+    /* Dark gradient over the photo so text is readable */
+    #spo-photo-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.40) 55%, rgba(0,0,0,0.10) 100%),
+        linear-gradient(to top,   rgba(0,0,0,0.60) 0%, transparent 50%);
+    }
+
+    /* Placeholder when no photo */
+    #spo-placeholder {
+      position: absolute;
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(0,0,0,0.92);
+    }
+    #spo-placeholder svg {
+      opacity: 0.08;
+      width: 320px;
+      height: 320px;
+    }
+
+    /* ── Info layer — fades in after the photo ── */
+    #spo-info-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 80px 120px;
+      opacity: 0;
+    }
+
+    #spo-info-layer.fade-in {
+      animation: fadein-info 0.8s ease forwards;
+    }
+    #spo-info-layer.fade-out {
+      animation: fadeout 0.4s ease forwards;
+    }
+
+    @keyframes fadein-info {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Orange accent bar */
+    .spo-accent {
+      width: 64px;
+      height: 5px;
+      background: #FF4500;
+      border-radius: 2px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 24px rgba(255,69,0,0.7);
+    }
+
+    .spo-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      color: #FF4500;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .spo-number {
+      font-family: 'Oswald', sans-serif;
+      font-size: 160px;
+      font-weight: 700;
+      color: #FF4500;
+      line-height: 0.9;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 80px rgba(255,69,0,0.5);
+      letter-spacing: -4px;
+    }
+
+    .spo-name {
+      font-family: 'Oswald', sans-serif;
       font-size: 96px;
-      opacity: .15;
-      user-select: none;
+      font-weight: 700;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      line-height: 1;
+      margin-top: 8px;
+      text-shadow: 0 4px 32px rgba(0,0,0,0.8);
+    }
+
+    .spo-pos {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 5px;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      margin-top: 16px;
     }
   </style>
 </head>
 <body>
 
   <div id="spo-card">
-    <div class="spo-body">
-      <div class="spo-info">
-        <div class="spo-number" id="spo-num">#</div>
-        <div class="spo-name"   id="spo-name">—</div>
-        <div class="spo-pos"    id="spo-pos"></div>
+
+    <!-- Photo (fades in first) -->
+    <div id="spo-photo-layer">
+      <div id="spo-placeholder">
+        <!-- generic silhouette -->
+        <svg viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="30" r="18"/>
+          <path d="M15 85 Q15 58 50 58 Q85 58 85 85 Z"/>
+        </svg>
       </div>
-      <div class="spo-photo-wrap" id="spo-photo-wrap">
-        <div class="spo-photo-placeholder" id="spo-placeholder">🧢</div>
-        <img class="spo-photo" id="spo-photo" src="" alt="" style="display:none">
-      </div>
+      <img id="spo-photo" src="" alt="" style="display:none">
     </div>
+
+    <!-- Text info (fades in after photo) -->
+    <div id="spo-info-layer">
+      <div class="spo-accent"></div>
+      <div class="spo-label">Player Spotlight</div>
+      <div class="spo-number" id="spo-num"></div>
+      <div class="spo-name"   id="spo-name"></div>
+      <div class="spo-pos"    id="spo-pos"></div>
+    </div>
+
   </div>
 
   <script>
@@ -158,24 +209,46 @@
     function showCard(data) {
       isVisible = true;
 
-      document.getElementById('spo-num').textContent  = data.number   || '#';
-      document.getElementById('spo-name').textContent = data.name      || '—';
+      document.getElementById('spo-num').textContent  = data.number   || '';
+      document.getElementById('spo-name').textContent = data.name      || '';
       document.getElementById('spo-pos').textContent  = data.position  || '';
 
+      // Photo or placeholder
       const img = document.getElementById('spo-photo');
       const ph  = document.getElementById('spo-placeholder');
       if (data.photo) {
-        img.src = data.photo; img.style.display = 'block'; ph.style.display = 'none';
+        img.src = data.photo;
+        img.style.display = 'block';
+        ph.style.display  = 'none';
       } else {
-        img.style.display = 'none'; ph.style.display = 'flex';
+        img.style.display = 'none';
+        ph.style.display  = 'flex';
       }
 
-      document.getElementById('spo-card').classList.add('visible');
+      // Step 1: photo fades in
+      const photoLayer = document.getElementById('spo-photo-layer');
+      const infoLayer  = document.getElementById('spo-info-layer');
+      photoLayer.classList.remove('fade-out');
+      infoLayer.classList.remove('fade-in', 'fade-out');
+      void photoLayer.offsetWidth; // reflow
+      photoLayer.classList.add('fade-in');
+
+      // Step 2: info fades in 900ms later
+      setTimeout(() => {
+        infoLayer.classList.add('fade-in');
+      }, 900);
     }
 
     function hideCard() {
       isVisible = false;
-      document.getElementById('spo-card').classList.remove('visible');
+      const photoLayer = document.getElementById('spo-photo-layer');
+      const infoLayer  = document.getElementById('spo-info-layer');
+
+      photoLayer.classList.remove('fade-in');
+      infoLayer.classList.remove('fade-in');
+      void photoLayer.offsetWidth;
+      photoLayer.classList.add('fade-out');
+      infoLayer.classList.add('fade-out');
     }
 
     poll();
