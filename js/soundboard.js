@@ -890,24 +890,24 @@ async function matchSave() {
   } catch(e) { console.warn('matchSave failed', e); }
 }
 
+function _allById(id) { return document.querySelectorAll('[id="' + id + '"]'); }
+
 function matchRenderPanel() {
   const homeBatting = !matchState.inningTop;
-  document.getElementById('matchScoreHome').textContent = matchState.scoreHome;
-  document.getElementById('matchScoreAway').textContent = matchState.scoreAway;
-  document.getElementById('matchScoreHome').style.color = homeBatting  ? 'var(--orange)' : 'var(--muted)';
-  document.getElementById('matchScoreAway').style.color = !homeBatting ? 'var(--orange)' : 'var(--muted)';
-  document.getElementById('matchInningNum').textContent = matchState.inning;
-  document.getElementById('matchInningArrow').textContent = matchState.inningTop ? '▲' : '▼';
+  _allById('matchScoreHome').forEach(el => { el.textContent = matchState.scoreHome; el.style.color = homeBatting  ? 'var(--orange)' : 'var(--muted)'; });
+  _allById('matchScoreAway').forEach(el => { el.textContent = matchState.scoreAway; el.style.color = !homeBatting ? 'var(--orange)' : 'var(--muted)'; });
+  _allById('matchInningNum').forEach(el => { el.textContent = matchState.inning; });
+  _allById('matchInningArrow').forEach(el => { el.textContent = matchState.inningTop ? '▲' : '▼'; });
 
   ['balls','strikes','outs'].forEach(type => {
-    const max = type === 'balls' ? 3 : 2;
     const val = matchState[type];
     const colors = { balls: '#4CAF50', strikes: '#FF9800', outs: '#f44336' };
-    document.getElementById('match' + type.charAt(0).toUpperCase() + type.slice(1))
-      .querySelectorAll('.match-dot').forEach((dot, i) => {
+    _allById('match' + type.charAt(0).toUpperCase() + type.slice(1)).forEach(container => {
+      container.querySelectorAll('.match-dot').forEach((dot, i) => {
         dot.style.background = i < val ? colors[type] : 'transparent';
         dot.style.borderColor = i < val ? colors[type] : 'var(--border)';
       });
+    });
   });
 
   let batterDisplay, onDeckDisplay;
@@ -933,8 +933,8 @@ function matchRenderPanel() {
     batterDisplay = fmtV(vl[bi]);
     onDeckDisplay = fmtV(vl[n ? (bi + 1) % n : 0]);
   }
-  document.getElementById('matchBatterDisplay').textContent = batterDisplay;
-  document.getElementById('matchOnDeckDisplay').textContent = onDeckDisplay;
+  _allById('matchBatterDisplay').forEach(el => { el.textContent = batterDisplay; });
+  _allById('matchOnDeckDisplay').forEach(el => { el.textContent = onDeckDisplay; });
 
   // Runners
   const runnerMap = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
@@ -942,26 +942,23 @@ function matchRenderPanel() {
   const runners = matchState.runners || { first: false, second: false, third: false };
   Object.keys(runnerMap).forEach(base => {
     const on = runners[base];
-    const baseEl = document.getElementById(runnerMap[base]);
-    const btnEl  = document.getElementById(btnMap[base]);
-    if (baseEl) {
+    _allById(runnerMap[base]).forEach(baseEl => {
       baseEl.setAttribute('fill', on ? 'var(--orange)' : 'transparent');
       baseEl.setAttribute('stroke', on ? 'var(--orange)' : 'var(--border)');
-    }
-    if (btnEl) {
+    });
+    _allById(btnMap[base]).forEach(btnEl => {
       btnEl.style.background    = on ? 'rgba(255,69,0,0.15)' : 'transparent';
       btnEl.style.borderColor   = on ? 'var(--orange)' : 'var(--border)';
       btnEl.style.color         = on ? 'var(--orange)' : 'var(--muted)';
-    }
+    });
   });
 
-  const elPitcherName = document.getElementById('matchPitcherName');
-  if (elPitcherName) elPitcherName.textContent = matchState.pitcherName || '—';
+  _allById('matchPitcherName').forEach(el => { el.textContent = matchState.pitcherName || '—'; });
   const elPitchCount = document.getElementById('matchPitchCount');
   if (elPitchCount) elPitchCount.textContent = matchState.pitchCount ?? 0;
 
   const overlayUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'overlay.html';
-  document.getElementById('matchOverlayUrl').textContent = overlayUrl;
+  _allById('matchOverlayUrl').forEach(el => { el.textContent = overlayUrl; });
 }
 
 function matchScoreAdj(side, delta) {
