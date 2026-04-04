@@ -771,8 +771,27 @@ function openSpotlight() {
   document.getElementById('spotlight-overlay').classList.add('on');
 }
 
-function closeSpotlight() {
+async function closeSpotlight() {
   document.getElementById('spotlight-overlay').classList.remove('on');
+
+  // If currently broadcasting, hide it in OBS too
+  if (spotlightActive) {
+    spotlightActive = false;
+    const btn = document.getElementById('spo-send-btn');
+    if (btn) { btn.textContent = '▶ Broadcast on screen'; btn.classList.remove('active'); }
+    try {
+      await fetch(`${SUPA_URL}/rest/v1/config`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${SUPA_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates',
+        },
+        body: JSON.stringify([{ key: 'spotlight', value: { active: false } }]),
+      });
+    } catch(e) { console.error('[spotlight] hide error', e); }
+  }
 }
 
 async function sendSpotlight() {
