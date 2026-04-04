@@ -148,8 +148,9 @@
       case 'toggle_runner_third':  callFn('matchToggleRunner', 'third');  break;
       case 'runners_clear':        callFn('matchClearRunners');            break;
 
-      case 'batter_next': callFn('matchBatterAdj',  1); break;
-      case 'batter_prev': callFn('matchBatterAdj', -1); break;
+      case 'batter_next':   callFn('matchBatterAdj',  1); break;
+      case 'batter_prev':   callFn('matchBatterAdj', -1); break;
+      case 'pitch_reset':   callFn('matchResetPitcher'); break;
 
       case 'broadcast_silver':   callFn('broadcastSilverBlock'); break;
       case 'broadcast_ballgame': callFn('broadcastBallGame');    break;
