@@ -412,7 +412,7 @@ html, body {
         <!-- Actions -->
         <div class="count-actions">
           <div class="ca-btn" onclick="cmd('count_reset')">↺ Reset Count</div>
-          <div class="ca-btn" onclick="state.count.pitches=0;renderCount();cmd('pitch_reset')">
+          <div class="ca-btn" onclick="pitchResetLocal()">
             ↺ Reset Pitches<br>
             <span style="font-size:18px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
           </div>
@@ -634,6 +634,14 @@ function tapRunner(base) {
   cmd('toggle_runner_' + base);
 }
 
+function pitchResetLocal() {
+  state.count.pitches = 0;
+  renderCount();
+  cmd('pitch_reset');
+  window._pitchResetLock = true;
+  setTimeout(() => { window._pitchResetLock = false; }, 1500);
+}
+
 function tapClearRunners() {
   state.runners.first = state.runners.second = state.runners.third = false;
   renderRunners();
@@ -656,7 +664,7 @@ function mergeState(s) {
     state.count.balls   = s.count.balls   ?? 0;
     state.count.strikes = s.count.strikes ?? 0;
     state.count.outs    = s.count.outs    ?? 0;
-    state.count.pitches = s.count.pitches ?? 0;
+    if (!window._pitchResetLock) state.count.pitches = s.count.pitches ?? 0;
   }
   if (s.runners) {
     state.runners.first  = !!s.runners.first;
