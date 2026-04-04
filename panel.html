@@ -324,7 +324,7 @@ html, body {
     <input class="cd" id="d4" type="tel" maxlength="1" placeholder="·">
   </div>
   <button class="cbtn" id="cbtn" onclick="doConnect()">Connecter</button>
-  <div class="cst" id="cst">En attente du code…</div>
+  <div class="cst" id="cst">Waiting for code…</div>
 </div>
 
 <!-- ── PANEL ─────────────────────────────────────── -->
@@ -342,7 +342,7 @@ html, body {
   <!-- Score (pleine largeur) -->
   <div class="score-row">
     <div class="steam">
-      <div class="steam-n">Domicile</div>
+      <div class="steam-n">Home</div>
       <div class="sctrl">
         <div class="sadj" onclick="cmd('score_home_dec')">−</div>
         <div class="snum fielding" id="sh">0</div>
@@ -351,7 +351,7 @@ html, body {
     </div>
     <div class="ssep">–</div>
     <div class="steam">
-      <div class="steam-n">Visiteurs</div>
+      <div class="steam-n">Visitors</div>
       <div class="sctrl">
         <div class="sadj" onclick="cmd('score_away_dec')">−</div>
         <div class="snum fielding" id="sa">0</div>
@@ -366,8 +366,8 @@ html, body {
     <!-- ── COLONNE GAUCHE : Pitching ─────────────── -->
     <div class="col">
 
-      <!-- Manche -->
-      <div class="sec">Manche</div>
+      <!-- Inning -->
+      <div class="sec">Inning</div>
       <div class="card">
         <div class="inning-row">
           <div class="adj" onclick="cmd('inning_prev')">−</div>
@@ -411,13 +411,13 @@ html, body {
 
         <!-- Actions -->
         <div class="count-actions">
+          <div class="ca-btn walk" onclick="cmd('walk')">Walk</div>
+          <div class="ca-btn so"   onclick="cmd('strikeout')">Strikeout</div>
           <div class="ca-btn" onclick="countResetLocal()">↺ Reset Count</div>
           <div class="ca-btn" onclick="pitchResetLocal()">
             ↺ Reset Pitches<br>
             <span style="font-size:18px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
           </div>
-          <div class="ca-btn walk" onclick="cmd('walk')">Walk</div>
-          <div class="ca-btn so"   onclick="cmd('strikeout')">Strikeout</div>
         </div>
       </div>
 
@@ -425,7 +425,7 @@ html, body {
       <div class="sec">Sponsors</div>
       <div class="card">
         <div class="sp-btn" id="sp-silver"   onclick="toggleSponsor('silver')">
-          <span>▶</span>Bloc Silver
+          <span>▶</span>Silver Block
         </div>
         <div class="sp-btn" id="sp-ballgame" onclick="toggleSponsor('ballgame')">
           <span>⚾</span>Ball Game
@@ -438,7 +438,7 @@ html, body {
     <div class="col">
 
       <!-- Runners -->
-      <div class="sec">Coureurs</div>
+      <div class="sec">Runners</div>
       <div class="card">
         <div class="runners-wrap">
           <!-- Diamond SVG -->
@@ -467,16 +467,16 @@ html, body {
           </svg>
           <!-- Boutons -->
           <div class="runner-btns">
-            <div class="rbtn" id="rb3" onclick="tapRunner('third')">3e base</div>
-            <div class="rbtn" id="rb2" onclick="tapRunner('second')">2e base</div>
-            <div class="rbtn" id="rb1" onclick="tapRunner('first')">1re base</div>
-            <div class="rbtn clear" onclick="tapClearRunners()">✕ Effacer</div>
+            <div class="rbtn" id="rb3" onclick="tapRunner('third')">3rd base</div>
+            <div class="rbtn" id="rb2" onclick="tapRunner('second')">2nd base</div>
+            <div class="rbtn" id="rb1" onclick="tapRunner('first')">1st base</div>
+            <div class="rbtn clear" onclick="tapClearRunners()">✕ Clear Bases</div>
           </div>
         </div>
       </div>
 
-      <!-- Frappeur -->
-      <div class="sec">Frappeur</div>
+      <!-- Batter -->
+      <div class="sec">Batter</div>
       <div class="card">
         <div class="batter-row">
           <div class="batter-lbl">At bat</div>
@@ -606,7 +606,7 @@ function doConnect() {
     .subscribe(status => {
       if (status === 'SUBSCRIBED') {
         ch.send({ type:'broadcast', event:'join', payload:{} });
-        setSt('En attente du PC…','');
+        setSt('Waiting for PC…','');
       }
     });
 }
