@@ -166,6 +166,26 @@
       text-transform: uppercase;
       margin-top: 16px;
     }
+
+    .spo-stats {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-top: 32px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      border-left: 4px solid #FF4500;
+      padding-left: 20px;
+      opacity: 0;
+    }
+
+    .spo-stats.fade-in {
+      animation: fadein-info 0.6s ease 0.3s forwards;
+    }
+    .spo-stats.fade-out {
+      animation: fadeout 0.4s ease forwards;
+    }
   </style>
 </head>
 <body>
@@ -179,6 +199,7 @@
       <div class="spo-number" id="spo-num"></div>
       <div class="spo-name"   id="spo-name"></div>
       <div class="spo-pos"    id="spo-pos"></div>
+      <div class="spo-stats"  id="spo-stats"></div>
     </div>
 
     <!-- Right: photo circle (fades in first) -->
@@ -224,9 +245,13 @@
     function showCard(data) {
       isVisible = true;
 
-      document.getElementById('spo-num').textContent  = data.number   || '';
-      document.getElementById('spo-name').textContent = data.name      || '';
-      document.getElementById('spo-pos').textContent  = data.position  || '';
+      document.getElementById('spo-num').textContent    = data.number   || '';
+      document.getElementById('spo-name').textContent  = data.name      || '';
+      document.getElementById('spo-pos').textContent   = data.position  || '';
+
+      const statsEl = document.getElementById('spo-stats');
+      statsEl.textContent = data.stats || '';
+      statsEl.style.display = data.stats ? 'block' : 'none';
 
       // Photo or placeholder
       const img = document.getElementById('spo-photo');
@@ -248,9 +273,11 @@
       void photoLayer.offsetWidth; // reflow
       photoLayer.classList.add('fade-in');
 
-      // Step 2: info fades in 900ms later
+      // Step 2: info fades in 900ms later, stats after that
       setTimeout(() => {
         infoLayer.classList.add('fade-in');
+        const statsEl = document.getElementById('spo-stats');
+        if (data.stats) statsEl.classList.add('fade-in');
       }, 900);
     }
 
@@ -261,9 +288,12 @@
 
       photoLayer.classList.remove('fade-in');
       infoLayer.classList.remove('fade-in');
+      const statsEl = document.getElementById('spo-stats');
+      statsEl.classList.remove('fade-in');
       void photoLayer.offsetWidth;
       photoLayer.classList.add('fade-out');
       infoLayer.classList.add('fade-out');
+      statsEl.classList.add('fade-out');
     }
 
     poll();

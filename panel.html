@@ -271,6 +271,22 @@ html, body {
 }
 .spo-select:focus { border-color: var(--or); }
 
+/* Stats textarea */
+.spo-stats-wrap {
+  padding: 10px 18px 10px 22px;
+  flex-shrink: 0;
+  border-bottom: 0.5px solid var(--bd);
+}
+.spo-stats {
+  width: 100%; height: 72px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 0.5px solid var(--bd); background: var(--bg3);
+  color: var(--txt); font-size: 13px; font-family: inherit;
+  resize: none; outline: none; line-height: 1.5;
+}
+.spo-stats:focus { border-color: var(--or); }
+.spo-stats::placeholder { color: var(--mut); }
+
 /* Spotlight button in batter section */
 .spo-trigger {
   width: 100%; margin-top: 6px; padding: 8px;
@@ -495,6 +511,12 @@ html, body {
     <select id="spo-player-select" class="spo-select" onchange="onSpotlightPlayerChange()">
       <option value="">— Choose a player —</option>
     </select>
+  </div>
+
+  <!-- Stats textarea — top quarter -->
+  <div class="spo-stats-wrap">
+    <label class="spo-select-label" for="spo-stats">Player stats</label>
+    <textarea id="spo-stats" class="spo-stats" placeholder="e.g. AVG .312 · HR 8 · RBI 34"></textarea>
   </div>
 
   <div class="spo-body">
@@ -741,6 +763,8 @@ function populateSpotlightSelect() {
 
 function onSpotlightPlayerChange() {
   const sel = document.getElementById('spo-player-select');
+  const statsEl = document.getElementById('spo-stats');
+  if (statsEl) statsEl.value = '';
   const idx = parseInt(sel.value);
   const img = document.getElementById('spo-photo');
   const ph  = document.getElementById('spo-placeholder');
@@ -798,12 +822,14 @@ async function sendSpotlight() {
   if (!spotlightActive && !spoSelectedPlayer) return;
   spotlightActive = !spotlightActive;
 
+  const stats = (document.getElementById('spo-stats')?.value || '').trim();
   const value = spotlightActive && spoSelectedPlayer ? {
     active:   true,
     name:     spoSelectedPlayer.name,
     number:   spoSelectedPlayer.number,
     position: spoSelectedPlayer.position,
     photo:    spoSelectedPlayer.photo || null,
+    stats:    stats || null,
   } : { active: false };
 
   try {
