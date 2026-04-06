@@ -656,14 +656,22 @@ async function ttsVoxtral(text, apiKey, voice) {
   const res = await fetch('https://api.mistral.ai/v1/audio/speech', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, voice }),
+    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, voice, response_format: 'mp3' }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(`Voxtral error ${res.status}: ${err.message || res.statusText}`);
   }
-  const arrayBuffer = await res.arrayBuffer();
-  return ttsPlayStadiumBuffer(arrayBuffer);
+  const blob = await res.blob();
+  console.log('[Voxtral] response type:', blob.type, 'size:', blob.size);
+  const url = URL.createObjectURL(blob);
+  // Lecture directe d'abord pour valider l'audio
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+    audio.onerror = (e) => { URL.revokeObjectURL(url); reject(new Error('Audio playback error: ' + e.message)); };
+    audio.play().catch(reject);
+  });
 }
 
 // Génère une réponse impulsionnelle synthétique (reverb de grand stade)
