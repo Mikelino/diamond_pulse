@@ -265,6 +265,7 @@ function initSortable() {
 // NAVIGATION PRINCIPALE
 // ═══════════════════════════════════════════
 function mainSwitchTab(tab) {
+  if (tab === 'live' && !FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('mainNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));

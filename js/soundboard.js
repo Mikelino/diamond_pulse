@@ -903,14 +903,18 @@ function applyFeatures() {
   const tabBtn  = document.getElementById('liveTabBroadcast');
   const isMobile = window.innerWidth <= 700;
 
-  // ── Badge Live Mode (Pro requis pour audio) ──
-  const badge = document.getElementById('liveTierBadge');
-  if (badge) {
+  // ── Live Mode nav (Pro requis) ──
+  const liveNavBtn = document.getElementById('mainNavLive');
+  if (liveNavBtn) {
     if (!FEATURES.soundboard) {
-      badge.textContent = 'FREE';
-      badge.style.display = '';
+      liveNavBtn.style.display = 'none';
+      // Si on est actuellement sur Live Mode, basculer vers Lineup
+      const livePanel = document.getElementById('mainPanelLive');
+      if (livePanel && livePanel.classList.contains('active')) {
+        mainSwitchTab('batting');
+      }
     } else {
-      badge.style.display = 'none';
+      liveNavBtn.style.display = '';
     }
   }
 
