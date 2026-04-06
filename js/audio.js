@@ -540,7 +540,7 @@ async function ttsSpeak(text) {
     return ttsElevenLabs(text, t.elevenLabsKey, t.elevenLabsVoice, t.elevenLabsLang);
   }
   if (t.engine === 'voxtral' && t.voxtralKey) {
-    return ttsVoxtral(text, t.voxtralKey, t.voxtralVoice || 'Meadow');
+    return ttsVoxtral(text, t.voxtralKey, t.voxtralVoice || 'fr_male');
   }
   return ttsWebSpeech(text, t.voiceName);
 }
@@ -656,7 +656,7 @@ async function ttsVoxtral(text, apiKey, voice) {
   const res = await fetch('https://api.mistral.ai/v1/audio/speech', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, voice: voice || 'Meadow' }),
+    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, voice: voice || 'fr_male' }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -805,7 +805,7 @@ function ttsSave() {
   t.elevenLabsVoice  = document.getElementById('ttsElevenLabsVoice')?.value  || '';
   t.elevenLabsLang   = document.getElementById('ttsElevenLabsLang')?.value   || '';
   t.voxtralKey       = document.getElementById('ttsVoxtralKey')?.value       || '';
-  t.voxtralVoice     = document.getElementById('ttsVoxtralVoice')?.value     || 'Meadow';
+  t.voxtralVoice     = document.getElementById('ttsVoxtralVoice')?.value     || 'fr_male';
   t.fadeDelay        = parseFloat(document.getElementById('ttsFade')?.value) || 1.5;
   saveConfig();
   showCfgSaveIndicator();
