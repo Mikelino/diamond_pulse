@@ -662,16 +662,13 @@ async function ttsVoxtral(text, apiKey, voice) {
     const err = await res.json().catch(() => ({}));
     throw new Error(`Voxtral error ${res.status}: ${err.message || res.statusText}`);
   }
-  const blob = await res.blob();
-  console.log('[Voxtral] response type:', blob.type, 'size:', blob.size);
-  const url = URL.createObjectURL(blob);
-  // Lecture directe d'abord pour valider l'audio
-  return new Promise((resolve, reject) => {
-    const audio = new Audio(url);
-    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-    audio.onerror = (e) => { URL.revokeObjectURL(url); reject(new Error('Audio playback error: ' + e.message)); };
-    audio.play().catch(reject);
-  });
+  const json = await res.json();
+  const base64 = json.audio_data;
+  if (!base64) throw new Error('Voxtral: no audio_data in response');
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return ttsPlayStadiumBuffer(bytes.buffer);
 }
 
 // Génère une réponse impulsionnelle synthétique (reverb de grand stade)
