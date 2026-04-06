@@ -20,7 +20,7 @@
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/players.js"></script>
-  <script src="js/audio.js?v=2"></script>
+  <script src="js/audio.js?v=3"></script>
   <script src="js/sponsors.js"></script>
   <script src="js/social.js"></script>
   <script src="js/settings.js"></script>
@@ -1153,7 +1153,7 @@
 
                   <div class="form-group" id="ttsEngineGroup">
                     <label class="form-label">Voice engine</label>
-                    <select class="form-input" id="ttsEngine" onchange="ttsEngineChanged()">
+                    <select class="form-input" id="ttsEngine" onchange="ttsEngineChanged();['ttsOpenAIGroup','ttsElevenLabsGroup','ttsVoxtralGroup'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=(id==='ttsOpenAIGroup'&&this.value==='openai'||id==='ttsElevenLabsGroup'&&this.value==='elevenlabs'||id==='ttsVoxtralGroup'&&this.value==='voxtral')?'':'none';},this)">
                       <option value="webspeech">🌐 Web Speech (free, built-in)</option>
                       <option value="openai">✨ OpenAI TTS (natural voices)</option>
                       <option value="elevenlabs">🎙️ ElevenLabs (multilingual, free tier)</option>
