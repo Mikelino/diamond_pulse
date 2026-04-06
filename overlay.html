@@ -404,6 +404,39 @@
       text-transform: uppercase;
     }
 
+    /* ── PITCH SPEED — sous pitcherCard + runners ── */
+    #pitchSpeedCard {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 6px 14px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #pitchSpeedCard.visible { opacity: 1; }
+    .speed-lbl {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .speed-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--orange);
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+
     /* ── BATTER UP CHEER ── */
     @keyframes cheer-in {
       0%   { transform: scale(0.5) translateY(20px); opacity: 0; }
@@ -833,6 +866,11 @@
         </svg>
       </div>
     </div>
+    <!-- Vitesse du lancer -->
+    <div id="pitchSpeedCard">
+      <span class="speed-lbl">Speed</span>
+      <span class="speed-value" id="pitchSpeedValue">—</span>
+    </div>
   </div>
 
   <!-- ══ ON DECK CARD ══ -->
@@ -913,6 +951,7 @@
     let visitorPlayers = [];
     let photoCache = {};
     let prevLastEvent = null;
+    let pitchSpeedHideTimer = null;
 
     // ══ INIT ══
     async function init() {
@@ -989,6 +1028,12 @@
         const rows = await res.json();
         const ms = rows?.[0]?.value?.matchState;
         if (!ms) return;
+
+        // Vitesse du lancer — afficher 10s dès qu'elle change
+        const speed = ms.pitchSpeed || '';
+        if (speed && speed !== (prev.pitchSpeed || '')) {
+          showPitchSpeed(speed);
+        }
 
         // Déclencher l'animation (WALK / STRIKEOUT / CHANGE FIELD) dès que possible
         const lastEvent = ms.lastEvent || null;
@@ -1176,6 +1221,16 @@
         ct.style.opacity   = '0';
         cs.style.opacity   = '0';
       }, 1400);
+    }
+
+    function showPitchSpeed(speed) {
+      const card = document.getElementById('pitchSpeedCard');
+      const val  = document.getElementById('pitchSpeedValue');
+      if (!card || !val) return;
+      val.textContent = speed;
+      card.classList.add('visible');
+      clearTimeout(pitchSpeedHideTimer);
+      pitchSpeedHideTimer = setTimeout(() => card.classList.remove('visible'), 10000);
     }
 
     function showError(msg) {

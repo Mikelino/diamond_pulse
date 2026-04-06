@@ -151,6 +151,7 @@
       case 'batter_next':   callFn('matchBatterAdj',  1); break;
       case 'batter_prev':   callFn('matchBatterAdj', -1); break;
       case 'pitch_reset':   callFn('matchResetPitcher'); break;
+      case 'pitch_speed':   callFn('matchSetPitchSpeed', payload.speed); break;
 
       case 'broadcast_silver':   callFn('broadcastSilverBlock'); break;
       case 'broadcast_ballgame': callFn('broadcastBallGame');    break;

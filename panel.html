@@ -419,6 +419,13 @@ html, body {
               <span style="font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">Pitches</span><br>
               <span style="font-size:20px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
             </div>
+            <div class="ca-btn" style="flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:auto">
+              <span style="font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">Speed</span>
+              <input id="pitch-speed-inp" type="text" placeholder="km/h" maxlength="10"
+                style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--bd);color:var(--or);font-size:18px;font-weight:700;font-family:inherit;text-align:center;outline:none;padding:0 2px"
+                oninput="sendPitchSpeed(this.value)"
+                onkeydown="if(event.key==='Enter'){this.select()}" />
+            </div>
             <div class="ca-btn" style="flex:1" onclick="pitchResetLocal()">↺ Reset<br>Pitches</div>
           </div>
         </div>
@@ -643,6 +650,10 @@ function countResetLocal() {
   cmd('count_reset');
   window._countResetLock = true;
   setTimeout(() => { window._countResetLock = false; }, 1500);
+}
+
+function sendPitchSpeed(value) {
+  cmd('pitch_speed', { speed: value });
 }
 
 function pitchResetLocal() {

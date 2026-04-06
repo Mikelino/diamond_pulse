@@ -414,6 +414,10 @@
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;flex-shrink:0">Pitches</span>
                   <div id="matchPitchCount" style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:var(--white);min-width:28px;text-align:center;line-height:1">0</div>
+                  <input id="matchPitchSpeedInput" type="text" placeholder="Speed…" maxlength="10"
+                    style="background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:4px 7px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;color:var(--orange);letter-spacing:1px;width:80px;outline:none;text-align:center"
+                    oninput="matchSetPitchSpeed(this.value)"
+                    onkeydown="if(event.key==='Enter'){this.select()}" />
                   <button onclick="matchResetPitcher()"
                     style="padding:3px 8px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s"
                     onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Reset</button>

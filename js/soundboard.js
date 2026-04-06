@@ -869,7 +869,8 @@ let matchState = {
   visitorPitchCount: 0,
   inningLog: [],         // [{inning, away, home}] — points par demi-inning
   prevScoreHome: 0,      // score local au début du demi-inning courant
-  prevScoreAway: 0       // score visiteur au début du demi-inning courant
+  prevScoreAway: 0,      // score visiteur au début du demi-inning courant
+  pitchSpeed: ''         // vitesse du lancer (ex: "142 km/h"), affichée brièvement sur l'overlay
 };
 
 async function matchSave() {
@@ -1122,6 +1123,11 @@ function matchResetPitcher() {
     matchState.visitorPitchCount = 0;
   }
   matchRenderPanel(); matchSave();
+}
+
+function matchSetPitchSpeed(speed) {
+  matchState.pitchSpeed = speed || '';
+  matchSave();
 }
 
 function matchToggleRunner(base) {
