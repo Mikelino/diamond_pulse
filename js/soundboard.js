@@ -834,43 +834,38 @@ async function loadLicense() {
 // Seuil "grand écran" : screen.width ≥ 1440px ≈ 13+ pouces (CSS pixels)
 const BROADCAST_MIN_WIDTH = 1440;
 
+function broadcastIsLargeScreen() {
+  return screen.width >= BROADCAST_MIN_WIDTH;
+}
+
 function applyFeatures() {
-  const col     = document.getElementById('liveColBroadcast');
+  const col    = document.getElementById('liveColBroadcast');
   const resizer = document.getElementById('liveResizer4');
   const tabBtn  = document.getElementById('liveTabBroadcast');
-  const isMobile    = window.innerWidth <= 700;
-  const isLargeScreen = screen.width >= BROADCAST_MIN_WIDTH;
+  const isMobile = window.innerWidth <= 700;
 
   if (col) {
-    col.dataset.hasBroadcast = '1';
-
-    if (isMobile) {
-      // Mobile : broadcast jamais disponible
+    if (!broadcastIsLargeScreen() || isMobile) {
+      // Petit écran ou mobile : masquer complètement la colonne broadcast
       col.style.display = 'none';
+      col.dataset.hasBroadcast = '0';
       if (tabBtn) tabBtn.style.display = 'none';
-    } else if (!isLargeScreen) {
-      // Petit écran (<13") : montrer seulement le bloc connexion panel, masquer les contrôles
-      col.style.display = '';
-      col.style.flex = '0 0 auto';
-      col.style.width = '260px';
-      if (resizer) resizer.style.display = '';
-      _setBroadcastSmallScreen(col, true);
+      if (resizer) resizer.style.display = 'none';
+      // Sur mobile : pas de popup. Sur petit écran non-mobile : popup au démarrage
+      if (!isMobile) {
+        const modal = document.getElementById('broadcastSmallModal');
+        if (modal) modal.style.display = 'flex';
+      }
     } else {
       // Grand écran : broadcast complet
       col.style.display = '';
       col.style.flex = '1 1 0';
+      col.dataset.hasBroadcast = '1';
       if (resizer) resizer.style.display = '';
-      _setBroadcastSmallScreen(col, false);
     }
   }
   matchAutoSetPitcher();
   matchRenderPanel();
-}
-
-function _setBroadcastSmallScreen(col, smallScreen) {
-  col.querySelectorAll('.broadcast-full-only').forEach(el => {
-    el.style.display = smallScreen ? 'none' : '';
-  });
 }
 
 // ═══════════════════════════════════════════

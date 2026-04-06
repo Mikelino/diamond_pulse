@@ -341,18 +341,6 @@
             </div>
             <div class="live-col-body">
 
-              <!-- Panel connect — toujours visible -->
-              <div id="broadcastPanelLink" style="margin-bottom:12px;padding:10px;background:rgba(255,69,0,0.08);border:1px solid var(--border);border-radius:4px;text-align:center">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Broadcast Panel</div>
-                <button onclick="window.open('panel.html','_blank')" style="width:100%;padding:8px 0;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">
-                  📱 Open Panel
-                </button>
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">Scan the QR code<br>on your mobile device</div>
-              </div>
-
-              <!-- Broadcast full controls (hidden on small screens) -->
-              <div class="broadcast-full-only">
-
               <!-- Score -->
               <div class="live-col-section-label">Score</div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -505,7 +493,6 @@
                 </button>
               </div>
 
-              </div><!-- /broadcast-full-only -->
             </div>
           </div>
 
@@ -2297,6 +2284,25 @@
     </div>
   </div>
 
+<!-- ── Broadcast small-screen modal ── -->
+<div id="broadcastSmallModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center">
+  <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:28px 24px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+    <div style="font-size:28px;margin-bottom:10px">📺</div>
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:1px">Broadcast</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:22px;line-height:1.55">Screen too small for broadcast controls.<br>Open the panel on a phone or tablet.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="window.open('panel.html','_blank');document.getElementById('broadcastSmallModal').style.display='none'"
+        style="width:100%;padding:10px 0;background:#ff4500;border:none;border-radius:4px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">
+        📱 Open Panel
+      </button>
+      <button onclick="document.getElementById('broadcastSmallModal').style.display='none'"
+        style="width:100%;padding:9px 0;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:4px;color:rgba(255,255,255,0.45);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+        No thanks
+      </button>
+    </div>
+  </div>
+</div>
+
 <script src="js/dp-sync.js?v=2"></script>
 
 <script>
@@ -2333,15 +2339,12 @@
 
   window.onPanelDisconnected = function() {
     window.panelConnected = false;
-    const col = document.getElementById('liveColBroadcast');
-    if (col && col.dataset.hasBroadcast === '1') {
-      if (window.innerWidth > 700) {
+    // Only restore broadcast column on large screens
+    if (typeof broadcastIsLargeScreen === 'function' && broadcastIsLargeScreen() && window.innerWidth > 700) {
+      const col = document.getElementById('liveColBroadcast');
+      if (col) {
         col.style.display = '';
-        // Re-apply small-screen restriction after showing the column
-        const isLargeScreen = screen.width >= (typeof BROADCAST_MIN_WIDTH !== 'undefined' ? BROADCAST_MIN_WIDTH : 1440);
-        _setBroadcastSmallScreen(col, !isLargeScreen);
-      } else {
-        document.getElementById('liveTabBroadcast').style.display = '';
+        col.dataset.hasBroadcast = '1';
       }
     }
     rebalanceCols();
