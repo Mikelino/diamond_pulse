@@ -854,7 +854,10 @@ function applyFeatures() {
       // Sur mobile : pas de popup. Sur petit écran non-mobile : popup au démarrage
       if (!isMobile) {
         const modal = document.getElementById('broadcastSmallModal');
-        if (modal) modal.style.display = 'flex';
+        if (modal && !window._broadcastModalShown) {
+          modal.style.display = 'flex';
+          window._broadcastModalShown = true;
+        }
       }
     } else {
       // Grand écran : broadcast complet
@@ -1212,6 +1215,26 @@ async function init() {
   // Sync pitcher name depuis le lineup (position P)
   matchAutoSetPitcher();
   matchRenderPanel();
+
+  // ── Détection changement d'écran ──
+  // resize : redimensionnement fenêtre
+  // polling screen.width : déplacement vers un autre moniteur
+  let _lastScreenWidth = screen.width;
+  let _broadcastModalShown = false;
+
+  function _onScreenChange() {
+    const wasLarge = _lastScreenWidth >= BROADCAST_MIN_WIDTH;
+    const isLarge  = broadcastIsLargeScreen();
+    if (wasLarge === isLarge) return;
+    _lastScreenWidth = screen.width;
+    window._broadcastModalShown = false; // reset pour re-proposer le popup si on repasse en petit
+    applyFeatures();
+  }
+
+  window.addEventListener('resize', _onScreenChange);
+  setInterval(() => {
+    if (screen.width !== _lastScreenWidth) _onScreenChange();
+  }, 800);
 
   // Charger les sons prédéfinis
   Object.keys(LIVE_SOUNDS).forEach(key => {
