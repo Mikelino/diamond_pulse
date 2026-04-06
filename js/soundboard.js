@@ -866,7 +866,10 @@ let matchState = {
   homeBatterIdx: null,
   visitorBatterIdx: null,
   homePitchCount: 0,
-  visitorPitchCount: 0
+  visitorPitchCount: 0,
+  inningLog: [],         // [{inning, away, home}] — points par demi-inning
+  prevScoreHome: 0,      // score local au début du demi-inning courant
+  prevScoreAway: 0       // score visiteur au début du demi-inning courant
 };
 
 async function matchSave() {
@@ -993,6 +996,24 @@ function matchAutoSetPitcher() {
 }
 
 function matchChangeField() {
+  // ── Enregistrer les points du demi-inning qui se termine ──
+  if (!matchState.inningLog) matchState.inningLog = [];
+  const inn = matchState.inning;
+  let entry = matchState.inningLog.find(e => e.inning === inn);
+  if (!entry) { entry = { inning: inn, away: null, home: null }; matchState.inningLog.push(entry); }
+
+  const prevHome = matchState.prevScoreHome ?? 0;
+  const prevAway = matchState.prevScoreAway ?? 0;
+  if (matchState.inningTop) {
+    // Les visiteurs viennent de batter (top) → enregistrer leurs points
+    entry.away = matchState.scoreAway - prevAway;
+  } else {
+    // L'équipe locale vient de batter (bottom) → enregistrer leurs points
+    entry.home = matchState.scoreHome - prevHome;
+  }
+  matchState.prevScoreHome = matchState.scoreHome;
+  matchState.prevScoreAway = matchState.scoreAway;
+
   const wasVisitorsBatting = matchState.inningTop;
 
   // Mémoriser la position du dernier batteur de l'équipe qui quitte le terrain
