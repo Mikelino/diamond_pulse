@@ -656,7 +656,7 @@ async function ttsVoxtral(text, apiKey, voice) {
   const res = await fetch('https://api.mistral.ai/v1/audio/speech', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, voice: voice || 'fr_male' }),
+    body: JSON.stringify({ model: 'voxtral-mini-tts-2603', input: text, ...(voice ? { voice } : {}) }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
