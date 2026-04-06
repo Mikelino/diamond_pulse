@@ -324,10 +324,11 @@ function ttsSetToggleUI(on) {
 }
 
 function ttsSetGroupsVisible(on) {
-  ['ttsSettingsGroup','ttsEngineGroup','ttsVoiceGroup','ttsFadeGroup','ttsTestGroup','ttsOpenAIGroup'].forEach(id => {
+  ['ttsSettingsGroup','ttsEngineGroup','ttsVoiceGroup','ttsFadeGroup','ttsTestGroup','ttsOpenAIGroup','ttsElevenLabsGroup','ttsVoxtralGroup'].forEach(id => {
     const el = document.getElementById(id);
-    if (el && id !== 'ttsOpenAIGroup') el.style.opacity = on ? '1' : '0.35';
-    if (el && id !== 'ttsOpenAIGroup') el.style.pointerEvents = on ? '' : 'none';
+    const isApiGroup = ['ttsOpenAIGroup','ttsElevenLabsGroup','ttsVoxtralGroup'].includes(id);
+    if (el && !isApiGroup) el.style.opacity = on ? '1' : '0.35';
+    if (el && !isApiGroup) el.style.pointerEvents = on ? '' : 'none';
   });
   if (on) ttsEngineChanged();
 }
