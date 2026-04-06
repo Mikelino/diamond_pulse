@@ -831,24 +831,46 @@ async function loadLicense() {
   }
 }
 
+// Seuil "grand écran" : ≥1280px ≈ 13 pouces
+const BROADCAST_MIN_WIDTH = 1280;
+
 function applyFeatures() {
   const col     = document.getElementById('liveColBroadcast');
   const resizer = document.getElementById('liveResizer4');
   const tabBtn  = document.getElementById('liveTabBroadcast');
+  const isMobile    = window.innerWidth <= 700;
+  const isLargeScreen = window.innerWidth >= BROADCAST_MIN_WIDTH;
+
   if (col) {
     col.dataset.hasBroadcast = '1';
-    if (!window.panelConnected) {
-      if (window.innerWidth > 700) {
-        col.style.display = '';
-        col.style.flex = '1 1 0';
-        if (resizer) resizer.style.display = '';
-      } else {
-        if (tabBtn) tabBtn.style.display = '';
-      }
+
+    if (isMobile) {
+      // Mobile : broadcast jamais disponible
+      col.style.display = 'none';
+      if (tabBtn) tabBtn.style.display = 'none';
+    } else if (!isLargeScreen) {
+      // Petit écran (<13") : montrer seulement le bloc connexion panel, masquer les contrôles
+      col.style.display = '';
+      col.style.flex = '0 0 auto';
+      col.style.width = '260px';
+      if (resizer) resizer.style.display = '';
+      _setBroadcastSmallScreen(col, true);
+    } else {
+      // Grand écran : broadcast complet
+      col.style.display = '';
+      col.style.flex = '1 1 0';
+      if (resizer) resizer.style.display = '';
+      _setBroadcastSmallScreen(col, false);
     }
   }
   matchAutoSetPitcher();
   matchRenderPanel();
+}
+
+function _setBroadcastSmallScreen(col, smallScreen) {
+  col.querySelectorAll('.broadcast-full-only').forEach(el => {
+    el.style.display = smallScreen ? 'none' : '';
+  });
 }
 
 // ═══════════════════════════════════════════
