@@ -546,102 +546,6 @@
       white-space: nowrap;
     }
 
-    /* ── INNING SCORE OVERLAY — tableau de score par inning ── */
-    #inningScoreOverlay {
-      position: absolute;
-      bottom: 56px;
-      left: 50%;
-      transform: translateX(-50%) translateY(24px);
-      opacity: 0;
-      transition: opacity 0.5s ease, transform 0.5s ease;
-      pointer-events: none;
-      z-index: 90;
-      min-width: 640px;
-    }
-    #inningScoreOverlay.visible {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-    body.silver-visible #inningScoreOverlay { bottom: 136px; }
-
-    .inn-panel {
-      background: var(--dark-panel);
-      border: 1px solid var(--border);
-      border-top: 3px solid var(--orange);
-      border-radius: 4px;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 40px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,69,0,0.08);
-    }
-    .inn-table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    .inn-table th, .inn-table td {
-      text-align: center;
-      padding: 0;
-      border-right: 1px solid rgba(255,69,0,0.12);
-    }
-    .inn-table th:last-child, .inn-table td:last-child { border-right: none; }
-
-    /* Header row */
-    .inn-table thead tr {
-      background: rgba(255,69,0,0.08);
-      border-bottom: 1px solid var(--border);
-    }
-    .inn-table th {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: var(--muted);
-      text-transform: uppercase;
-      padding: 7px 0 6px;
-    }
-    .inn-th-team { min-width: 160px; padding-left: 16px !important; text-align: left !important; }
-    .inn-th-inn  { min-width: 44px; }
-    .inn-th-r    { min-width: 52px; border-left: 2px solid rgba(255,69,0,0.3) !important; color: var(--orange) !important; }
-
-    /* Data rows */
-    .inn-table tbody tr { border-bottom: 1px solid rgba(255,69,0,0.08); }
-    .inn-table tbody tr:last-child { border-bottom: none; }
-    .inn-table tbody tr.batting { background: rgba(255,69,0,0.05); }
-
-    .inn-td-team {
-      font-family: 'Oswald', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: var(--white);
-      text-transform: uppercase;
-      text-align: left !important;
-      padding: 9px 14px 9px 16px !important;
-      white-space: nowrap;
-    }
-    .inn-table tbody tr.batting .inn-td-team { color: var(--orange); }
-
-    .inn-td-score {
-      font-family: 'Oswald', sans-serif;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--white);
-      padding: 9px 4px !important;
-      min-width: 44px;
-    }
-    .inn-td-score.scored    { color: #fff; }
-    .inn-td-score.zero      { color: rgba(255,255,255,0.35); }
-    .inn-td-score.pending   { color: rgba(255,255,255,0.18); font-size: 13px; }
-    .inn-td-score.current   { color: var(--orange); font-size: 14px; font-weight: 700; }
-
-    .inn-td-total {
-      font-family: 'Oswald', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--orange);
-      padding: 9px 8px !important;
-      border-left: 2px solid rgba(255,69,0,0.3) !important;
-    }
-
     /* ── ERROR STATE ── */
     #errorMsg {
       position: absolute;
@@ -829,8 +733,7 @@
     body.ballgame-active #batterCard,
     body.ballgame-active #onDeckCard,
     body.ballgame-active .gold-sponsor,
-    body.ballgame-active #silver-block,
-    body.ballgame-active #inningScoreOverlay {
+    body.ballgame-active #silver-block {
       opacity: 0 !important;
       transition: opacity 0.5s ease !important;
       pointer-events: none;
@@ -964,33 +867,6 @@
     </div>
   </div>
 
-  <!-- ══ INNING SCORE OVERLAY — tableau par inning ══ -->
-  <div id="inningScoreOverlay">
-    <div class="inn-panel">
-      <table class="inn-table" id="inningTable">
-        <thead>
-          <tr>
-            <th class="inn-th-team"></th>
-            <!-- colonnes d'innings générées dynamiquement -->
-            <th class="inn-th-r">R</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr id="inningRowAway">
-            <td class="inn-td-team" id="inningNameAway">VISITORS</td>
-            <!-- scores générés dynamiquement -->
-            <td class="inn-td-total" id="inningTotalAway">0</td>
-          </tr>
-          <tr id="inningRowHome">
-            <td class="inn-td-team" id="inningNameHome">HOME</td>
-            <!-- scores générés dynamiquement -->
-            <td class="inn-td-total" id="inningTotalHome">0</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- ══ BALL GAME — Séquence sponsors fin de match ══ -->
   <div id="ballgame-overlay">
     <div id="bg-tier-label"></div>
@@ -1121,10 +997,6 @@
                     : lastEvent === 'STRIKEOUT' ? '3 STRIKES'
                     : 'SIDE OUT';
           showOverlayCheer(lastEvent, sub);
-          // Afficher le tableau de score par inning après le cheer
-          if (lastEvent === 'CHANGE FIELD') {
-            setTimeout(() => showInningScore(ms), 1600);
-          }
         }
         prevLastEvent = lastEvent;
 
@@ -1304,105 +1176,6 @@
         ct.style.opacity   = '0';
         cs.style.opacity   = '0';
       }, 1400);
-    }
-
-    // ── INNING SCORE OVERLAY ──
-    let inningHideTimer = null;
-
-    function showInningScore(ms) {
-      const log      = ms.inningLog || [];
-      const inning   = ms.inning ?? 1;
-      const inningTop = ms.inningTop !== false;
-      const homeBatting = !inningTop;
-
-      // Nombre de colonnes : au moins 9, au plus inning actuel + éventuels extras
-      const maxInning = Math.max(9, inning);
-
-      // Rebuild header
-      const thead = document.querySelector('#inningTable thead tr');
-      // Vider les colonnes d'innings (conserver th.team et th.R en dernier)
-      while (thead.children.length > 1) thead.removeChild(thead.children[1]);
-      const thR = document.createElement('th');
-      thR.className = 'inn-th-r'; thR.textContent = 'R';
-      for (let i = 1; i <= maxInning; i++) {
-        const th = document.createElement('th');
-        th.className = 'inn-th-inn';
-        th.textContent = i;
-        if (i === inning) th.style.color = 'var(--orange)';
-        thead.insertBefore(th, thead.lastElementChild);
-      }
-
-      // Rebuild rows
-      function buildRow(rowId, key, nameId, totalId) {
-        const row  = document.getElementById(rowId);
-        const name = document.getElementById(nameId);
-        const total = document.getElementById(totalId);
-
-        // Supprimer cellules existantes entre td.team et td.total
-        while (row.children.length > 2) row.removeChild(row.children[1]);
-
-        let grandTotal = 0;
-        const insertBefore = row.lastElementChild; // inn-td-total
-
-        for (let i = 1; i <= maxInning; i++) {
-          const entry = log.find(e => e.inning === i);
-          const val   = entry ? entry[key] : null;
-          const td    = document.createElement('td');
-          td.className = 'inn-td-score';
-
-          if (i < inning && val !== null) {
-            // Inning terminé
-            td.textContent = val;
-            td.classList.add(val > 0 ? 'scored' : 'zero');
-            grandTotal += val;
-          } else if (i === inning) {
-            if (key === 'away' && !inningTop && entry?.away !== null) {
-              // Top terminé pour cet inning
-              const v = entry.away;
-              td.textContent = v;
-              td.classList.add(v > 0 ? 'scored' : 'zero');
-              grandTotal += v;
-            } else if (key === 'home' && inningTop && entry?.home !== null) {
-              // Bottom terminé pour cet inning (rare en cours de match)
-              const v = entry.home;
-              td.textContent = v;
-              td.classList.add(v > 0 ? 'scored' : 'zero');
-              grandTotal += v;
-            } else {
-              // En cours
-              td.textContent = '▶';
-              td.classList.add('current');
-            }
-          } else {
-            // Inning futur
-            td.textContent = '–';
-            td.classList.add('pending');
-          }
-          row.insertBefore(td, insertBefore);
-        }
-
-        total.textContent = grandTotal;
-      }
-
-      buildRow('inningRowAway', 'away', 'inningNameAway', 'inningTotalAway');
-      buildRow('inningRowHome', 'home', 'inningNameHome', 'inningTotalHome');
-
-      // Mettre à jour les noms d'équipes
-      document.getElementById('inningNameAway').textContent = (teamNames.away || 'VISITORS').toUpperCase().slice(0, 14);
-      document.getElementById('inningNameHome').textContent = (teamNames.home || 'HOME').toUpperCase().slice(0, 14);
-
-      // Highlighter l'équipe en défense (qui vient de finir de batter)
-      document.getElementById('inningRowAway').classList.toggle('batting', !homeBatting);
-      document.getElementById('inningRowHome').classList.toggle('batting', homeBatting);
-
-      // Afficher le panneau
-      const panel = document.getElementById('inningScoreOverlay');
-      panel.classList.add('visible');
-
-      clearTimeout(inningHideTimer);
-      inningHideTimer = setTimeout(() => {
-        panel.classList.remove('visible');
-      }, 12000);
     }
 
     function showError(msg) {

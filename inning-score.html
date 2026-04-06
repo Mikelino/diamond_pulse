@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Diamond Pulse — Inning Score</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="js/config.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --orange:     #FF4500;
+      --orange-dim: rgba(255,69,0,0.18);
+      --border:     rgba(255,69,0,0.22);
+      --dark:       rgba(8,4,0,0.90);
+      --white:      #FFFFFF;
+      --muted:      rgba(255,255,255,0.50);
+    }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    /* ── Panneau centré en bas ── */
+    #wrap {
+      position: absolute;
+      bottom: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* ── Carte principale ── */
+    .card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--orange);
+      border-radius: 5px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 48px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,69,0,0.07);
+    }
+
+    /* ── Entête du tableau ── */
+    .inn-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 20px 7px;
+      background: rgba(255,69,0,0.10);
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+    .inn-header-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--orange);
+      text-transform: uppercase;
+    }
+    .inn-header-inning {
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+    .inn-header-arrow {
+      font-size: 11px;
+      color: var(--orange);
+    }
+
+    /* ── Tableau de score ── */
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: center;
+      border-right: 1px solid rgba(255,69,0,0.10);
+    }
+    th:last-child, td:last-child { border-right: none; }
+
+    /* Header inning numbers */
+    thead tr {
+      border-bottom: 1px solid rgba(255,69,0,0.14);
+      background: rgba(255,69,0,0.05);
+    }
+    th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 6px 0 5px;
+      min-width: 52px;
+    }
+    th.th-team {
+      text-align: left;
+      padding-left: 20px;
+      min-width: 190px;
+      letter-spacing: 2px;
+      font-size: 10px;
+    }
+    th.th-r {
+      min-width: 60px;
+      color: var(--orange);
+      border-left: 2px solid rgba(255,69,0,0.25);
+    }
+    th.th-cur { color: var(--orange); }
+
+    /* Body rows */
+    tbody tr {
+      border-bottom: 1px solid rgba(255,69,0,0.07);
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr.batting { background: rgba(255,69,0,0.05); }
+
+    td.td-team {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-align: left;
+      padding: 11px 16px 11px 20px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    tbody tr.batting td.td-team { color: var(--orange); }
+
+    td.td-score {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--white);
+      padding: 11px 6px;
+    }
+    td.td-score.scored  { color: #fff; }
+    td.td-score.zero    { color: rgba(255,255,255,0.28); }
+    td.td-score.pending { color: rgba(255,255,255,0.14); font-size: 15px; }
+    td.td-score.current { color: var(--orange); font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+
+    td.td-total {
+      font-family: 'Oswald', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--orange);
+      padding: 11px 10px;
+      border-left: 2px solid rgba(255,69,0,0.25);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="wrap">
+    <div class="card">
+
+      <!-- Entête -->
+      <div class="inn-header">
+        <span class="inn-header-label">⚾ Score par inning</span>
+        <span class="inn-header-inning">
+          <span class="inn-header-arrow" id="hdrArrow">▲</span>
+          Inning <span id="hdrInning">1</span>
+        </span>
+      </div>
+
+      <!-- Tableau -->
+      <table id="scoreTable">
+        <thead>
+          <tr id="theadRow">
+            <th class="th-team">Équipe</th>
+            <!-- colonnes générées dynamiquement -->
+            <th class="th-r">R</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="rowAway" class="">
+            <td class="td-team" id="nameAway">VISITORS</td>
+            <!-- scores générés dynamiquement -->
+            <td class="td-total" id="totalAway">0</td>
+          </tr>
+          <tr id="rowHome" class="">
+            <td class="td-team" id="nameHome">HOME</td>
+            <!-- scores générés dynamiquement -->
+            <td class="td-total" id="totalHome">0</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = APP_CONFIG.supabaseUrl;
+    const SUPABASE_KEY = APP_CONFIG.supabaseKey;
+
+    let prev = null;
+
+    async function poll() {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        const rows = await res.json();
+        const app  = rows?.[0]?.value || {};
+        const ms   = app.matchState || {};
+
+        // Noms d'équipes
+        const nameHome = (app.clubSettings?.name || APP_CONFIG.clubName || 'HOME').toUpperCase();
+        const nameAway = (app.opponentName || 'VISITORS').toUpperCase();
+
+        render(ms, nameHome, nameAway);
+        prev = ms;
+      } catch(e) { /* silencieux */ }
+    }
+
+    function render(ms, nameHome, nameAway) {
+      const log       = ms.inningLog  || [];
+      const inning    = ms.inning     ?? 1;
+      const inningTop = ms.inningTop  !== false; // true = visiteurs battent
+      const homeBatting = !inningTop;
+
+      // Entête
+      document.getElementById('hdrInning').textContent = inning;
+      document.getElementById('hdrArrow').textContent  = inningTop ? '▲' : '▼';
+
+      // Noms
+      document.getElementById('nameAway').textContent = nameAway.slice(0, 16);
+      document.getElementById('nameHome').textContent = nameHome.slice(0, 16);
+
+      // Highlight équipe en offense
+      document.getElementById('rowAway').classList.toggle('batting', !homeBatting);
+      document.getElementById('rowHome').classList.toggle('batting',  homeBatting);
+
+      // Nombre de colonnes : 9 minimum, ou plus si extras
+      const maxInning = Math.max(9, inning);
+
+      // Rebuild header (conserver th.th-team en 1er et th.th-r en dernier)
+      const thead = document.getElementById('theadRow');
+      while (thead.children.length > 1) thead.removeChild(thead.children[1]);
+      const thR = thead.lastElementChild; // th.th-r
+      for (let i = 1; i <= maxInning; i++) {
+        const th = document.createElement('th');
+        th.textContent = i;
+        if (i === inning) th.classList.add('th-cur');
+        thead.insertBefore(th, thR);
+      }
+
+      // Rebuild rows
+      buildRow('rowAway', 'away', 'totalAway', log, inning, inningTop, maxInning);
+      buildRow('rowHome', 'home', 'totalHome', log, inning, inningTop, maxInning);
+    }
+
+    function buildRow(rowId, key, totalId, log, inning, inningTop, maxInning) {
+      const row   = document.getElementById(rowId);
+      const total = document.getElementById(totalId);
+
+      // Supprimer les cellules intermédiaires (entre td-team et td-total)
+      while (row.children.length > 2) row.removeChild(row.children[1]);
+
+      const insertBefore = row.lastElementChild; // td-total
+      let grandTotal = 0;
+
+      for (let i = 1; i <= maxInning; i++) {
+        const entry = log.find(e => e.inning === i);
+        const val   = entry ? entry[key] : null;
+        const td    = document.createElement('td');
+        td.className = 'td-score';
+
+        if (i < inning && val !== null) {
+          // Inning passé — score connu
+          td.textContent = val;
+          td.classList.add(val > 0 ? 'scored' : 'zero');
+          grandTotal += val;
+
+        } else if (i === inning) {
+          // Inning en cours
+          const halfDone = key === 'away'
+            ? (!inningTop && entry?.away !== null)   // top terminé, bottom en cours
+            : ( inningTop && entry?.home !== null);  // cas rare
+
+          if (halfDone) {
+            const v = entry[key];
+            td.textContent = v;
+            td.classList.add(v > 0 ? 'scored' : 'zero');
+            grandTotal += v;
+          } else if ((key === 'away' && inningTop) || (key === 'home' && !inningTop)) {
+            // Cette équipe batte en ce moment
+            td.textContent = '▶';
+            td.classList.add('current');
+          } else {
+            // Cette équipe attend le bas de l'inning
+            td.textContent = '▶';
+            td.classList.add('current');
+          }
+
+        } else {
+          // Inning futur
+          td.textContent = '–';
+          td.classList.add('pending');
+        }
+
+        row.insertBefore(td, insertBefore);
+      }
+
+      total.textContent = grandTotal;
+    }
+
+    poll();
+    setInterval(poll, 2500);
+  </script>
+</body>
+</html>
