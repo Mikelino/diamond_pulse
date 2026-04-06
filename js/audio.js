@@ -662,9 +662,8 @@ async function ttsVoxtral(text, apiKey, voice) {
     const err = await res.json().catch(() => ({}));
     throw new Error(`Voxtral error ${res.status}: ${err.message || res.statusText}`);
   }
-  const blob = await res.blob();
-  const url  = URL.createObjectURL(blob);
-  return ttsPlayStadium(url);
+  const arrayBuffer = await res.arrayBuffer();
+  return ttsPlayStadiumBuffer(arrayBuffer);
 }
 
 // Génère une réponse impulsionnelle synthétique (reverb de grand stade)
@@ -691,13 +690,11 @@ function _createStadiumIR(ctx) {
   return ir;
 }
 
-async function ttsPlayStadium(url) {
+async function ttsPlayStadiumBuffer(arrayBuffer) {
   return new Promise(async (resolve, reject) => {
     try {
       const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-      const resp = await fetch(url);
-      const buf  = await resp.arrayBuffer();
-      const decoded = await ctx.decodeAudioData(buf);
+      const decoded = await ctx.decodeAudioData(arrayBuffer);
 
       const src = ctx.createBufferSource();
       src.buffer = decoded;
@@ -744,10 +741,10 @@ async function ttsPlayStadium(url) {
 
       const reverbTail = 3200; // ms — laisser la réverb se dissiper
       src.onended = () => {
-        setTimeout(() => { ctx.close(); URL.revokeObjectURL(url); resolve(); }, reverbTail);
+        setTimeout(() => { ctx.close(); resolve(); }, reverbTail);
       };
       src.start();
-    } catch(e) { URL.revokeObjectURL(url); reject(e); }
+    } catch(e) { reject(e); }
   });
 }
 
