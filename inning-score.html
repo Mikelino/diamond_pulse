@@ -282,22 +282,12 @@
           grandTotal += val;
 
         } else if (i === inning) {
-          // Inning en cours
-          const halfDone = key === 'away'
-            ? (!inningTop && entry?.away !== null)   // top terminé, bottom en cours
-            : ( inningTop && entry?.home !== null);  // cas rare
-
-          if (halfDone) {
-            const v = entry[key];
-            td.textContent = v;
-            td.classList.add(v > 0 ? 'scored' : 'zero');
-            grandTotal += v;
-          } else if ((key === 'away' && inningTop) || (key === 'home' && !inningTop)) {
-            // Cette équipe batte en ce moment
-            td.textContent = '▶';
-            td.classList.add('current');
+          // Top terminé : les visiteurs ont un score enregistré et c'est maintenant le bas
+          if (key === 'away' && !inningTop && val !== null) {
+            td.textContent = val;
+            td.classList.add(val > 0 ? 'scored' : 'zero');
+            grandTotal += val;
           } else {
-            // Cette équipe attend le bas de l'inning
             td.textContent = '▶';
             td.classList.add('current');
           }
