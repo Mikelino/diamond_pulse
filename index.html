@@ -1157,6 +1157,7 @@
                       <option value="webspeech">🌐 Web Speech (free, built-in)</option>
                       <option value="openai">✨ OpenAI TTS (natural voices)</option>
                       <option value="elevenlabs">🎙️ ElevenLabs (multilingual, free tier)</option>
+                      <option value="voxtral">🏟️ Voxtral — Mistral AI (stadium FX)</option>
                     </select>
                   </div>
 
@@ -1191,6 +1192,33 @@
                           <option value="nova">Nova (bright)</option>
                           <option value="shimmer">Shimmer (smooth)</option>
                         </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Voxtral settings -->
+                  <div id="ttsVoxtralGroup" style="display:none;min-width:100%">
+                    <div class="config-form-row" style="gap:14px;flex-wrap:wrap">
+                      <div class="form-group" style="flex:1;min-width:200px">
+                        <label class="form-label">Mistral API Key</label>
+                        <input class="form-input" type="password" id="ttsVoxtralKey" placeholder="..." autocomplete="off" />
+                        <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">
+                          Free tier available — <a href="https://console.mistral.ai" target="_blank" style="color:var(--orange)">console.mistral.ai</a>
+                        </p>
+                      </div>
+                      <div class="form-group" style="flex:0 0 auto;min-width:180px">
+                        <label class="form-label">Voice</label>
+                        <select class="form-input" id="ttsVoxtralVoice">
+                          <option value="Meadow">Meadow (warm, FR/EN)</option>
+                          <option value="Dusk">Dusk (deep, stadium)</option>
+                          <option value="Brook">Brook (clear, energetic)</option>
+                          <option value="Vale">Vale (authoritative)</option>
+                          <option value="Ridge">Ridge (strong, EN)</option>
+                          <option value="Cove">Cove (smooth)</option>
+                        </select>
+                        <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">
+                          Effet micro de stade appliqué automatiquement.
+                        </p>
                       </div>
                     </div>
                   </div>

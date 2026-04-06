@@ -308,6 +308,10 @@ function ttsInitPanel() {
   if (elVoice && t.elevenLabsVoice) elVoice.value = t.elevenLabsVoice;
   const elLang = document.getElementById('ttsElevenLabsLang');
   if (elLang) elLang.value = t.elevenLabsLang || '';
+  const vxKey   = document.getElementById('ttsVoxtralKey');
+  if (vxKey)   vxKey.value   = t.voxtralKey   || '';
+  const vxVoice = document.getElementById('ttsVoxtralVoice');
+  if (vxVoice && t.voxtralVoice) vxVoice.value = t.voxtralVoice;
   ttsPopulateVoices();
 }
 
@@ -340,9 +344,11 @@ function ttsEngineChanged() {
   const wsGroup  = document.getElementById('ttsVoiceGroup');
   const oaiGroup = document.getElementById('ttsOpenAIGroup');
   const elGroup  = document.getElementById('ttsElevenLabsGroup');
-  if (wsGroup)  wsGroup.style.display  = (val === 'webspeech')   ? '' : 'none';
-  if (oaiGroup) oaiGroup.style.display = (val === 'openai')      ? '' : 'none';
-  if (elGroup)  elGroup.style.display  = (val === 'elevenlabs')  ? '' : 'none';
+  const vxGroup  = document.getElementById('ttsVoxtralGroup');
+  if (wsGroup)  wsGroup.style.display  = (val === 'webspeech')  ? '' : 'none';
+  if (oaiGroup) oaiGroup.style.display = (val === 'openai')     ? '' : 'none';
+  if (elGroup)  elGroup.style.display  = (val === 'elevenlabs') ? '' : 'none';
+  if (vxGroup)  vxGroup.style.display  = (val === 'voxtral')    ? '' : 'none';
   if (val === 'webspeech') ttsPopulateVoices();
 }
 
@@ -532,6 +538,9 @@ async function ttsSpeak(text) {
   if (t.engine === 'elevenlabs' && t.elevenLabsKey) {
     return ttsElevenLabs(text, t.elevenLabsKey, t.elevenLabsVoice, t.elevenLabsLang);
   }
+  if (t.engine === 'voxtral' && t.voxtralKey) {
+    return ttsVoxtral(text, t.voxtralKey, t.voxtralVoice || 'Meadow');
+  }
   return ttsWebSpeech(text, t.voiceName);
 }
 
@@ -640,6 +649,107 @@ async function ttsElevenLabs(text, apiKey, voiceId, langCode) {
   });
 }
 
+// ── Voxtral TTS (Mistral AI) + effet micro de stade ──────────────────────────
+
+async function ttsVoxtral(text, apiKey, voice) {
+  const res = await fetch('https://api.mistral.ai/v1/audio/speech', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'voxtral-mini-tts-2503', input: text, voice: voice || 'Meadow' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Voxtral error ${res.status}: ${err.message || res.statusText}`);
+  }
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  return ttsPlayStadium(url);
+}
+
+// Génère une réponse impulsionnelle synthétique (reverb de grand stade)
+function _createStadiumIR(ctx) {
+  const sr      = ctx.sampleRate;
+  const dur     = 3.2;
+  const len     = Math.floor(sr * dur);
+  const ir      = ctx.createBuffer(2, len, sr);
+  const earlyMs = [18, 32, 48, 68, 95]; // réflexions précoces en ms
+
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      const t     = i / sr;
+      const decay = Math.exp(-2.8 * t);
+      d[i] = (Math.random() * 2 - 1) * decay * 0.85;
+    }
+    // Réflexions précoces distinctes (effet écho de tribune)
+    earlyMs.forEach((ms, idx) => {
+      const s = Math.floor(ms * 0.001 * sr);
+      if (s < len) d[s] += (0.6 - idx * 0.08) * (ch === 0 ? 1 : 0.85);
+    });
+  }
+  return ir;
+}
+
+async function ttsPlayStadium(url) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const resp = await fetch(url);
+      const buf  = await resp.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(buf);
+
+      const src = ctx.createBufferSource();
+      src.buffer = decoded;
+
+      // 1. Filtre passe-haut — coupe le grave (PA de stade, pas de sub)
+      const hpf = ctx.createBiquadFilter();
+      hpf.type = 'highpass';
+      hpf.frequency.value = 130;
+      hpf.Q.value = 0.7;
+
+      // 2. Boost de présence (caractère PA 2-3 kHz)
+      const presence = ctx.createBiquadFilter();
+      presence.type = 'peaking';
+      presence.frequency.value = 2600;
+      presence.gain.value = 5;
+      presence.Q.value = 1.2;
+
+      // 3. Compresseur (dynamique PA)
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -16;
+      comp.knee.value = 6;
+      comp.ratio.value = 5;
+      comp.attack.value = 0.004;
+      comp.release.value = 0.18;
+
+      // 4. Reverb de stade
+      const convolver = ctx.createConvolver();
+      convolver.buffer = _createStadiumIR(ctx);
+
+      // Dry/wet
+      const dry = ctx.createGain(); dry.gain.value = 0.65;
+      const wet = ctx.createGain(); wet.gain.value = 0.45;
+
+      // Chaîne : src → hpf → presence → comp → dry → out
+      //                                       → wet (via convolver) → out
+      src.connect(hpf);
+      hpf.connect(presence);
+      presence.connect(comp);
+      comp.connect(dry);
+      comp.connect(convolver);
+      convolver.connect(wet);
+      dry.connect(ctx.destination);
+      wet.connect(ctx.destination);
+
+      const reverbTail = 3200; // ms — laisser la réverb se dissiper
+      src.onended = () => {
+        setTimeout(() => { ctx.close(); URL.revokeObjectURL(url); resolve(); }, reverbTail);
+      };
+      src.start();
+    } catch(e) { URL.revokeObjectURL(url); reject(e); }
+  });
+}
+
 async function ttsLoadElevenLabsVoices() {
   const key = document.getElementById('ttsElevenLabsKey')?.value?.trim();
   if (!key) { alert('Please enter your ElevenLabs API key first.'); return; }
@@ -693,6 +803,8 @@ function ttsSave() {
   t.elevenLabsKey    = document.getElementById('ttsElevenLabsKey')?.value    || '';
   t.elevenLabsVoice  = document.getElementById('ttsElevenLabsVoice')?.value  || '';
   t.elevenLabsLang   = document.getElementById('ttsElevenLabsLang')?.value   || '';
+  t.voxtralKey       = document.getElementById('ttsVoxtralKey')?.value       || '';
+  t.voxtralVoice     = document.getElementById('ttsVoxtralVoice')?.value     || 'Meadow';
   t.fadeDelay        = parseFloat(document.getElementById('ttsFade')?.value) || 1.5;
   saveConfig();
   showCfgSaveIndicator();
