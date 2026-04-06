@@ -410,6 +410,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      width: 100%;
       background: var(--dark-panel);
       border: 1px solid var(--border);
       border-radius: 3px;
@@ -826,7 +827,8 @@
         </div>
       </div>
     </div>
-    <!-- Ligne pitcher + runners -->
+    <!-- Ligne pitcher + runners + speed -->
+    <div style="display:flex;flex-direction:column;gap:6px">
     <div style="display:flex;gap:6px;align-items:stretch">
       <!-- Pitcher info — visible only when pitcherName is set -->
       <div id="pitcherCard">
@@ -871,6 +873,7 @@
       <span class="speed-lbl">Speed</span>
       <span class="speed-value" id="pitchSpeedValue">—</span>
     </div>
+    </div><!-- fin conteneur pitcher+runners+speed -->
   </div>
 
   <!-- ══ ON DECK CARD ══ -->
