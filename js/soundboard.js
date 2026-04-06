@@ -831,15 +831,15 @@ async function loadLicense() {
   }
 }
 
-// Seuil "grand écran" : ≥1280px ≈ 13 pouces
-const BROADCAST_MIN_WIDTH = 1280;
+// Seuil "grand écran" : screen.width ≥ 1440px ≈ 13+ pouces (CSS pixels)
+const BROADCAST_MIN_WIDTH = 1440;
 
 function applyFeatures() {
   const col     = document.getElementById('liveColBroadcast');
   const resizer = document.getElementById('liveResizer4');
   const tabBtn  = document.getElementById('liveTabBroadcast');
   const isMobile    = window.innerWidth <= 700;
-  const isLargeScreen = window.innerWidth >= BROADCAST_MIN_WIDTH;
+  const isLargeScreen = screen.width >= BROADCAST_MIN_WIDTH;
 
   if (col) {
     col.dataset.hasBroadcast = '1';
