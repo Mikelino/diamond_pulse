@@ -245,7 +245,7 @@
 
       // Rebuild header (conserver th.th-team en 1er et th.th-r en dernier)
       const thead = document.getElementById('theadRow');
-      while (thead.children.length > 1) thead.removeChild(thead.children[1]);
+      while (thead.children.length > 2) thead.removeChild(thead.children[1]);
       const thR = thead.lastElementChild; // th.th-r
       for (let i = 1; i <= maxInning; i++) {
         const th = document.createElement('th');
