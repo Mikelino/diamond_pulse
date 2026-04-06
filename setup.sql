@@ -76,6 +76,28 @@ CREATE POLICY "Suppression photos public" ON storage.objects
   FOR DELETE USING (bucket_id = 'photos');
 
 
+-- ── 5. TABLE LICENCES ────────────────────────────────────────
+-- Gère les clés de licence par club (Free / Pro / Broadcast)
+
+CREATE TABLE IF NOT EXISTS licenses (
+  key        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  club_id    TEXT NOT NULL,
+  features   JSONB NOT NULL DEFAULT '{"soundboard": false, "broadcast": false}',
+  active     BOOLEAN NOT NULL DEFAULT true,
+  expires_at TIMESTAMPTZ  -- null = perpétuel
+);
+
+ALTER TABLE licenses ENABLE ROW LEVEL SECURITY;
+
+-- Lecture publique (clé anon suffit — la clé UUID protège l'accès)
+CREATE POLICY "Public read licenses" ON licenses
+  FOR SELECT USING (true);
+
+-- Écriture réservée au service_role uniquement (jamais exposée au client)
+CREATE POLICY "Service role write licenses" ON licenses
+  FOR ALL USING (auth.role() = 'service_role');
+
+
 -- ── TERMINÉ ───────────────────────────────────────────────────
 -- Votre base de données est prête.
 -- Retournez dans config.js pour renseigner l'URL et la clé Supabase.

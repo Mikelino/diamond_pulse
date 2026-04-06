@@ -96,6 +96,7 @@
       <button class="main-nav-btn active" id="mainNavLive" onclick="mainSwitchTab('live')">
         <span class="main-nav-icon">🎙️</span>
         <span class="main-nav-label">Live Mode</span>
+        <span class="tier-badge" id="liveTierBadge" style="display:none">FREE</span>
       </button>
       <button class="main-nav-btn" id="mainNavBatting" onclick="mainSwitchTab('batting')">
         <span class="main-nav-icon">⚾</span>
@@ -965,6 +966,12 @@
           </span>
           <span class="cfg-nav-label">Security</span>
         </button>
+        <button class="cfg-nav-btn" id="cfgNavLicence" onclick="cfgSwitchTab('licence')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Licence</span>
+        </button>
         <button class="cfg-nav-btn" id="cfgNavAds" onclick="cfgSwitchTab('ads')">
           <span class="cfg-nav-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 7H3c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10 7H5v-2h6v2zm4-2c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
@@ -1561,6 +1568,42 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- PANEL : LICENCE -->
+        <div class="config-panel" id="cfgPanelLicence">
+          <div class="config-section">
+            <div class="config-section-label">🔑 Licence Key</div>
+
+            <div id="licenceStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:16px">
+              Active tier: <span style="font-weight:700;color:rgba(255,255,255,0.35)">🆓 Free</span>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <input id="licenceKeyInput" type="text" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                style="flex:1;font-family:monospace;font-size:12px;letter-spacing:1px"
+                oninput="appSettings.licenseKey = this.value.trim() || undefined" />
+              <button onclick="licenceSaveKey()"
+                style="padding:8px 16px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;flex-shrink:0">
+                Save
+              </button>
+            </div>
+
+            <button id="licenceCheckBtn" onclick="licenceRevalidate()"
+              style="width:100%;padding:9px 0;background:transparent;border:1px solid var(--border);border-radius:3px;color:rgba(255,255,255,0.5);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:border-color 0.15s,color 0.15s"
+              onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='rgba(255,255,255,0.5)'">
+              Verify now
+            </button>
+          </div>
+
+          <div class="config-section" style="margin-top:20px">
+            <div class="config-section-label">📦 Tiers</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;color:rgba(255,255,255,0.55)">
+              <div><span style="color:#fff;font-weight:700">🆓 Free</span> — Lineup Mode, Social Mode</div>
+              <div><span style="color:#4CAF50;font-weight:700">🎙️ Pro</span> — + Live audio, Walk-up songs, Soundboard, TTS</div>
+              <div><span style="color:#ff4500;font-weight:700">📺 Broadcast</span> — + Match overlay, Scoreboard, Panel sync</div>
+            </div>
+          </div>
         </div>
 
         <!-- PANEL : ADS / SPONSORS -->
@@ -2283,6 +2326,24 @@
       </div>
     </div>
   </div>
+
+<!-- ── Upgrade prompt modal ── -->
+<div id="upgradePromptOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div class="cfg-modal" style="max-width:380px;text-align:center">
+    <div class="cfg-modal-title" id="upgradePromptTitle" style="margin-bottom:12px">🔒 Pro Licence Required</div>
+    <div class="cfg-modal-body" id="upgradePromptBody" style="margin-bottom:24px;font-size:14px;line-height:1.6"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="cfgSwitchTab('licence');openConfig();document.getElementById('upgradePromptOverlay').style.display='none'"
+        style="width:100%;padding:10px 0;background:var(--orange);border:none;border-radius:4px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer">
+        Enter Licence Key
+      </button>
+      <button onclick="document.getElementById('upgradePromptOverlay').style.display='none'"
+        style="width:100%;padding:9px 0;background:transparent;border:1px solid var(--border);border-radius:4px;color:rgba(255,255,255,0.45);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Broadcast small-screen modal ── -->
 <div id="broadcastSmallModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center">

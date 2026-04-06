@@ -22,6 +22,12 @@
 // ── CONSTANTES ───────────────────────────────────────────────
 const EMOJIS = ['⚾','🏃','💥','🎯','⚡','🔥','💪','🌟','🎸','🏆','👊','🦅','🐻','💫','🎺'];
 
+// ── LICENCE & FEATURES ───────────────────────────────────────
+// Défini ici (avant audio.js et soundboard.js) pour être accessible en global
+const LICENSE_CACHE_KEY = 'dp_license_cache';
+const LICENSE_CACHE_TTL = 7 * 24 * 3600 * 1000; // 7 jours en ms
+let FEATURES = { overlay: true, soundboard: false, broadcast: false };
+
 // ── SUPABASE ─────────────────────────────────────────────────
 // Lecture différée via getters — APP_CONFIG est lu au moment de l'appel,
 // pas au parsing du script. Évite les erreurs si config.js charge légèrement

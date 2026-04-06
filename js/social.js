@@ -912,6 +912,7 @@ let introState = {
 
 
 function startTeamIntro() {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   ttsUnlock();
   const entries = currentLineup().filter(e => e.present !== false);
   if (entries.length === 0) { alert('No present players in the lineup.'); return; }

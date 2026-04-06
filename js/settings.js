@@ -29,7 +29,7 @@
    ============================================================ */
 
 function cfgSwitchTab(tab) {
-  const tabs = { teams: 'Teams', interface: 'Interface', positions: 'Positions', opponents: 'Opponents', securite: 'Security', ads: 'ADS' };
+  const tabs = { teams: 'Teams', interface: 'Interface', positions: 'Positions', opponents: 'Opponents', securite: 'Security', ads: 'ADS', licence: 'Licence' };
   document.querySelectorAll('.cfg-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('cfgNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
@@ -39,6 +39,47 @@ function cfgSwitchTab(tab) {
   if (tab === 'positions') cfgRenderPositions();
   if (tab === 'opponents') cfgRenderOpponents();
   if (tab === 'ads') adsRenderPanel();
+  if (tab === 'licence') licenceInitPanel();
+}
+
+// ── LICENCE PANEL ──
+
+function licenceInitPanel() {
+  const keyInput = document.getElementById('licenceKeyInput');
+  if (keyInput) keyInput.value = appSettings.licenseKey || '';
+  _licenceUpdateStatus();
+}
+
+function _licenceUpdateStatus() {
+  const el = document.getElementById('licenceStatus');
+  if (!el) return;
+  let tier, color;
+  if (FEATURES.broadcast) {
+    tier = '📺 Broadcast'; color = '#ff4500';
+  } else if (FEATURES.soundboard) {
+    tier = '🎙️ Pro'; color = '#4CAF50';
+  } else {
+    tier = '🆓 Free'; color = 'rgba(255,255,255,0.35)';
+  }
+  el.innerHTML = `Active tier: <span style="font-weight:700;color:${color}">${tier}</span>`;
+}
+
+async function licenceSaveKey() {
+  const val = (document.getElementById('licenceKeyInput')?.value || '').trim();
+  appSettings.licenseKey = val || undefined;
+  await saveConfig();
+  showCfgSaveIndicator();
+}
+
+async function licenceRevalidate() {
+  const btn = document.getElementById('licenceCheckBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  localStorage.removeItem(LICENSE_CACHE_KEY);
+  // Reset FEATURES to defaults before re-validating
+  FEATURES = { overlay: true, soundboard: false, broadcast: false };
+  await loadLicense();
+  _licenceUpdateStatus();
+  if (btn) { btn.disabled = false; btn.textContent = 'Verify now'; }
 }
 
 // ── POSITIONS MANAGEMENT ──

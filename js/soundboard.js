@@ -359,6 +359,7 @@ async function startVisitorIntro() {
 }
 
 function liveSoundPlay(key) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const def = LIVE_SOUNDS[key];
   if (!def?.url) return; // greyed out — no file uploaded
 
@@ -399,6 +400,7 @@ function liveSoundStopAll() {
 }
 
 function liveCustomSoundPlay(id) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const s = liveCustomSounds.find(s => s.id === id);
   if (!s) return;
   const btnId = 'lcsBtn_' + id;
@@ -433,6 +435,7 @@ function liveCustomSoundDelete(id) {
 }
 
 async function liveAddCustomSound(input) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const file = input.files[0];
   if (!file) return;
   input.value = '';
@@ -548,6 +551,7 @@ function renderFieldSongs() {
 }
 
 function liveFieldSongPlay(id) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const s = liveFieldSongs.find(s => s.id === id);
   if (!s?.url) return;
   if (liveFieldAudios[id]) { liveFieldAudios[id].pause(); liveFieldAudios[id] = null; document.getElementById('lfsBtn_' + id)?.classList.remove('playing'); return; }
@@ -564,6 +568,7 @@ function liveFieldSongStop(id) {
 }
 
 async function liveAddFieldSong(input) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const file = input.files[0]; if (!file) return; input.value = '';
   const label = file.name.replace(/\.[^.]+$/, '');
   const id = 'fs_' + Date.now();
@@ -803,31 +808,85 @@ function liveTogglePlay(liveIndex) {
 //   alter table licenses enable row level security;
 //   create policy "Public read" on licenses for select using (true);
 // ═══════════════════════════════════════════
-let FEATURES = { overlay: true };
+// FEATURES et LICENSE_CACHE_KEY sont déclarés dans data.js (chargé avant)
 
 async function loadLicense() {
+  // 1. Lire le cache localStorage d'abord
+  let cached = null;
   try {
-    // 1. Lire la clé de licence depuis app_settings
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    const data = await res.json();
-    const licenseKey = data?.[0]?.value?.appSettings?.licenseKey;
-    if (!licenseKey) return;
+    const raw = localStorage.getItem(LICENSE_CACHE_KEY);
+    if (raw) cached = JSON.parse(raw);
+  } catch(e) {}
 
-    // 2. Vérifier la clé dans la table licenses
-    const res2 = await fetch(
-      `${SUPABASE_URL}/rest/v1/licenses?key=eq.${licenseKey}&active=eq.true&select=features`,
+  const now = Date.now();
+  const cacheValid = cached?.features && cached?.validatedAt &&
+                     (now - cached.validatedAt) < LICENSE_CACHE_TTL;
+
+  // 2. Cache frais → l'utiliser sans requête réseau
+  if (cacheValid) {
+    FEATURES = { ...FEATURES, ...cached.features };
+    applyFeatures();
+    return;
+  }
+
+  // 3. Sinon, valider en ligne
+  try {
+    const licenseKey = appSettings?.licenseKey;
+    if (!licenseKey) {
+      applyFeatures();
+      return;
+    }
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/licenses?key=eq.${licenseKey}&active=eq.true&select=features,expires_at`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
-    const rows = await res2.json();
-    if (rows?.[0]?.features) {
-      FEATURES = { ...FEATURES, ...rows[0].features };
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const rows = await res.json();
+    if (!rows?.length) {
+      localStorage.removeItem(LICENSE_CACHE_KEY);
+      applyFeatures();
+      return;
     }
-  } catch (err) {
-    console.warn('License check failed:', err);
+
+    const { features, expires_at } = rows[0];
+
+    if (expires_at && new Date(expires_at) < new Date()) {
+      localStorage.removeItem(LICENSE_CACHE_KEY);
+      applyFeatures();
+      return;
+    }
+
+    FEATURES = { ...FEATURES, ...features };
+    localStorage.setItem(LICENSE_CACHE_KEY, JSON.stringify({ features, validatedAt: now }));
+
+  } catch(e) {
+    // Pas de réseau → cache expiré en mode dégradé
+    if (cached?.features) {
+      console.warn('[Diamond Pulse] Offline — using cached licence');
+      FEATURES = { ...FEATURES, ...cached.features };
+    }
   } finally {
     applyFeatures();
+  }
+}
+
+function showUpgradePrompt(requiredTier) {
+  const msg = requiredTier === 'Broadcast'
+    ? 'Broadcast Mode requires a Broadcast licence. Contact Diamond Pulse to activate this feature.'
+    : 'Live audio features require a Pro licence. Contact Diamond Pulse to activate this feature.';
+
+  const overlay = document.getElementById('upgradePromptOverlay');
+  const title   = document.getElementById('upgradePromptTitle');
+  const body    = document.getElementById('upgradePromptBody');
+  if (overlay && title && body) {
+    title.textContent = requiredTier === 'Broadcast' ? '🔒 Broadcast Licence Required' : '🔒 Pro Licence Required';
+    body.textContent  = msg;
+    overlay.style.display = 'flex';
+  } else {
+    alert(msg);
   }
 }
 
@@ -839,19 +898,32 @@ function broadcastIsLargeScreen() {
 }
 
 function applyFeatures() {
-  const col    = document.getElementById('liveColBroadcast');
+  const col     = document.getElementById('liveColBroadcast');
   const resizer = document.getElementById('liveResizer4');
   const tabBtn  = document.getElementById('liveTabBroadcast');
   const isMobile = window.innerWidth <= 700;
 
+  // ── Badge Live Mode (Pro requis pour audio) ──
+  const badge = document.getElementById('liveTierBadge');
+  if (badge) {
+    if (!FEATURES.soundboard) {
+      badge.textContent = 'FREE';
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ── Colonne Broadcast ──
   if (col) {
+    const canShowBroadcast = FEATURES.broadcast && broadcastIsLargeScreen() && !isMobile;
+
     if (!broadcastIsLargeScreen() || isMobile) {
-      // Petit écran ou mobile : masquer complètement la colonne broadcast
+      // Petit écran ou mobile : masquer complètement
       col.style.display = 'none';
       col.dataset.hasBroadcast = '0';
       if (tabBtn) tabBtn.style.display = 'none';
       if (resizer) resizer.style.display = 'none';
-      // Sur mobile : pas de popup. Sur petit écran non-mobile : popup au démarrage
       if (!isMobile) {
         const modal = document.getElementById('broadcastSmallModal');
         if (modal && !window._broadcastModalShown) {
@@ -859,8 +931,14 @@ function applyFeatures() {
           window._broadcastModalShown = true;
         }
       }
+    } else if (!FEATURES.broadcast) {
+      // Grand écran mais pas de licence Broadcast
+      col.style.display = 'none';
+      col.dataset.hasBroadcast = '0';
+      if (tabBtn) tabBtn.style.display = 'none';
+      if (resizer) resizer.style.display = 'none';
     } else {
-      // Grand écran : broadcast complet
+      // Grand écran + licence Broadcast : complet
       col.style.display = '';
       col.style.flex = '1 1 0';
       col.dataset.hasBroadcast = '1';
@@ -894,6 +972,7 @@ let matchState = {
 };
 
 async function matchSave() {
+  if (!FEATURES.broadcast) return;
   try {
     // Lire la valeur actuelle pour ne pas écraser les autres clés
     const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
@@ -986,6 +1065,7 @@ function matchRenderPanel() {
 }
 
 function matchScoreAdj(side, delta) {
+  if (!FEATURES.broadcast) { showUpgradePrompt('Broadcast'); return; }
   const key = side === 'home' ? 'scoreHome' : 'scoreAway';
   matchState[key] = Math.max(0, matchState[key] + delta);
   matchRenderPanel(); matchSave();

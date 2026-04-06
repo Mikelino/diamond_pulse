@@ -36,6 +36,7 @@ function switchTeam(teamId) {
 
 // ── PLAY ──
 function togglePlay(entryIndex, e) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   // ✅ BLOQUAGE en mode édition (AJOUT)
   if (isEditMode) { if (e) e.stopPropagation(); return; }
 
@@ -50,6 +51,7 @@ function togglePlay(entryIndex, e) {
 }
 
 async function startPlayback(entry, entryIndex) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   ttsUnlock();
   const player = allPlayers[entry.pid];
   if (!player) return;
@@ -532,6 +534,7 @@ function ttsUnlock() {
 document.addEventListener('touchstart', ttsUnlock, { once: true, passive: true });
 
 async function ttsSpeak(text) {
+  if (!FEATURES.soundboard) { showUpgradePrompt('Pro'); return; }
   const t = appSettings.tts || {};
   if (t.engine === 'openai' && t.openAIKey) {
     return ttsOpenAI(text, t.openAIKey, t.openAIVoice || 'onyx');
