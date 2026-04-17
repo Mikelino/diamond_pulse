@@ -30,9 +30,9 @@ const APP_CONFIG = {
   // Modifiez cette valeur si vous hébergez plusieurs clubs sur le même projet Supabase.
   clubId: 'andenne-black-bears',
 
-  clubName:    'Andenne Black Bears',
-  clubSub:     'Walk-Up Songs',
-  clubWebsite: 'https://www.andenne-baseball.be/',
+  clubName:    'Your Club',
+  clubSub:     'Your Subtitle',
+  clubWebsite: 'Your website',
 
   // ── ÉQUIPES PAR DÉFAUT ────────────────────────────────────
   // Liste des équipes créées au premier lancement.

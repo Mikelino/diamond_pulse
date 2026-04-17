@@ -1,0 +1,564 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Mono',monospace,sans-serif}
+:root{
+  --bg:#080c14;--surface:#0f1623;--surface2:#161e2e;--surface3:#1c2438;
+  --border:#ffffff14;--border2:#ffffff22;
+  --red:#e94560;--teal:#16c79a;--amber:#f4a261;--blue:#60a5fa;
+  --text:#e8edf5;--muted:#8892a4;--dim:#4b5568;
+}
+#app{min-height:100vh;background:var(--bg);color:var(--text);font-size:13px}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-title{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--red),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.header-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:7px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:.5px;transition:all .15s;white-space:nowrap}
+.btn:hover{color:var(--text);border-color:var(--border2)}
+.btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.teal{background:#16c79a18;color:var(--teal);border-color:#16c79a33}
+.btn.teal.active{background:var(--teal);color:#000}
+.btn.upload{background:#e9456018;color:var(--red);border-color:#e9456033}
+.nav{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.nav-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.filters{padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.input{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:7px;padding:7px 12px;font-size:12px;font-family:inherit;outline:none;transition:border .15s}
+.input:focus{border-color:var(--red)}
+.input::placeholder{color:var(--dim)}
+select.input{cursor:pointer}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.content{max-width:1300px;margin:0 auto;padding:20px}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:11.5px;font-family:'IBM Plex Mono',monospace}
+thead th{padding:9px 8px;background:var(--surface);color:var(--dim);font-size:10px;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;user-select:none;transition:color .15s}
+thead th:hover{color:var(--text)}
+thead th.sorted{color:var(--red)}
+thead th.left{text-align:left}
+thead th.right{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:var(--surface3)}
+tbody td{padding:8px 8px;white-space:nowrap}
+tbody td.left{text-align:left}
+tbody td.right{text-align:right;color:var(--muted)}
+tbody td.player{color:var(--text);font-weight:600;cursor:pointer}
+tbody td.player:hover{color:var(--red)}
+tbody td.highlight{font-weight:700}
+.count{color:var(--muted);font-size:11px;margin-bottom:8px}
+.empty{text-align:center;padding:60px 20px;color:var(--dim)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 30px #00000044}
+.card-accent{position:absolute;top:0;left:0;right:0;height:2px}
+.card-rank{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.card-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px}
+.card-team{font-size:11px;color:var(--muted)}
+.card-main{font-size:26px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin:10px 0 4px}
+.card-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.card-bars{margin-top:12px}
+.bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.bar-lbl{font-size:10px;color:var(--muted);width:28px;text-align:right}
+.bar-track{flex:1;height:4px;background:#ffffff0a;border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.22,1,.36,1)}
+.bar-val{font-size:10px;color:var(--muted);width:28px}
+.card-footer{display:flex;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.mini{flex:1;text-align:center}
+.mini-val{font-size:13px;font-weight:700}
+.mini-lbl{font-size:9px;color:var(--dim);letter-spacing:.5px}
+.player-modal{position:fixed;inset:0;background:#000000cc;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.player-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:4px 10px;cursor:pointer;font-size:13px;font-family:inherit}
+.modal-close:hover{color:var(--text)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin:16px 0}
+.stat-box{background:var(--surface2);border-radius:8px;padding:10px;text-align:center}
+.stat-val{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.stat-lbl{font-size:9px;color:var(--dim);letter-spacing:.5px;margin-top:2px;text-transform:uppercase}
+.tab-bar{display:flex;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.tab{flex:1;padding:7px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border-right:1px solid var(--border2);transition:all .15s}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--red);color:#fff}
+.export-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:5px 10px;cursor:pointer;font-size:11px;font-family:inherit}
+.export-btn:hover{color:var(--text)}
+.multi-info{font-size:10px;color:var(--muted);padding:6px 10px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.chip.loaded{color:var(--teal);border-color:#16c79a33;background:#16c79a0d}
+.chip-close{cursor:pointer;color:var(--dim);font-size:12px;line-height:1}
+.chip-close:hover{color:var(--red)}
+.files-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+</style>
+
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L22 12L12 22L2 12Z" fill="#e94560" opacity=".15"/>
+          <path d="M12 2L22 12L12 22L2 12Z" stroke="#e94560" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="2" fill="#e94560" opacity=".7"/>
+        </svg>
+        <div>
+          <div class="logo-title">DIAMOND PULSE</div>
+          <div class="logo-sub" id="meta-label">KBBSF Stats Viewer</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <input type="file" id="file-input" accept=".json" multiple style="display:none">
+        <button class="btn upload" onclick="document.getElementById('file-input').click()">&#128194; Charger JSON</button>
+        <button class="btn" id="btn-export-csv" onclick="exportCSV()">&#8595; CSV</button>
+        <button class="btn" id="btn-export-json" onclick="exportJSON()">&#8595; JSON</button>
+      </div>
+    </div>
+    <div id="files-row" class="files-row" style="display:none"></div>
+    <div class="nav">
+      <button class="btn active" id="tab-spotlight" onclick="setView('spotlight')">&#9889; Spotlight</button>
+      <button class="btn" id="tab-stats" onclick="setView('stats')">&#128202; Stats</button>
+      <button class="btn" id="tab-standings" onclick="setView('standings')">&#127942; Classement</button>
+      <button class="btn" id="tab-rosters" onclick="setView('rosters')">&#128101; Effectifs</button>
+      <div class="nav-sep"></div>
+      <button class="btn teal active" id="type-batting" onclick="setStatType('batting')">&#9918; Batting</button>
+      <button class="btn teal" id="type-pitching" onclick="setStatType('pitching')">&#128293; Pitching</button>
+    </div>
+  </div>
+
+  <div class="filters" id="filters-bar">
+    <input class="input" id="search-player" placeholder="&#128269; Joueur..." oninput="applyFilters()" style="width:170px">
+    <select class="input" id="filter-event" onchange="applyFilters()" style="width:180px">
+      <option value="ALL">Toutes les divisions</option>
+    </select>
+    <select class="input" id="filter-team" onchange="applyFilters()" style="width:190px">
+      <option value="ALL">Toutes les équipes</option>
+    </select>
+    <select class="input" id="highlight-stat" onchange="render()" style="width:110px"></select>
+    <div style="flex:1"></div>
+    <span class="count" id="result-count"></span>
+  </div>
+
+  <div class="content" id="content"></div>
+</div>
+
+<div id="player-modal" class="player-modal" style="display:none" onclick="closeModal(event)">
+  <div class="player-modal-box" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">✕ Fermer</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+const TEAM_COLORS = {
+  MER:{accent:"#e94560",name:"Merchtem Cats"},HOB:{accent:"#16c79a",name:"Hoboken Pioneers"},
+  BOR:{accent:"#ee6c4d",name:"Borgerhout Squirrels"},BRU:{accent:"#60a5fa",name:"Brussels Kangaroos"},
+  MSG:{accent:"#e6d5b8",name:"MSGuibert Phoenix"},DEU:{accent:"#d6a2ad",name:"Deurne Spartans"},
+  BRA:{accent:"#f4a261",name:"Brasschaat Braves"},NAM:{accent:"#40916c",name:"Namur Angels"},
+  WBA:{accent:"#a78bfa",name:"WBA Foxes"},GEN:{accent:"#34d399",name:"Gent Knights"},
+  MEC:{accent:"#f59e0b",name:"Mechelen"},ANT:{accent:"#fb7185",name:"Antwerp"},
+  OST:{accent:"#38bdf8",name:"Oostende Piranhas"},PIE:{accent:"#c084fc",name:"Poperinge"},
+};
+const ACCENT_POOL=["#e94560","#16c79a","#f4a261","#60a5fa","#a78bfa","#34d399","#fb7185","#f59e0b","#38bdf8","#e6d5b8","#d6a2ad","#40916c"];
+let accentIdx=0;
+const teamColorCache={};
+function teamColor(t){
+  if(TEAM_COLORS[t])return TEAM_COLORS[t].accent;
+  if(!teamColorCache[t])teamColorCache[t]=ACCENT_POOL[accentIdx++%ACCENT_POOL.length];
+  return teamColorCache[t];
+}
+function teamName(t){return TEAM_COLORS[t]?.name||t}
+
+const BATTING_COLS=["Player","Source","Team","G","AB","R","H","2B","3B","HR","RBI","BB","SO","SB","AVG","OBP","SLG","OPS"];
+const PITCHING_COLS=["Player","Source","Team","W","L","ERA","G","GS","IP","H","R","ER","BB","SO","WHIP","K/9"];
+const NUMERIC=new Set(["G","AB","R","H","2B","3B","HR","RBI","BB","SO","SB","W","L","GS","ER","AVG","OBP","SLG","OPS","ERA","IP","WHIP","K/9"]);
+
+const SAMPLE={
+  metadata:{event:"Baseball D1",year:2025,source:"https://www.baseballsoftball.be"},
+  batting:[
+    {Player:"L. Hendricks",Team:"MER",G:"28",AB:"98",R:"22",H:"38","2B":"9","3B":"2",HR:"5",RBI:"28",BB:"15",SO:"12",SB:"8",AVG:".388",OBP:".460",SLG:".643",OPS:"1.103"},
+    {Player:"T. Vanden Berg",Team:"HOB",G:"26",AB:"92",R:"18",H:"33","2B":"7","3B":"1",HR:"4",RBI:"22",BB:"12",SO:"15",SB:"5",AVG:".359",OBP:".433",SLG:".565",OPS:".998"},
+    {Player:"M. De Smet",Team:"BRU",G:"27",AB:"95",R:"20",H:"33","2B":"8","3B":"0",HR:"6",RBI:"25",BB:"14",SO:"18",SB:"3",AVG:".347",OBP:".422",SLG:".579",OPS:"1.001"},
+    {Player:"J. Peeters",Team:"BOR",G:"25",AB:"88",R:"16",H:"30","2B":"5","3B":"1",HR:"3",RBI:"19",BB:"10",SO:"14",SB:"12",AVG:".341",OBP:".408",SLG:".500",OPS:".908"},
+    {Player:"K. Janssen",Team:"DEU",G:"28",AB:"102",R:"19",H:"34","2B":"6","3B":"2",HR:"2",RBI:"17",BB:"8",SO:"20",SB:"6",AVG:".333",OBP:".382",SLG:".461",OPS:".843"},
+    {Player:"R. Claes",Team:"MSG",G:"24",AB:"80",R:"14",H:"26","2B":"4","3B":"1",HR:"3",RBI:"15",BB:"11",SO:"16",SB:"2",AVG:".325",OBP:".407",SLG:".500",OPS:".907"},
+    {Player:"S. Wouters",Team:"NAM",G:"26",AB:"90",R:"15",H:"29","2B":"7","3B":"0",HR:"2",RBI:"14",BB:"9",SO:"22",SB:"4",AVG:".322",OBP:".384",SLG:".456",OPS:".840"},
+    {Player:"A. Lambert",Team:"BRA",G:"27",AB:"94",R:"17",H:"30","2B":"5","3B":"1",HR:"4",RBI:"21",BB:"13",SO:"19",SB:"1",AVG:".319",OBP:".397",SLG:".500",OPS:".897"},
+    {Player:"N. Dubois",Team:"MER",G:"28",AB:"100",R:"21",H:"31","2B":"8","3B":"1",HR:"3",RBI:"18",BB:"16",SO:"11",SB:"7",AVG:".310",OBP:".405",SLG:".470",OPS:".875"},
+    {Player:"B. Van Damme",Team:"HOB",G:"25",AB:"86",R:"13",H:"26","2B":"3","3B":"0",HR:"2",RBI:"12",BB:"7",SO:"25",SB:"9",AVG:".302",OBP:".355",SLG:".407",OPS:".762"},
+  ],
+  pitching:[
+    {Player:"V. Moens",Team:"MER",W:"8",L:"2",ERA:"1.85",G:"14",GS:"12",IP:"82.1",H:"58",R:"20",ER:"17",BB:"22",SO:"95",WHIP:"0.97","K/9":"10.38"},
+    {Player:"P. Raes",Team:"HOB",W:"7",L:"3",ERA:"2.12",G:"13",GS:"11",IP:"76.1",H:"55",R:"22",ER:"18",BB:"18",SO:"82",WHIP:"0.96","K/9":"9.67"},
+    {Player:"F. Willems",Team:"BOR",W:"6",L:"3",ERA:"2.45",G:"15",GS:"10",IP:"69.2",H:"52",R:"21",ER:"19",BB:"24",SO:"71",WHIP:"1.09","K/9":"9.17"},
+    {Player:"G. Leclercq",Team:"BRU",W:"5",L:"4",ERA:"2.78",G:"12",GS:"12",IP:"71.0",H:"60",R:"25",ER:"22",BB:"20",SO:"68",WHIP:"1.13","K/9":"8.62"},
+    {Player:"E. Vermeer",Team:"MSG",W:"5",L:"5",ERA:"3.15",G:"14",GS:"11",IP:"65.2",H:"58",R:"26",ER:"23",BB:"25",SO:"60",WHIP:"1.26","K/9":"8.22"},
+    {Player:"H. Declerck",Team:"NAM",W:"4",L:"5",ERA:"3.42",G:"13",GS:"10",IP:"60.1",H:"55",R:"28",ER:"23",BB:"21",SO:"55",WHIP:"1.26","K/9":"8.20"},
+  ],
+  fielding:[],standings:[
+    {Team:"Merchtem Cats",W:"22",L:"6",PCT:".786",GB:"-"},
+    {Team:"Hoboken Pioneers",W:"20",L:"8",PCT:".714",GB:"2"},
+    {Team:"Borgerhout Squirrels",W:"17",L:"11",PCT:".607",GB:"5"},
+    {Team:"Brussels Kangaroos",W:"15",L:"13",PCT:".536",GB:"7"},
+  ],rosters:{}
+};
+
+let loadedFiles=[];
+let allData=[];
+let view="spotlight",statType="batting";
+let sortKey="AVG",sortDir="desc";
+let filterEvent="ALL",filterTeam="ALL",filterPlayer="";
+let highlightStat="AVG";
+
+function mergeData(){
+  allData=[];
+  const sources=loadedFiles.length?loadedFiles:[{...SAMPLE,_source:"Demo · Baseball D1 2025"}];
+  sources.forEach(src=>{
+    const lbl=src._source||(src.metadata?.event+" "+src.metadata?.year);
+    ["batting","pitching","fielding"].forEach(cat=>{
+      (src[cat]||[]).forEach(r=>allData.push({...r,_cat:cat,_source:lbl,Source:lbl}));
+    });
+  });
+}
+
+function getEvents(){
+  const s=new Set();
+  allData.forEach(r=>s.add(r._source));
+  return["ALL",...Array.from(s).sort()];
+}
+function getTeams(){
+  const s=new Set();
+  allData.filter(r=>r._cat===statType&&(filterEvent==="ALL"||r._source===filterEvent)).forEach(r=>s.add(r.Team));
+  return["ALL",...Array.from(s).sort()];
+}
+
+function filteredRows(){
+  return allData.filter(r=>{
+    if(r._cat!==statType)return false;
+    if(filterEvent!=="ALL"&&r._source!==filterEvent)return false;
+    if(filterTeam!=="ALL"&&r.Team!==filterTeam)return false;
+    if(filterPlayer&&!r.Player?.toLowerCase().includes(filterPlayer.toLowerCase()))return false;
+    return true;
+  }).sort((a,b)=>{
+    let va=a[sortKey]||"",vb=b[sortKey]||"";
+    const na=parseFloat(va),nb=parseFloat(vb);
+    if(!isNaN(na)&&!isNaN(nb))return sortDir==="asc"?na-nb:nb-na;
+    return sortDir==="asc"?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
+  });
+}
+
+function updateFilters(){
+  const esel=document.getElementById("filter-event");
+  const tsel=document.getElementById("filter-team");
+  const hsel=document.getElementById("highlight-stat");
+  const events=getEvents();
+  esel.innerHTML=events.map(e=>`<option value="${e}">${e==="ALL"?"Toutes les divisions":e}</option>`).join("");
+  esel.value=filterEvent;
+  const teams=getTeams();
+  tsel.innerHTML=teams.map(t=>`<option value="${t}">${t==="ALL"?"Toutes les équipes":teamName(t)+" ("+t+")"}</option>`).join("");
+  tsel.value=filterTeam;
+  const cols=(statType==="batting"?BATTING_COLS:PITCHING_COLS).filter(c=>c!=="Player"&&c!=="Team"&&c!=="Source");
+  hsel.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join("");
+  hsel.value=cols.includes(highlightStat)?highlightStat:cols[0];
+  highlightStat=hsel.value;
+  const meta=loadedFiles.length?loadedFiles.map(f=>f._source).join(" · "):"Demo · Baseball D1 2025";
+  document.getElementById("meta-label").textContent=meta;
+}
+
+function applyFilters(){
+  filterPlayer=document.getElementById("search-player").value;
+  filterEvent=document.getElementById("filter-event").value;
+  filterTeam=document.getElementById("filter-team").value;
+  highlightStat=document.getElementById("highlight-stat").value;
+  if(filterTeam==="ALL"||getTeams().includes(filterTeam)){}else filterTeam="ALL";
+  updateFilters();
+  render();
+}
+
+function setView(v){
+  view=v;
+  ["spotlight","stats","standings","rosters"].forEach(id=>{
+    document.getElementById("tab-"+id).classList.toggle("active",id===v);
+  });
+  const showTypes=["spotlight","stats"].includes(v);
+  document.getElementById("type-batting").style.display=showTypes?"":"none";
+  document.getElementById("type-pitching").style.display=showTypes?"":"none";
+  document.getElementById("filters-bar").style.display=["spotlight","stats"].includes(v)?"flex":"none";
+  render();
+}
+
+function setStatType(t){
+  statType=t;
+  sortKey=t==="batting"?"AVG":"ERA";
+  sortDir=t==="batting"?"desc":"asc";
+  highlightStat=sortKey;
+  filterTeam="ALL";
+  document.getElementById("type-batting").classList.toggle("active",t==="batting");
+  document.getElementById("type-pitching").classList.toggle("active",t==="pitching");
+  updateFilters();
+  render();
+}
+
+function sortBy(col){
+  if(sortKey===col){sortDir=sortDir==="asc"?"desc":"asc";}
+  else{sortKey=col;sortDir=NUMERIC.has(col)?"desc":"asc";}
+  render();
+}
+
+function maxVal(rows,col){
+  return Math.max(1,...rows.map(r=>parseFloat(r[col])||0));
+}
+
+function renderSpotlight(){
+  const rows=filteredRows().slice(0,12);
+  const medals=["","🥇","🥈","🥉"];
+  if(!rows.length){document.getElementById("content").innerHTML=`<div class="empty">Aucune donnée — charge un fichier JSON</div>`;return;}
+  const isB=statType==="batting";
+  const mainStat=isB?"AVG":"ERA";
+  const mxH=maxVal(rows,"H"),mxHR=maxVal(rows,"HR"),mxRBI=maxVal(rows,"RBI"),mxSB=maxVal(rows,"SB"),mxSO=maxVal(rows,"SO"),mxW=maxVal(rows,"W"),mxIP=maxVal(rows,"IP");
+
+  document.getElementById("content").innerHTML=`<div class="cards">`+rows.map((r,i)=>{
+    const ac=teamColor(r.Team);
+    const tn=teamName(r.Team);
+    const rank=i+1;
+    const medal=rank<=3?medals[rank]+" ":"";
+    const bars=isB?`
+      <div class="bar-row"><span class="bar-lbl">H</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.H)||0)/mxH*100}%;background:${ac}"></div></div><span class="bar-val">${r.H||0}</span></div>
+      <div class="bar-row"><span class="bar-lbl">HR</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.HR)||0)/mxHR*100}%;background:${ac}"></div></div><span class="bar-val">${r.HR||0}</span></div>
+      <div class="bar-row"><span class="bar-lbl">RBI</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.RBI)||0)/mxRBI*100}%;background:${ac}"></div></div><span class="bar-val">${r.RBI||0}</span></div>
+      <div class="bar-row"><span class="bar-lbl">SB</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.SB)||0)/mxSB*100}%;background:${ac}aa"></div></div><span class="bar-val">${r.SB||0}</span></div>
+    `:`
+      <div class="bar-row"><span class="bar-lbl">K</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.SO)||0)/mxSO*100}%;background:${ac}"></div></div><span class="bar-val">${r.SO||0}</span></div>
+      <div class="bar-row"><span class="bar-lbl">W</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.W)||0)/mxW*100}%;background:${ac}"></div></div><span class="bar-val">${r.W||0}</span></div>
+      <div class="bar-row"><span class="bar-lbl">IP</span><div class="bar-track"><div class="bar-fill" style="width:${(parseFloat(r.IP)||0)/mxIP*100}%;background:${ac}aa"></div></div><span class="bar-val">${r.IP||0}</span></div>
+    `;
+    const footer=isB?`
+      <div class="mini"><div class="mini-val" style="color:${ac}">${r.OBP||"-"}</div><div class="mini-lbl">OBP</div></div>
+      <div class="mini"><div class="mini-val" style="color:${ac}">${r.SLG||"-"}</div><div class="mini-lbl">SLG</div></div>
+      <div class="mini"><div class="mini-val" style="color:${ac}">${r.OPS||"-"}</div><div class="mini-lbl">OPS</div></div>
+      <div class="mini"><div class="mini-val">${r.G||"-"}</div><div class="mini-lbl">G</div></div>
+    `:`
+      <div class="mini"><div class="mini-val" style="color:${ac}">${r.WHIP||"-"}</div><div class="mini-lbl">WHIP</div></div>
+      <div class="mini"><div class="mini-val" style="color:${ac}">${r["K/9"]||"-"}</div><div class="mini-lbl">K/9</div></div>
+      <div class="mini"><div class="mini-val">${r.W||0}-${r.L||0}</div><div class="mini-lbl">W-L</div></div>
+      <div class="mini"><div class="mini-val">${r.G||"-"}</div><div class="mini-lbl">G</div></div>
+    `;
+    const srcLine=loadedFiles.length>1?`<span style="color:var(--dim);font-size:9px;margin-left:6px">· ${r._source}</span>`:"";
+    return `<div class="card" onclick="openPlayer('${encodeURIComponent(JSON.stringify(r))}')">
+      <div class="card-accent" style="background:linear-gradient(90deg,${ac},${ac}44)"></div>
+      <div class="card-rank" style="color:${ac}">${medal}#${rank}</div>
+      <div class="card-name">${r.Player}</div>
+      <div class="card-team"><span class="badge" style="background:${ac}22;color:${ac}">${r.Team}</span> ${tn}${srcLine}</div>
+      <div class="card-main" style="color:${ac}">${r[mainStat]||"-"}</div>
+      <div class="card-label">${mainStat}</div>
+      <div class="card-bars">${bars}</div>
+      <div class="card-footer">${footer}</div>
+    </div>`;
+  }).join("")+"</div>";
+}
+
+function renderStats(){
+  const rows=filteredRows();
+  document.getElementById("result-count").textContent=`${rows.length} joueur${rows.length!==1?"s":""}`;
+  if(!rows.length){document.getElementById("content").innerHTML=`<div class="empty">Aucun joueur trouvé</div>`;return;}
+  const cols=(statType==="batting"?BATTING_COLS:PITCHING_COLS);
+  const showSrc=loadedFiles.length>1;
+  const visCols=cols.filter(c=>showSrc||c!=="Source");
+
+  let html=`<div class="table-wrap"><table><thead><tr>`;
+  visCols.forEach(c=>{
+    const isLeft=c==="Player"||c==="Team"||c==="Source";
+    const sorted=sortKey===c;
+    const arrow=sorted?(sortDir==="asc"?" ↑":" ↓"):"";
+    html+=`<th class="${isLeft?"left":"right"}${sorted?" sorted":""}" onclick="sortBy('${c}')">${c}${arrow}</th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+
+  rows.forEach((r,i)=>{
+    const ac=teamColor(r.Team);
+    html+=`<tr>`;
+    visCols.forEach(c=>{
+      if(c==="Player"){
+        html+=`<td class="left player" onclick="openPlayer('${encodeURIComponent(JSON.stringify(r))}')">${r[c]||"-"}</td>`;
+      }else if(c==="Team"){
+        html+=`<td class="left"><span class="badge" style="background:${ac}22;color:${ac}">${r[c]||"-"}</span></td>`;
+      }else if(c==="Source"){
+        html+=`<td class="left" style="color:var(--dim);font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis">${r[c]||"-"}</td>`;
+      }else{
+        const isHL=c===highlightStat;
+        html+=`<td class="right${isHL?" highlight":""}" style="${isHL?"color:"+ac+";":""}">${r[c]||"-"}</td>`;
+      }
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  document.getElementById("content").innerHTML=html;
+}
+
+function renderStandings(){
+  const src=loadedFiles.length?loadedFiles:[{...SAMPLE,_source:"Demo"}];
+  let html="";
+  src.forEach(f=>{
+    const standings=f.standings||[];
+    if(!standings.length)return;
+    html+=`<h3 style="color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px">${f._source||f.metadata?.event+" "+f.metadata?.year}</h3>`;
+    standings.forEach((t,i)=>{
+      const code=Object.keys(TEAM_COLORS).find(k=>TEAM_COLORS[k].name?.toLowerCase().includes((t.Team||"").toLowerCase().split(" ")[0]));
+      const ac=code?TEAM_COLORS[code].accent:ACCENT_POOL[i%ACCENT_POOL.length];
+      const w=parseInt(t.W)||0,l=parseInt(t.L)||0;
+      const pct=w+l>0?w/(w+l):0;
+      html+=`<div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${i<3?ac:"var(--surface2)"};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${i<3?"#fff":"var(--dim)"}">${i+1}</div>
+        <div style="flex:1;font-weight:600;font-size:13px">${t.Team||"-"}</div>
+        <div style="text-align:center;width:55px"><div style="font-size:15px;font-weight:800;color:${ac};font-family:'IBM Plex Mono',monospace">${t.W||0}-${t.L||0}</div><div style="font-size:9px;color:var(--dim)">W-L</div></div>
+        <div style="width:100px"><div style="height:5px;background:#ffffff0a;border-radius:3px;overflow:hidden"><div style="height:100%;background:${ac};width:${pct*100}%;border-radius:3px"></div></div><div style="font-size:9px;color:var(--muted);text-align:center;margin-top:3px">${t.PCT||pct.toFixed(3)}</div></div>
+        <div style="width:35px;text-align:center;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace">${t.GB==="-"?"—":(t.GB?"+"+t.GB:"")}</div>
+      </div>`;
+    });
+    html+=`<div style="margin-bottom:24px"></div>`;
+  });
+  if(!html)html=`<div class="empty">Aucune donnée de classement</div>`;
+  document.getElementById("content").innerHTML=html;
+}
+
+function renderRosters(){
+  const src=loadedFiles.length?loadedFiles:[{...SAMPLE,_source:"Demo"}];
+  const searchVal=document.getElementById("search-player").value.toLowerCase();
+  let html="";
+  src.forEach(f=>{
+    const rosters=f.rosters||{};
+    const teams=Object.keys(rosters);
+    if(!teams.length)return;
+    html+=`<h3 style="color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px">${f._source||""}</h3>`;
+    teams.forEach(teamName=>{
+      const players=(rosters[teamName]||[]).filter(p=>!searchVal||p.name?.toLowerCase().includes(searchVal));
+      if(!players.length)return;
+      html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:12px">${teamName} <span style="color:var(--muted);font-weight:400">(${players.length})</span></div>
+        <div style="overflow-x:auto"><table style="width:100%">
+          <thead><tr>
+            <th style="padding:7px 12px;text-align:left;color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.8px">#</th>
+            <th style="padding:7px 12px;text-align:left;color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.8px">Joueur</th>
+            <th style="padding:7px 12px;text-align:left;color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.8px">Position</th>
+            <th style="padding:7px 12px;text-align:left;color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.8px">B/T</th>
+          </tr></thead>
+          <tbody>`;
+      players.forEach((p,i)=>{
+        html+=`<tr style="border-top:1px solid var(--border);${i%2?"background:#ffffff04":""}">
+          <td style="padding:7px 12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px">${p.number||"-"}</td>
+          <td style="padding:7px 12px;font-weight:600;font-size:12px">${p.name||"-"}</td>
+          <td style="padding:7px 12px;color:var(--muted);font-size:11px">${p.position||"-"}</td>
+          <td style="padding:7px 12px;color:var(--muted);font-size:11px">${p.bats_throws||"-"}</td>
+        </tr>`;
+      });
+      html+=`</tbody></table></div></div>`;
+    });
+  });
+  if(!html)html=`<div class="empty">Aucun effectif disponible</div>`;
+  document.getElementById("content").innerHTML=html;
+}
+
+function render(){
+  highlightStat=document.getElementById("highlight-stat")?.value||highlightStat;
+  if(view==="spotlight")renderSpotlight();
+  else if(view==="stats")renderStats();
+  else if(view==="standings")renderStandings();
+  else if(view==="rosters")renderRosters();
+}
+
+function openPlayer(encoded){
+  const r=JSON.parse(decodeURIComponent(encoded));
+  const ac=teamColor(r.Team);
+  const isB=r._cat==="batting";
+  const keys=isB?["G","AB","R","H","2B","3B","HR","RBI","BB","SO","SB","AVG","OBP","SLG","OPS"]:["W","L","ERA","G","GS","IP","H","R","ER","BB","SO","WHIP","K/9"];
+  const srcLine=loadedFiles.length>1?`<div style="font-size:10px;color:var(--dim);margin-top:2px">${r._source}</div>`:"";
+  document.getElementById("modal-content").innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+      <div style="width:48px;height:48px;border-radius:50%;background:${ac}22;border:2px solid ${ac};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${ac}">
+        ${r.Player?.split(" ").map(w=>w[0]).join("").slice(0,2)||"?"}
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:800">${r.Player||"-"}</div>
+        <div><span class="badge" style="background:${ac}22;color:${ac}">${r.Team}</span> <span style="color:var(--muted);font-size:12px">${teamName(r.Team)}</span></div>
+        ${srcLine}
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active">${isB?"Batting":"Pitching"}</div>
+    </div>
+    <div class="stat-grid">
+      ${keys.map(k=>`<div class="stat-box">
+        <div class="stat-val" style="color:${k===("AVG"||"ERA")?ac:"var(--text)"}">${r[k]||"-"}</div>
+        <div class="stat-lbl">${k}</div>
+      </div>`).join("")}
+    </div>
+  `;
+  document.getElementById("player-modal").style.display="flex";
+}
+
+function closeModal(e){
+  if(!e||e.target===document.getElementById("player-modal")||e.currentTarget.classList.contains("modal-close")){
+    document.getElementById("player-modal").style.display="none";
+  }
+}
+
+function loadFiles(files){
+  const promises=Array.from(files).map(f=>new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        d._source=d.metadata?.event&&d.metadata?.year?d.metadata.event+" "+d.metadata.year:f.name.replace(".json","");
+        res(d);
+      }catch(e){alert("Erreur JSON : "+f.name);res(null);}
+    };
+    reader.readAsText(f);
+  }));
+  Promise.all(promises).then(results=>{
+    results.filter(Boolean).forEach(d=>{
+      if(!loadedFiles.find(f=>f._source===d._source))loadedFiles.push(d);
+    });
+    mergeData();
+    updateFilters();
+    updateChips();
+    render();
+  });
+}
+
+function updateChips(){
+  const row=document.getElementById("files-row");
+  if(!loadedFiles.length){row.style.display="none";return;}
+  row.style.display="flex";
+  row.innerHTML=loadedFiles.map((f,i)=>`
+    <div class="chip loaded">${f._source}
+      <span class="chip-close" onclick="removeFile(${i})">✕</span>
+    </div>`).join("");
+}
+
+function removeFile(i){
+  loadedFiles.splice(i,1);
+  mergeData();
+  updateFilters();
+  updateChips();
+  render();
+}
+
+function exportCSV(){
+  const rows=filteredRows();
+  if(!rows.length)return;
+  const cols=(statType==="batting"?BATTING_COLS:PITCHING_COLS);
+  const csv=[cols.join(","),...rows.map(r=>cols.map(c=>`"${r[c]||""}"`).join(","))].join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download=`diamond_pulse_${statType}.csv`;a.click();
+}
+
+function exportJSON(){
+  const rows=filteredRows();
+  if(!rows.length)return;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(rows,null,2)],{type:"application/json"}));
+  a.download=`diamond_pulse_${statType}.json`;a.click();
+}
+
+document.getElementById("file-input").addEventListener("change",e=>{if(e.target.files.length)loadFiles(e.target.files);e.target.value="";});
+
+mergeData();
+updateFilters();
+render();
+</script>
