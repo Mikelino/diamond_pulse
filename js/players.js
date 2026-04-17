@@ -445,12 +445,13 @@ async function render() {
     card.querySelector('.song-artist').addEventListener('click', (e) => e.stopPropagation());
 
     // Upload fichier audio → Supabase
+    const audioInput = card.querySelector('.upload-btn input[type="file"]');
     card.querySelector('.upload-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      card.querySelector('input[type="file"]').click();
+      audioInput.click();
     });
-    card.querySelector('input[type="file"]').addEventListener('click', (e) => e.stopPropagation());
-    card.querySelector('input[type="file"]').addEventListener('change', async (e) => {
+    audioInput.addEventListener('click', (e) => e.stopPropagation());
+    audioInput.addEventListener('change', async (e) => {
       e.stopPropagation();
       const file = e.target.files[0];
       if (!file) return;
