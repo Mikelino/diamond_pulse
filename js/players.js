@@ -621,6 +621,9 @@ function updateTeamSelector() {
     .join('');
 }
 
+let uploadedAudioURL = null;
+let uploadedAudioFile = null;
+
 function handleAudioUpload(input) {
   const file = input.files[0];
   if (!file) return;
