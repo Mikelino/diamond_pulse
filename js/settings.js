@@ -938,14 +938,14 @@ function ifResetColors() {
   showCfgSaveIndicator();
 }
 
-function ifSaveDuration() {
+async function ifSaveDuration() {
   const val = parseInt(document.getElementById('ifDuration').value);
-  if (val >= 5 && val <= 60) {
-    PLAY_DURATION = val;
-    appSettings.playDuration = val;
-    saveConfig();
-    showCfgSaveIndicator();
-  }
+  if (isNaN(val) || val < 5 || val > 60) return;
+  PLAY_DURATION = val;
+  appSettings.playDuration = val;
+  document.getElementById('ifDurationVal').textContent = val;
+  await saveConfig();
+  showCfgSaveIndicator();
 }
 
 function ifIntroRestSetUI(on) {

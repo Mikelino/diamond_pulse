@@ -265,7 +265,7 @@ async function loadConfig() {
     // Paramètres app
     if (v.appSettings) {
       appSettings   = { ...appSettings, ...v.appSettings };
-      PLAY_DURATION = appSettings.playDuration;
+      PLAY_DURATION = appSettings.playDuration || 15;
       refreshNewPosSelect();
 
       if (appSettings.fontPairId) {
