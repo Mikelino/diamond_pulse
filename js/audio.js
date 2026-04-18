@@ -778,7 +778,7 @@ async function ttsLoadElevenLabsVoices() {
     const res = await fetch('https://api.elevenlabs.io/v1/voices', {
       headers: { 'xi-api-key': key },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(res.status === 401 ? 'Invalid API key (401) — check your ElevenLabs key and try again.' : `HTTP ${res.status}`);
     const data = await res.json();
     const sel = document.getElementById('ttsElevenLabsVoice');
     if (!sel) return;
