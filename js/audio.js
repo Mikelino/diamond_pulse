@@ -44,7 +44,7 @@ function togglePlay(entryIndex, e) {
   const entry = currentLineup()[entryIndex];
   if (!entry) return;
 
-  if (currentPid === entry.pid) { stopPlayback(); return; }
+  if (currentPid === entry.pid) { fadeOutAndStop(); return; }
 
   stopPlayback();
   startPlayback(entry, entryIndex);
@@ -164,6 +164,20 @@ async function startPlayback(entry, entryIndex) {
   }, 100);
 
   render();
+}
+
+function fadeOutAndStop(duration = 800) {
+  if (!currentAudio) { stopPlayback(); return; }
+  const audio = currentAudio;
+  const startVol = audio.volume;
+  const steps = 20;
+  const stepMs = duration / steps;
+  let step = 0;
+  const fadeInterval = setInterval(() => {
+    step++;
+    if (audio === currentAudio) audio.volume = Math.max(startVol * (1 - step / steps), 0);
+    if (step >= steps) { clearInterval(fadeInterval); stopPlayback(); }
+  }, stepMs);
 }
 
 function stopPlayback() {
